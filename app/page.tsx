@@ -89,19 +89,22 @@ export default function HomePage() {
     }
   }
 
-  const getDaysUntilEvent = (dateStr: string) => {
-    const eventDate = new Date(dateStr)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    eventDate.setHours(0, 0, 0, 0)
+  const getDaysUntilEvent = (dateStr: string, timeStr?: string) => {
+    const eventDate = new Date(dateStr + (timeStr ? `T${timeStr}` : 'T00:00'))
+    const now = new Date()
     
-    const diffTime = eventDate.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const diffTime = eventDate.getTime() - now.getTime()
+    const diffMinutes = Math.floor(diffTime / (1000 * 60))
+    const diffHours = Math.floor(diffMinutes / 60)
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
     
+    if (diffMinutes < 0) return 'Past'
+    if (diffMinutes < 60) return `In ${diffMinutes} minutes`
+    if (diffHours < 24) return `In ${diffHours} hours`
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Tomorrow'
-    if (diffDays > 0) return `In ${diffDays} days`
-    return 'Past'
+    if (diffDays <= 7) return `In ${diffDays} days`
+    return `In ${diffDays} days`
   }
 
   const isMultiDayEvent = (event: StoredEvent) => {
@@ -141,8 +144,8 @@ export default function HomePage() {
     return eventDate >= today && eventDate <= nextWeek
   }).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
 
-  // Calendar state and functions
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 8, 1)) // Start in September 2025
+  // Calendar state and functions 
+  const [currentDate, setCurrentDate] = useState(new Date(2025, 8, 1)) // September 2025 where events exist
   const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
 
   const prevMonth = () => {
@@ -182,8 +185,15 @@ export default function HomePage() {
           start: e.start_date, 
           end: e.end_date,
           startMonth: e.start_date.substring(0, 7)
-        }))
+        })),
+        viewingMonth: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
       })
+    }
+    
+    // Debug specific day if it has events
+    if (dayEvents.length > 0) {
+      console.log(`Day ${dateStr} (${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}) has ${dayEvents.length} events:`, 
+        dayEvents.map(e => ({ title: e.title, start: e.start_date, end: e.end_date })))
     }
     const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
     const isToday = dateStr === today.toISOString().split('T')[0]
@@ -292,6 +302,12 @@ export default function HomePage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
                               <span className="font-medium">{formatEventDuration(event)}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="font-medium text-orange-300">{getDaysUntilEvent(event.start_date, event.start_time)}</span>
                             </div>
                             {event.location && (
                               <div className="flex items-center space-x-2">

@@ -83,7 +83,8 @@ export async function parseNewsletterWithGPT(content: string, logId?: string): P
     console.log('OpenAI response received, choices:', completion.choices?.length || 0)
 
     const responseText = completion.choices[0]?.message?.content
-    console.log('OpenAI response text:', responseText)
+    console.log('OpenAI response text length:', responseText?.length || 0)
+    console.log('OpenAI response preview:', responseText?.substring(0, 200))
     
     if (!responseText) {
       console.error('No response content from OpenAI')
