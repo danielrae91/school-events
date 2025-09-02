@@ -215,43 +215,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Calendar Subscription Section */}
-        <div className="bg-gray-800/30 backdrop-blur-sm rounded-lg p-3 mb-6">
-          <h2 className="text-sm font-medium mb-3 text-center text-gray-300">📅 Subscribe to Calendar</h2>
-          <div className="flex flex-wrap justify-center gap-1">
-            <button
-              onClick={() => {
-                const calendarUrl = getCalendarUrl()
-                const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
-                window.open(googleUrl, '_blank')
-              }}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs transition-colors"
-            >
-              Add to Google
-            </button>
-            
-            <button
-              onClick={() => {
-                const calendarUrl = getCalendarUrl()
-                window.open(calendarUrl, '_blank')
-              }}
-              className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
-            >
-              Other Apps
-            </button>
-            
-            <button
-              onClick={() => {
-                const calendarUrl = getCalendarUrl()
-                navigator.clipboard.writeText(calendarUrl)
-                alert('Calendar URL copied!')
-              }}
-              className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
-            >
-              Copy URL
-            </button>
-          </div>
-        </div>
 
         {/* Upcoming Events */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-8">
@@ -340,6 +303,44 @@ export default function HomePage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Calendar Subscription Section */}
+        <div className="bg-gray-800/30 backdrop-blur-sm rounded-lg p-3 mb-6">
+          <h2 className="text-sm font-medium mb-3 text-center text-gray-300">📅 Subscribe to Calendar</h2>
+          <div className="flex flex-wrap justify-center gap-1">
+            <button
+              onClick={() => {
+                const calendarUrl = getCalendarUrl()
+                const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
+                window.open(googleUrl, '_blank')
+              }}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs transition-colors"
+            >
+              Add to Google
+            </button>
+            
+            <button
+              onClick={() => {
+                const calendarUrl = getCalendarUrl()
+                window.open(calendarUrl, '_blank')
+              }}
+              className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
+            >
+              Other Apps
+            </button>
+            
+            <button
+              onClick={() => {
+                const calendarUrl = getCalendarUrl()
+                navigator.clipboard.writeText(calendarUrl)
+                alert('Calendar URL copied!')
+              }}
+              className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
+            >
+              Copy URL
+            </button>
+          </div>
         </div>
 
         {/* Calendar */}
