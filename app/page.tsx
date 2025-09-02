@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { StoredEvent } from '@/lib/types'
 import AddEventModal from '@/components/AddEventModal'
+import SuggestEventModal from '@/components/SuggestEventModal'
 
 export default function HomePage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
@@ -11,6 +12,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<StoredEvent | null>(null)
   const [showAddEventModal, setShowAddEventModal] = useState(false)
+  const [showSuggestEventModal, setShowSuggestEventModal] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
 
   useEffect(() => {
@@ -266,16 +268,7 @@ export default function HomePage() {
         {/* Upcoming Events */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Upcoming Events</h2>
-            <button
-              onClick={() => setShowAddEventModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Event
-            </button>
+            <h2 className="text-xl font-semibold text-white">Upcoming Events</h2>
           </div>
           {loading ? (
             <div className="flex justify-center py-8">
@@ -358,9 +351,20 @@ export default function HomePage() {
               </svg>
             </button>
             
-            <h2 className="text-xl font-semibold text-white">
-              {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold text-white">
+                {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </h2>
+              <button
+                onClick={() => setShowSuggestEventModal(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Suggest Event
+              </button>
+            </div>
             
             <button
               onClick={nextMonth}
@@ -493,6 +497,17 @@ export default function HomePage() {
           <AddEventModal 
             onClose={() => setShowAddEventModal(false)}
             onEventAdded={fetchEvents}
+          />
+        )}
+
+        {/* Suggest Event Modal */}
+        {showSuggestEventModal && (
+          <SuggestEventModal 
+            onClose={() => setShowSuggestEventModal(false)}
+            onEventSuggested={() => {
+              // Could show a success message here
+              console.log('Event suggestion submitted')
+            }}
           />
         )}
       </div>
