@@ -301,43 +301,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Calendar Subscription Section */}
-        <div className="bg-gray-800/30 backdrop-blur-sm rounded-lg p-3 mb-6">
-          <h2 className="text-sm font-medium mb-3 text-center text-gray-300">📅 Subscribe to Calendar</h2>
-          <div className="flex flex-wrap justify-center gap-1">
-            <button
-              onClick={() => {
-                const calendarUrl = `${window.location.origin}/calendar.ics`
-                const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
-                window.open(googleUrl, '_blank')
-              }}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs transition-colors"
-            >
-              Add to Google
-            </button>
-            
-            <button
-              onClick={() => {
-                const calendarUrl = getCalendarUrl()
-                window.open(calendarUrl, '_blank')
-              }}
-              className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
-            >
-              Other Apps
-            </button>
-            
-            <button
-              onClick={() => {
-                const calendarUrl = getCalendarUrl()
-                navigator.clipboard.writeText(calendarUrl)
-                alert('Calendar URL copied!')
-              }}
-              className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
-            >
-              Copy URL
-            </button>
-          </div>
-        </div>
 
         {/* Calendar */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl mb-8">
@@ -380,20 +343,20 @@ export default function HomePage() {
                 <div 
                   key={dateStr}
                   className={`
-                    aspect-square p-1 text-sm border border-slate-700 rounded-lg
+                    min-h-[50px] sm:min-h-[80px] p-1 sm:p-2 text-xs sm:text-sm border border-slate-700 rounded-lg
                     ${isCurrentMonth ? 'text-white' : 'text-gray-600'}
-                    ${isToday ? 'bg-purple-600 border-purple-500' : 'hover:bg-slate-700'}
+                    ${isToday ? 'bg-purple-800 border-purple-600' : 'hover:bg-slate-700'}
                     ${events.length > 0 ? 'bg-slate-700' : ''}
                   `}
                 >
                   <div className="h-full flex flex-col">
-                    <div className="text-center mb-1">{date.getDate()}</div>
+                    <div className="text-center mb-1 font-medium">{date.getDate()}</div>
                     {events.length > 0 && (
                       <div className="flex-1 flex flex-col gap-0.5">
-                        {events.slice(0, 2).map((event, i) => (
+                        {events.slice(0, 1).map((event, i) => (
                           <div
                             key={i}
-                            className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer transition-colors ${
+                            className={`text-xs px-1 py-0.5 rounded cursor-pointer transition-colors overflow-hidden ${
                               isMultiDayEvent(event)
                                 ? 'bg-orange-500 hover:bg-orange-400 text-white'
                                 : 'bg-purple-500 hover:bg-purple-400 text-white'
@@ -401,15 +364,15 @@ export default function HomePage() {
                             onClick={() => setSelectedEvent(event)}
                             title={`${event.title}${isMultiDayEvent(event) ? ' (Multi-day)' : ''}${event.start_time ? ` at ${event.start_time}` : ''}`}
                           >
-                            <span className="font-medium">{event.title}</span>
+                            <div className="truncate font-medium leading-tight">{event.title}</div>
                             {event.start_time && (
-                              <span className="ml-1 opacity-75">{event.start_time}</span>
+                              <div className="text-xs opacity-75 leading-tight">{event.start_time}</div>
                             )}
                           </div>
                         ))}
-                        {events.length > 2 && (
-                          <div className="text-xs text-gray-400 text-center font-medium">
-                            +{events.length - 2} more
+                        {events.length > 1 && (
+                          <div className="text-xs text-gray-400 text-center font-medium mt-1">
+                            +{events.length - 1}
                           </div>
                         )}
                       </div>
@@ -421,6 +384,56 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Calendar Subscription Section */}
+        <div className="bg-gray-800/30 backdrop-blur-sm rounded-lg p-4 mb-6">
+          <h2 className="text-lg font-medium mb-4 text-center text-white">📅 Subscribe to Calendar</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              onClick={() => {
+                const calendarUrl = `${window.location.origin}/calendar.ics`
+                const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
+                window.open(googleUrl, '_blank')
+              }}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Add to Google Calendar
+            </button>
+            
+            <button
+              onClick={() => {
+                const calendarUrl = `${window.location.origin}/calendar.ics`
+                window.open(calendarUrl, '_blank')
+              }}
+              className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Other Calendar Apps
+            </button>
+            
+            <button
+              onClick={() => {
+                const calendarUrl = `${window.location.origin}/calendar.ics`
+                navigator.clipboard.writeText(calendarUrl)
+                alert('Calendar URL copied to clipboard!')
+              }}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy URL
+            </button>
+          </div>
+        </div>
+
         {/* Suggest Event Section */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-8 text-center">
           <button
@@ -429,6 +442,11 @@ export default function HomePage() {
           >
             Suggest Event
           </button>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center py-6 text-gray-500 text-sm">
+          Made by a TK Parent
         </div>
 
 

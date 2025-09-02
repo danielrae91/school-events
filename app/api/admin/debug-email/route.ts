@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get GPT prompt status
-    const gptPrompt = await redis.get('gpt_prompt')
+    const gptPrompt = await redis.get('gpt_prompt') as string | null
     
     return NextResponse.json({
       logs,
