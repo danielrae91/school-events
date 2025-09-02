@@ -50,7 +50,7 @@ export default function HomePage() {
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric'
     })
   }
@@ -180,6 +180,12 @@ export default function HomePage() {
     })
   }
 
+  console.log('Calendar debug:', { 
+    totalEvents: events.length, 
+    currentMonth: currentMonth.toISOString().split('T')[0].substring(0, 7),
+    sampleEvents: events.slice(0, 3).map(e => ({ title: e.title, start: e.start_date, end: e.end_date }))
+  })
+
   const getEventEmoji = (title: string) => {
     const titleLower = title.toLowerCase()
     if (titleLower.includes('sport') || titleLower.includes('game') || titleLower.includes('match')) return '⚽'
@@ -220,7 +226,12 @@ export default function HomePage() {
 
         {/* Upcoming Events */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6 text-center text-white">📅 Upcoming Events</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center text-white flex items-center justify-center gap-2">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Upcoming Events
+          </h2>
           {loading ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
@@ -413,6 +424,16 @@ export default function HomePage() {
             </button>
             
             <button
+              onClick={handleAppleCalendar}
+              className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+              Add to Apple Calendar
+            </button>
+            
+            <button
               onClick={() => {
                 const calendarUrl = `${window.location.origin}/calendar.ics`
                 window.open(calendarUrl, '_blank')
@@ -422,7 +443,7 @@ export default function HomePage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Other Calendar Apps
+              Download ICS File
             </button>
             
             <button
@@ -443,8 +464,14 @@ export default function HomePage() {
 
 
         {/* Footer */}
-        <div className="text-center py-6 text-gray-500 text-sm">
-          Made by a TK Parent
+        <div className="text-center py-6 text-gray-500 text-sm flex items-center justify-center gap-4">
+          <span>Made by a TK Parent</span>
+          <button
+            onClick={() => setShowSuggestEventModal(true)}
+            className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
+          >
+            Send feedback
+          </button>
         </div>
 
 
@@ -542,7 +569,7 @@ export default function HomePage() {
                   {/* Share Buttons */}
                   <div className="border-t border-slate-700 pt-4">
                     <p className="text-gray-400 text-sm mb-3">Share this event</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => {
                           const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''}`
@@ -555,20 +582,6 @@ export default function HomePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                         Copy
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''} ${window.location.origin}`
-                          const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
-                          window.open(url, '_blank')
-                        }}
-                        className="bg-blue-500 hover:bg-blue-400 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                        </svg>
-                        Tweet
                       </button>
                       
                       <button

@@ -5,22 +5,25 @@ export function generateICalFeed(events: StoredEvent[]): string {
   const calendar = ical({
     name: 'School Events Calendar',
     description: 'Automated school newsletter events feed',
-    timezone: 'Pacific/Auckland',
     url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/calendar.ics` : 'http://localhost:3000/calendar.ics',
     prodId: '-//TK Newsletter//School Events//EN'
   })
 
   for (const event of events) {
     try {
+      const startDate = parseEventDateTime(event.start_date, event.start_time)
+      const endDate = parseEventDateTime(event.end_date || event.start_date, event.end_time || event.start_time)
+      
       const calEvent: any = {
-        uid: event.id,
-        start: parseEventDateTime(event.start_date, event.start_time),
-        end: parseEventDateTime(event.end_date || event.start_date, event.end_time || event.start_time),
+        uid: `${event.id}@school-events`,
+        start: startDate,
+        end: endDate,
         summary: event.title,
         description: event.description || '',
         ...(event.location && event.location.trim() ? { location: event.location.trim() } : {}),
         created: new Date(event.created_at),
-        lastModified: new Date(event.updated_at)
+        lastModified: new Date(event.updated_at),
+        stamp: new Date() // Force UTC timestamp
       }
 
       // Mark as all-day if no time specified
@@ -33,20 +36,24 @@ export function generateICalFeed(events: StoredEvent[]): string {
         calEvent.description += '\n\n⚠️ This event may need additional details.'
       }
 
-      // Add last modified timestamp and sequence to force calendar refresh
-      calEvent.lastModified = new Date(event.updated_at)
-      calEvent.sequence = Math.floor(new Date(event.updated_at).getTime() / 1000)
-      
-      // Add revision number to UID to force update recognition
-      calEvent.uid = `${event.id}-rev${calEvent.sequence}@school-events`
-
       calendar.createEvent(calEvent)
     } catch (error) {
       console.error('Error adding event to calendar:', event.id, error)
     }
   }
 
-  return calendar.toString()
+  // Get the ICS string and ensure UTC timestamps
+  let icsString = calendar.toString()
+  
+  // Force UTC timestamps by adding Z to DTSTAMP, DTSTART, DTEND if they don't have timezone info
+  icsString = icsString.replace(/DTSTAMP:(\d{8}T\d{6})(?![Z\+\-])/g, 'DTSTAMP:$1Z')
+  icsString = icsString.replace(/DTSTART:(\d{8}T\d{6})(?![Z\+\-])/g, 'DTSTART:$1Z')
+  icsString = icsString.replace(/DTEND:(\d{8}T\d{6})(?![Z\+\-])/g, 'DTEND:$1Z')
+  
+  // Ensure CRLF line endings for better compatibility
+  icsString = icsString.replace(/\r?\n/g, '\r\n')
+  
+  return icsString
 }
 
 function parseEventDateTime(date: string, time?: string | null): Date {
