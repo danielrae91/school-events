@@ -11,10 +11,11 @@ export function generateICalFeed(events: StoredEvent[]): string {
       company: 'TK Newsletter',
       product: 'School Events',
       language: 'EN'
-    },
-    // Force calendar refresh by updating feed timestamp
-    lastModified: new Date()
+    }
   })
+
+  // Force calendar refresh by updating feed timestamp
+  calendar.lastModified(new Date())
 
   for (const event of events) {
     try {
