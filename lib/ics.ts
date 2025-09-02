@@ -46,7 +46,7 @@ export function generateICalFeed(events: StoredEvent[]): string {
   return calendar.toString()
 }
 
-function parseEventDateTime(date: string, time?: string): Date {
+function parseEventDateTime(date: string, time?: string | null): Date {
   if (!time) {
     // All-day event - use date at midnight
     return new Date(`${date}T00:00:00`)

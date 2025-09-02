@@ -148,6 +148,22 @@ export default function AdminPage() {
     }
   }
 
+  const debugRedisData = async () => {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/debug', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      console.log('Redis Debug Data:', data)
+      alert(`Redis Debug: ${data.totalEventKeys} event keys found. Check console for details.`)
+    } catch (err) {
+      setError('Failed to debug Redis data')
+    }
+  }
+
   const handleLogin = () => {
     if (adminToken) {
       localStorage.setItem('admin_token', adminToken)
@@ -394,13 +410,21 @@ export default function AdminPage() {
           {activeTab === 'logs' && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Email Processing Logs</h2>
-                <button
-                  onClick={fetchLogs}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Refresh Logs
-                </button>
+                <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>
+                <div className="space-x-2">
+                  <button
+                    onClick={fetchLogs}
+                    className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    onClick={debugRedisData}
+                    className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                  >
+                    Debug Redis
+                  </button>
+                </div>
               </div>
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
