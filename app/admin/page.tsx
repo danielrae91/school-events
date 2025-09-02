@@ -4,18 +4,21 @@ import { useState, useEffect } from 'react'
 import { StoredEvent, Event } from '@/lib/types'
 
 export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState('events')
   const [events, setEvents] = useState<StoredEvent[]>([])
-  const [suggestions, setSuggestions] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'settings'>('events')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [adminToken, setAdminToken] = useState('')
+  const [suggestions, setSuggestions] = useState<StoredEvent[]>([])
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
+  const [editingSuggestion, setEditingSuggestion] = useState<StoredEvent | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [debugEmailData, setDebugEmailData] = useState<any>(null)
+  const [adminToken, setAdminToken] = useState('')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [gptPrompt, setGptPrompt] = useState('')
-  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
 
   // Check authentication
   useEffect(() => {

@@ -444,6 +444,74 @@ export default function HomePage() {
           </button>
         </div>
 
+        {/* Upcoming Events */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-6 text-center">📅 Upcoming Events</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+            {upcomingEvents.map((event) => (
+              <div
+                key={event.id}
+                className="group bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
+                onClick={() => setSelectedEvent(event)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start space-x-4 mb-3">
+                      <div className="text-3xl mt-1 group-hover:scale-110 transition-transform duration-300">
+                        {getEventEmoji(event.title)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="text-lg font-semibold text-white truncate group-hover:text-purple-300 transition-colors">
+                            {event.title}
+                          </h3>
+                          {isMultiDayEvent(event) && (
+                            <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full whitespace-nowrap font-medium">
+                              Multi-day
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col space-y-2 text-gray-300 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="font-medium">{formatEventDuration(event)}</span>
+                          </div>
+                          {event.location && (
+                            <div className="flex items-center space-x-2">
+                              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span className="truncate max-w-[200px] sm:max-w-[300px]">{event.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
+                      const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
+                      const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`
+                      window.open(googleUrl, '_blank')
+                    }}
+                    className="ml-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center space-x-2 shadow-lg hover:shadow-purple-500/25 hover:scale-105"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span>Add to Calendar</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Footer */}
         <div className="text-center py-6 text-gray-500 text-sm">
           Made by a TK Parent
@@ -452,17 +520,20 @@ export default function HomePage() {
 
         {/* Event Modal */}
         {selectedEvent && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-800 border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="bg-purple-600 px-6 py-4 rounded-t-xl">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{getEventEmoji(selectedEvent.title)}</span>
-                    <h2 className="text-lg font-bold text-white">{selectedEvent.title}</h2>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-3xl bg-white/20 p-2 rounded-xl">{getEventEmoji(selectedEvent.title)}</div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">{selectedEvent.title}</h2>
+                      <p className="text-purple-100 text-sm">{getDaysUntilEvent(selectedEvent.start_date)}</p>
+                    </div>
                   </div>
                   <button
                     onClick={() => setSelectedEvent(null)}
-                    className="text-white hover:text-gray-300 p-1"
+                    className="text-white hover:text-gray-300 p-2 hover:bg-white/10 rounded-lg transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -471,37 +542,58 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="p-6 space-y-4">
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-gray-400 text-sm">When</p>
-                    <p className="text-white">{formatEventDuration(selectedEvent)}</p>
-                    <p className="text-purple-400 text-sm font-medium">{getDaysUntilEvent(selectedEvent.start_date)}</p>
+              <div className="p-6 space-y-6">
+                <div className="grid gap-4">
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-gray-300 font-medium">When</p>
+                    </div>
+                    <p className="text-white text-lg">{formatEventDuration(selectedEvent)}</p>
                   </div>
                   
                   {selectedEvent.location && (
-                    <div>
-                      <p className="text-gray-400 text-sm">Location</p>
+                    <div className="bg-slate-700/50 rounded-xl p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <p className="text-gray-300 font-medium">Location</p>
+                      </div>
                       <p className="text-white">{selectedEvent.location}</p>
                     </div>
                   )}
                   
                   {selectedEvent.description && (
-                    <div>
-                      <p className="text-gray-400 text-sm">Description</p>
-                      <p className="text-gray-200 text-sm">{selectedEvent.description}</p>
+                    <div className="bg-slate-700/50 rounded-xl p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-gray-300 font-medium">Description</p>
+                      </div>
+                      <p className="text-gray-200">{selectedEvent.description}</p>
                     </div>
                   )}
 
                   {isMultiDayEvent(selectedEvent) && (
-                    <div className="bg-orange-900/30 border border-orange-600 rounded-lg p-3">
-                      <p className="text-orange-300 text-sm font-medium">📅 Multi-day Event</p>
-                      <p className="text-orange-200 text-xs">This event spans multiple days</p>
+                    <div className="bg-gradient-to-r from-orange-900/40 to-red-900/40 border border-orange-500/50 rounded-xl p-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xl">📅</span>
+                        <div>
+                          <p className="text-orange-300 font-medium">Multi-day Event</p>
+                          <p className="text-orange-200 text-sm">This event spans multiple days</p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
                 
-                <div className="border-t border-slate-700 pt-4">
+                {/* Action Buttons */}
+                <div className="space-y-3">
                   <button
                     onClick={() => {
                       const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
@@ -509,13 +601,69 @@ export default function HomePage() {
                       const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEvent.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
                       window.open(googleUrl, '_blank')
                     }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-medium shadow-lg hover:shadow-blue-500/25"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Add to Calendar
                   </button>
+                  
+                  {/* Share Buttons */}
+                  <div className="border-t border-slate-700 pt-4">
+                    <p className="text-gray-400 text-sm mb-3">Share this event</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => {
+                          const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''}`
+                          navigator.clipboard.writeText(text)
+                          alert('Event details copied to clipboard!')
+                        }}
+                        className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''} ${window.location.origin}`
+                          const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
+                          window.open(url, '_blank')
+                        }}
+                        className="bg-blue-500 hover:bg-blue-400 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                        </svg>
+                        Tweet
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({
+                              title: selectedEvent.title,
+                              text: `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''}`,
+                              url: window.location.origin
+                            })
+                          } else {
+                            const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''} ${window.location.origin}`
+                            navigator.clipboard.writeText(text)
+                            alert('Event details copied to clipboard!')
+                          }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                        Share
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

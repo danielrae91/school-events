@@ -6,30 +6,36 @@ import { createHash, createHmac } from 'crypto'
 
 // Async function to process email without blocking webhook response
 async function processEmailAsync(logId: string, subject: string, plain: string, html?: string) {
-  console.log(`Starting async processing for log ${logId}`)
+  console.log(`[${new Date().toISOString()}] [info] Starting async processing for log ${logId}`)
   
   try {
     // Update status to show processing started
     await redis.hset(`email_log:${logId}`, {
-      status: 'processing_gpt',
-      processingStarted: new Date().toISOString()
+      status: 'processing',
+      stage: 'gpt_parsing',
+      processingStarted: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     })
 
+    console.log(`[${new Date().toISOString()}] [info] Calling GPT for log ${logId}`)
+    
     // Parse newsletter content with GPT-4
-    console.log(`Calling GPT for log ${logId}`)
     const events = await parseNewsletterWithGPT(subject, plain, html)
-    console.log(`GPT returned ${events.length} events for log ${logId}`)
+    console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
 
     // Update status to show GPT completed
     await redis.hset(`email_log:${logId}`, {
-      status: 'processing_events',
+      status: 'processing',
+      stage: 'storing_events',
       gptCompleted: new Date().toISOString(),
-      eventsExtracted: events.length
+      eventsExtracted: events.length,
+      updatedAt: new Date().toISOString()
     })
 
     // Store events (with deduplication)
     const storedEvents = []
     const skippedEvents = []
+    const createdEventIds = []
 
     for (const event of events) {
       try {
@@ -37,40 +43,47 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
         
         if (exists) {
           skippedEvents.push(event.title)
-          console.log(`Skipping duplicate event: ${event.title} on ${event.start_date}`)
+          console.log(`[${new Date().toISOString()}] [info] Skipping duplicate event: ${event.title} on ${event.start_date}`)
           continue
         }
 
         const stored = await storeEvent(event)
         storedEvents.push(stored)
-        console.log(`Stored event: ${event.title} on ${event.start_date}`)
+        createdEventIds.push(stored.id)
+        console.log(`[${new Date().toISOString()}] [info] Stored event: ${event.title} on ${event.start_date} (ID: ${stored.id})`)
         
       } catch (error) {
-        console.error('Error storing event:', event.title, error)
+        console.error(`[${new Date().toISOString()}] [error] Error storing event:`, event.title, error)
         skippedEvents.push(`${event.title} (storage error)`)
       }
     }
 
     // Update log with success
     await redis.hset(`email_log:${logId}`, {
-      status: 'success',
+      status: 'completed',
+      stage: 'completed',
       eventsProcessed: storedEvents.length,
       eventsSkipped: skippedEvents.length,
-      completedAt: new Date().toISOString()
+      createdEvents: JSON.stringify(createdEventIds),
+      createdEventTitles: JSON.stringify(storedEvents.map(e => e.title)),
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     })
 
-    console.log(`Email processing complete for ${logId}: ${storedEvents.length} stored, ${skippedEvents.length} skipped`)
+    console.log(`[${new Date().toISOString()}] [info] Email processing complete for ${logId}: ${storedEvents.length} stored, ${skippedEvents.length} skipped`)
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error(`Async email processing error for ${logId}:`, error)
+    console.error(`[${new Date().toISOString()}] [error] Async email processing error for ${logId}:`, error)
     
     // Update log with detailed error
     await redis.hset(`email_log:${logId}`, {
-      status: 'error',
+      status: 'failed',
+      stage: 'error',
       error: errorMessage,
       errorDetails: error instanceof Error ? error.stack : 'No stack trace',
-      failedAt: new Date().toISOString()
+      failedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     })
   }
 }
@@ -165,7 +178,12 @@ export async function POST(request: NextRequest) {
       subject: email.headers?.subject || 'No subject',
       messageId: email.headers?.message_id || 'unknown',
       timestamp: new Date().toISOString(),
-      status: 'processing',
+      status: 'received',
+      stage: 'received',
+      retryCount: 0,
+      createdEvents: '[]',
+      createdEventTitles: '[]',
+      updatedAt: new Date().toISOString(),
       emailContent: JSON.stringify({
         subject: email.headers.subject,
         plain: email.plain,
