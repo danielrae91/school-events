@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { Event, EventSchema, OpenAIResponseSchema } from './types'
+import { redis } from './db'
 import { z } from 'zod'
 
 if (!process.env.OPENAI_API_KEY) {
@@ -49,6 +50,10 @@ export async function parseNewsletterWithGPT(
   htmlBody?: string
 ): Promise<Event[]> {
   try {
+    // Get custom GPT prompt from Redis, fallback to default
+    const customPrompt = await redis.get('gpt_prompt') as string
+    const promptToUse = customPrompt || EXTRACTION_PROMPT
+
     const content = `
 NEWSLETTER SUBJECT: ${subject}
 
@@ -63,7 +68,7 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
       messages: [
         {
           role: 'system',
-          content: EXTRACTION_PROMPT
+          content: promptToUse
         },
         {
           role: 'user',

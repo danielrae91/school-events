@@ -11,6 +11,9 @@ export default function AdminPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [adminToken, setAdminToken] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'settings'>('events')
+  const [logs, setLogs] = useState<any[]>([])
+  const [gptPrompt, setGptPrompt] = useState('')
 
   // Check authentication
   useEffect(() => {
@@ -19,10 +22,78 @@ export default function AdminPage() {
       setAdminToken(token)
       setIsAuthenticated(true)
       fetchEvents()
+      fetchLogs()
+      fetchSettings()
     } else {
       setLoading(false)
     }
   }, [])
+
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch('/api/admin/logs', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setLogs(data.logs || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch logs:', err)
+    }
+  }
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setGptPrompt(data.gptPrompt || '')
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err)
+    }
+  }
+
+  const saveSettings = async () => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ gptPrompt })
+      })
+      if (response.ok) {
+        alert('Settings saved successfully!')
+      }
+    } catch (err) {
+      setError('Failed to save settings')
+    }
+  }
+
+  const retryFailedEmail = async (logId: string) => {
+    try {
+      const response = await fetch('/api/admin/retry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ logId })
+      })
+      if (response.ok) {
+        fetchLogs()
+        fetchEvents()
+        alert('Email processing retried successfully!')
+      }
+    } catch (err) {
+      setError('Failed to retry email processing')
+    }
+  }
 
   const handleLogin = () => {
     if (adminToken) {
@@ -153,27 +224,49 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
-            <div className="space-x-4">
+            <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+            >
+              Logout
+            </button>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-8">
               <button
-                onClick={() => setShowAddForm(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                onClick={() => setActiveTab('events')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'events'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                Add Event
+                Events
               </button>
               <button
-                onClick={fetchEvents}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                onClick={() => setActiveTab('logs')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'logs'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                Refresh
+                Email Logs
               </button>
               <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                onClick={() => setActiveTab('settings')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'settings'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                Logout
+                Settings
               </button>
-            </div>
+            </nav>
           </div>
 
           {error && (
@@ -182,29 +275,141 @@ export default function AdminPage() {
             </div>
           )}
 
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <p className="mt-2 text-gray-600">Loading events...</p>
+          {/* Tab Content */}
+          {activeTab === 'events' && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Event Management</h2>
+                <div className="space-x-2">
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Add Event
+                  </button>
+                  <button
+                    onClick={fetchEvents}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+              
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <p className="mt-2 text-gray-600">Loading events...</p>
+                </div>
+              ) : (
+                <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                  <ul className="divide-y divide-gray-200">
+                    {events.length === 0 ? (
+                      <li className="px-6 py-8 text-center text-gray-500">
+                        No events found. Add some events to get started.
+                      </li>
+                    ) : (
+                      events.map((event) => (
+                        <EventListItem
+                          key={event.id}
+                          event={event}
+                          onEdit={setEditingEvent}
+                          onDelete={handleDeleteEvent}
+                        />
+                      ))
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
-                {events.length === 0 ? (
-                  <li className="px-6 py-8 text-center text-gray-500">
-                    No events found. Add some events to get started.
-                  </li>
-                ) : (
-                  events.map((event) => (
-                    <EventListItem
-                      key={event.id}
-                      event={event}
-                      onEdit={setEditingEvent}
-                      onDelete={handleDeleteEvent}
+          )}
+
+          {activeTab === 'logs' && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Email Processing Logs</h2>
+                <button
+                  onClick={fetchLogs}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Refresh Logs
+                </button>
+              </div>
+              
+              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                <ul className="divide-y divide-gray-200">
+                  {logs.length === 0 ? (
+                    <li className="px-6 py-8 text-center text-gray-500">
+                      No email processing logs found.
+                    </li>
+                  ) : (
+                    logs.map((log, index) => (
+                      <li key={index} className="px-6 py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                log.status === 'success' ? 'bg-green-100 text-green-800' :
+                                log.status === 'error' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {log.status}
+                              </span>
+                              <h3 className="ml-3 text-sm font-medium text-gray-900">{log.subject}</h3>
+                            </div>
+                            <div className="mt-1 text-sm text-gray-600">
+                              <p>From: {log.from}</p>
+                              <p>Received: {new Date(log.timestamp).toLocaleString()}</p>
+                              {log.error && <p className="text-red-600">Error: {log.error}</p>}
+                              {log.eventsProcessed && <p>Events processed: {log.eventsProcessed}</p>}
+                            </div>
+                          </div>
+                          {log.status === 'error' && (
+                            <button
+                              onClick={() => retryFailedEmail(log.id)}
+                              className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                            >
+                              Retry
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Settings</h2>
+              
+              <div className="bg-white shadow sm:rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">GPT Event Extraction Prompt</h3>
+                  <div className="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Customize the prompt used to extract events from newsletter emails.</p>
+                  </div>
+                  <div className="mt-5">
+                    <textarea
+                      value={gptPrompt}
+                      onChange={(e) => setGptPrompt(e.target.value)}
+                      rows={10}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md p-3"
+                      placeholder="Enter the GPT prompt for event extraction..."
                     />
-                  ))
-                )}
-              </ul>
+                  </div>
+                  <div className="mt-5">
+                    <button
+                      onClick={saveSettings}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      Save Prompt
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

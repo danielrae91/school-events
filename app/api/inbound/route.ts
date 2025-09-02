@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CloudMailinInbound } from '@/lib/types'
 import { parseNewsletterWithGPT } from '@/lib/parseNewsletter'
-import { storeEvent, eventExists } from '@/lib/db'
+import { storeEvent, eventExists, redis } from '@/lib/db'
 import { createHash, createHmac } from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -86,47 +86,83 @@ export async function POST(request: NextRequest) {
       messageId: email.headers.message_id
     })
 
-    // Parse newsletter content with GPT-4
-    const events = await parseNewsletterWithGPT(
-      email.headers.subject,
-      email.plain,
-      email.html
-    )
-
-    console.log(`Extracted ${events.length} events from newsletter`)
-
-    // Store events (with deduplication)
-    const storedEvents = []
-    const skippedEvents = []
-
-    for (const event of events) {
-      try {
-        // Check if event already exists
-        const exists = await eventExists(event.title, event.start_date)
-        
-        if (exists) {
-          skippedEvents.push(event.title)
-          console.log(`Skipping duplicate event: ${event.title} on ${event.start_date}`)
-          continue
-        }
-
-        // Store new event
-        const stored = await storeEvent(event)
-        storedEvents.push(stored)
-        console.log(`Stored event: ${event.title} on ${event.start_date}`)
-        
-      } catch (error) {
-        console.error('Error storing event:', event.title, error)
-      }
+    // Create log entry
+    const logId = Date.now().toString()
+    const logData = {
+      id: logId,
+      from: email.envelope?.from || 'unknown',
+      subject: email.headers?.subject || 'No subject',
+      messageId: email.headers?.message_id || 'unknown',
+      timestamp: new Date().toISOString(),
+      status: 'processing',
+      emailContent: JSON.stringify({
+        subject: email.headers.subject,
+        plain: email.plain,
+        html: email.html
+      })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Processed newsletter: ${storedEvents.length} new events stored, ${skippedEvents.length} duplicates skipped`,
-      events_stored: storedEvents.length,
-      events_skipped: skippedEvents.length,
-      skipped_titles: skippedEvents
-    })
+    try {
+      // Store initial log
+      await redis.hset(`email_log:${logId}`, logData)
+
+      // Parse newsletter content with GPT-4
+      const events = await parseNewsletterWithGPT(
+        email.headers.subject,
+        email.plain,
+        email.html
+      )
+
+      console.log(`Extracted ${events.length} events from newsletter`)
+
+      // Store events (with deduplication)
+      const storedEvents = []
+      const skippedEvents = []
+
+      for (const event of events) {
+        try {
+          // Check if event already exists
+          const exists = await eventExists(event.title, event.start_date)
+          
+          if (exists) {
+            skippedEvents.push(event.title)
+            console.log(`Skipping duplicate event: ${event.title} on ${event.start_date}`)
+            continue
+          }
+
+          // Store new event
+          const stored = await storeEvent(event)
+          storedEvents.push(stored)
+          console.log(`Stored event: ${event.title} on ${event.start_date}`)
+          
+        } catch (error) {
+          console.error('Error storing event:', event.title, error)
+        }
+      }
+
+      // Update log with success
+      await redis.hset(`email_log:${logId}`, {
+        status: 'success',
+        eventsProcessed: storedEvents.length,
+        eventsSkipped: skippedEvents.length
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: `Processed newsletter: ${storedEvents.length} new events stored, ${skippedEvents.length} duplicates skipped`,
+        events_stored: storedEvents.length,
+        events_skipped: skippedEvents.length,
+        skipped_titles: skippedEvents
+      })
+
+    } catch (processingError) {
+      // Update log with error
+      await redis.hset(`email_log:${logId}`, {
+        status: 'error',
+        error: processingError instanceof Error ? processingError.message : 'Unknown error'
+      })
+      throw processingError
+    }
 
   } catch (error) {
     console.error('Error processing inbound email:', error)

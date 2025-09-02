@@ -2,13 +2,13 @@ import { Redis } from '@upstash/redis'
 import { Event, StoredEvent } from './types'
 import { createHash } from 'crypto'
 
-if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-  throw new Error('Missing required Redis environment variables')
-}
+// For local development, use placeholder values if env vars are missing
+const redisUrl = process.env.KV_REST_API_URL || 'https://placeholder-redis-url.upstash.io'
+const redisToken = process.env.KV_REST_API_TOKEN || 'placeholder-token'
 
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
+export const redis = new Redis({
+  url: redisUrl,
+  token: redisToken,
 })
 
 // Generate unique event ID based on title and date
