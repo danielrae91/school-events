@@ -50,9 +50,16 @@ export async function parseNewsletterWithGPT(
   htmlBody?: string
 ): Promise<Event[]> {
   try {
+    console.log('Starting GPT parsing for subject:', subject)
+    console.log('Text body length:', textBody?.length || 0)
+    console.log('HTML body length:', htmlBody?.length || 0)
+    
     // Get custom GPT prompt from Redis, fallback to default
     const customPrompt = await redis.get('gpt_prompt') as string
     const promptToUse = customPrompt || EXTRACTION_PROMPT
+    
+    console.log('Using prompt length:', promptToUse?.length || 0)
+    console.log('Prompt is custom:', !!customPrompt)
 
     const content = `
 NEWSLETTER SUBJECT: ${subject}
@@ -62,6 +69,8 @@ ${textBody}
 
 ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
     `.trim()
+
+    console.log('Calling OpenAI with content length:', content.length)
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -79,8 +88,13 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
       max_tokens: 2000
     })
 
+    console.log('OpenAI response received, choices:', response.choices?.length || 0)
+
     const responseText = response.choices[0]?.message?.content
+    console.log('OpenAI response text:', responseText)
+    
     if (!responseText) {
+      console.error('No response content from OpenAI')
       throw new Error('No response from OpenAI')
     }
 
@@ -89,27 +103,36 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
     try {
       // Remove markdown code blocks if present
       let cleanedResponse = responseText.trim()
+      console.log('Raw response before cleaning:', cleanedResponse)
+      
       if (cleanedResponse.startsWith('```json')) {
         cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
       } else if (cleanedResponse.startsWith('```')) {
         cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
       }
       
+      console.log('Cleaned response:', cleanedResponse)
       parsedResponse = JSON.parse(cleanedResponse)
+      console.log('Parsed response:', parsedResponse)
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', responseText)
+      console.error('Parse error:', parseError)
       throw new Error('Invalid JSON response from OpenAI')
     }
 
     // Validate against schema
+    console.log('Validating response against schema...')
     const validatedResponse = OpenAIResponseSchema.parse(parsedResponse)
+    console.log('Schema validation passed, events found:', validatedResponse.events?.length || 0)
     
     // Additional validation for each event
     const validEvents: Event[] = []
     for (const event of validatedResponse.events) {
       try {
+        console.log('Validating event:', event.title)
         const validEvent = EventSchema.parse(event)
         validEvents.push(validEvent)
+        console.log('Event validation passed:', event.title)
       } catch (validationError) {
         console.error('Event validation failed:', event, validationError)
         // Mark as needing enrichment if validation fails
@@ -120,9 +143,11 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
           needs_enrichment: true
         }
         validEvents.push(fallbackEvent)
+        console.log('Added fallback event:', fallbackEvent.title)
       }
     }
 
+    console.log('Final valid events count:', validEvents.length)
     return validEvents
 
   } catch (error) {

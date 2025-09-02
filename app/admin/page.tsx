@@ -717,6 +717,24 @@ export default function AdminPage() {
                   >
                     Refresh
                   </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/admin/debug-email', {
+                          headers: { 'Authorization': `Bearer ${adminToken}` }
+                        })
+                        const data = await response.json()
+                        console.log('Email Debug Data:', data)
+                        alert(`Email Debug:\n- Recent logs: ${data.totalLogKeys}\n- GPT prompt exists: ${data.gptPromptExists}\n- OpenAI key exists: ${data.openaiKeyExists}\nCheck console for details.`)
+                      } catch (err) {
+                        console.error('Debug failed:', err)
+                        alert('Debug failed - check console')
+                      }
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Debug Email
+                  </button>
                 </div>
               </div>
               
