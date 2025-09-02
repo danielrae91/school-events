@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     // Get recent email logs
     const keys = await redis.keys('email_log:*')
-    const logs = []
+    const logs: any[] = []
     
     for (const key of keys.slice(-10)) { // Get last 10 logs
       const logData = await redis.hgetall(key)
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by timestamp (with type safety)
-    logs.sort((a, b) => {
+    logs.sort((a: any, b: any) => {
       const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0
       const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0
       return bTime - aTime
