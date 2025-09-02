@@ -6,63 +6,66 @@ import { createHash, createHmac } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    // CloudMailin sends different content types, handle both JSON and form data
+    // Get the raw body for signature verification
+    const rawBody = await request.text()
+    console.log('Raw body length:', rawBody.length)
+    
+    // Validate CloudMailin webhook signature if secret is provided
+    if (process.env.CLOUDMAILIN_SECRET) {
+      const signature = request.headers.get('x-cloudmailin-signature')
+      if (!signature || !verifyCloudMailinSignature(rawBody, signature)) {
+        console.log('Signature validation failed')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
+    }
+    
+    // Parse the body based on content type
     const contentType = request.headers.get('content-type') || ''
     console.log('Content-Type:', contentType)
     
     let body: any
     
     if (contentType.includes('application/json')) {
-      // Handle JSON payload
-      const rawBody = await request.text()
-      console.log('Raw JSON payload:', rawBody.substring(0, 500))
-      
       try {
         body = JSON.parse(rawBody)
       } catch (parseError) {
         console.error('JSON parse error:', parseError)
-        console.error('Raw body that failed to parse:', rawBody.substring(0, 1000))
         return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
       }
     } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
-      // Handle form data payload
-      const formData = await request.formData()
+      // Re-create request to parse form data since we already consumed the body
+      const newRequest = new Request(request.url, {
+        method: 'POST',
+        headers: request.headers,
+        body: rawBody
+      })
+      
+      const formData = await newRequest.formData()
       console.log('Form data keys:', Array.from(formData.keys()))
       
-      // CloudMailin sends form data with a 'message' field containing JSON
-      const messageField = formData.get('message')
-      if (messageField) {
-        try {
-          body = JSON.parse(messageField.toString())
-        } catch (parseError) {
-          console.error('Form data JSON parse error:', parseError)
-          return NextResponse.json({ error: 'Invalid form data JSON' }, { status: 400 })
+      // Convert form data to object for CloudMailin format
+      body = {} as any
+      formData.forEach((value, key) => {
+        // Handle nested keys like headers[subject]
+        if (key.includes('[') && key.includes(']')) {
+          const match = key.match(/^([^[]+)\[([^\]]+)\]$/)
+          if (match) {
+            const [, parentKey, childKey] = match
+            if (!body[parentKey]) body[parentKey] = {}
+            body[parentKey][childKey] = value.toString()
+          } else {
+            body[key] = value.toString()
+          }
+        } else {
+          body[key] = value.toString()
         }
-      } else {
-        // Convert form data to object
-        body = {} as any
-        formData.forEach((value, key) => {
-          (body as any)[key] = value.toString()
-        })
-      }
+      })
     } else {
-      // Fallback: try to parse as JSON
-      const rawBody = await request.text()
-      console.log('Unknown content type, trying JSON parse:', rawBody.substring(0, 500))
-      
       try {
         body = JSON.parse(rawBody)
       } catch (parseError) {
         console.error('Fallback JSON parse error:', parseError)
         return NextResponse.json({ error: 'Unsupported content type or invalid payload' }, { status: 400 })
-      }
-    }
-    
-    // Validate CloudMailin webhook signature if secret is provided
-    if (process.env.CLOUDMAILIN_SECRET) {
-      const signature = request.headers.get('x-cloudmailin-signature')
-      if (!signature || !verifyCloudMailinSignature(body, signature)) {
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
       }
     }
 
@@ -134,14 +137,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function verifyCloudMailinSignature(body: any, signature: string): boolean {
+function verifyCloudMailinSignature(rawBody: string, signature: string): boolean {
   if (!process.env.CLOUDMAILIN_SECRET) return false
   
   try {
-    const bodyString = JSON.stringify(body)
     const expectedSignature = createHmac('sha256', process.env.CLOUDMAILIN_SECRET)
-      .update(bodyString)
+      .update(rawBody)
       .digest('hex')
+    
+    console.log('Expected signature:', expectedSignature)
+    console.log('Received signature:', signature)
     
     return signature === expectedSignature
   } catch (error) {
