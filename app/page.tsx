@@ -76,6 +76,7 @@ export default function HomePage() {
     
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-US', { 
+        weekday: 'short',
         month: 'short', 
         day: 'numeric'
       })
@@ -519,7 +520,7 @@ export default function HomePage() {
 
         {/* Footer */}
         <div className="text-center py-6 text-gray-500 text-sm flex items-center justify-center gap-4">
-          <span>Made by a TK Parent</span>
+          <span>Made by a TK Parent - </span>
           <button
             onClick={() => setShowFeedbackModal(true)}
             className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"

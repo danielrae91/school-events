@@ -145,7 +145,7 @@ export default function StatsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-300 text-sm font-medium">Page Views</p>
-                  <p className="text-3xl font-bold text-white">{stats.pageViews.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">{stats.pageViews?.toLocaleString() || '0'}</p>
                 </div>
                 <div className="text-blue-400">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@ export default function StatsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-300 text-sm font-medium">Unique Visitors</p>
-                  <p className="text-3xl font-bold text-white">{stats.uniqueViews.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">{stats.uniqueViews?.toLocaleString() || '0'}</p>
                 </div>
                 <div className="text-green-400">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +174,7 @@ export default function StatsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-300 text-sm font-medium">Subscribe Clicks</p>
-                  <p className="text-3xl font-bold text-white">{stats.subscribeClicks.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">{stats.subscribeClicks?.toLocaleString() || '0'}</p>
                 </div>
                 <div className="text-purple-400">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +188,7 @@ export default function StatsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-orange-300 text-sm font-medium">Add to Calendar</p>
-                  <p className="text-3xl font-bold text-white">{stats.addToCalendarClicks.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-white">{stats.addToCalendarClicks?.toLocaleString() || '0'}</p>
                 </div>
                 <div className="text-orange-400">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,7 +203,7 @@ export default function StatsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-emerald-300 text-sm font-medium">Active Subscribers</p>
-                    <p className="text-3xl font-bold text-white">{stats.activeSubscribers.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-white">{stats.activeSubscribers?.toLocaleString() || '0'}</p>
                   </div>
                   <div className="text-emerald-400">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
