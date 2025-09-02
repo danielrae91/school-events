@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      suggestions: suggestions.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      suggestions: suggestions.sort((a: any, b: any) => 
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
       )
     })
 
