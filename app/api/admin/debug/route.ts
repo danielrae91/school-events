@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { redis } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     // Check admin authorization
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
     
-    if (!token || token !== process.env.ADMIN_TOKEN) {
+    if (token !== process.env.ADMIN_TOKEN) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

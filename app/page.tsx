@@ -369,7 +369,7 @@ export default function HomePage() {
                     {date.getDate()}
                   </div>
                   <div className="space-y-0.5 sm:space-y-1">
-                    {events.slice(0, window.innerWidth < 640 ? 1 : 2).map((event) => (
+                    {events.slice(0, 2).map((event) => (
                       <div 
                         key={event.id}
                         className={`text-xs rounded px-1 py-0.5 truncate cursor-pointer transition-colors ${
@@ -385,9 +385,9 @@ export default function HomePage() {
                         {isMultiDayEvent(event) && <span className="ml-1 hidden sm:inline">📅</span>}
                       </div>
                     ))}
-                    {events.length > (window.innerWidth < 640 ? 1 : 2) && (
+                    {events.length > 2 && (
                       <div className="text-xs text-gray-500">
-                        +{events.length - (window.innerWidth < 640 ? 1 : 2)}
+                        +{events.length - 2}
                       </div>
                     )}
                   </div>
