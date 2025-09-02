@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAllEvents } from '@/lib/db'
 import { generateICalFeed, validateICalFeed } from '@/lib/ics'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const providedKey = request.nextUrl.searchParams.get('key')
