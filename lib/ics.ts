@@ -18,7 +18,7 @@ export function generateICalFeed(events: StoredEvent[]): string {
         end: parseEventDateTime(event.end_date || event.start_date, event.end_time || event.start_time),
         summary: event.title,
         description: event.description || '',
-        location: event.location || '',
+        ...(event.location && event.location.trim() ? { location: event.location.trim() } : {}),
         created: new Date(event.created_at),
         lastModified: new Date(event.updated_at)
       }
