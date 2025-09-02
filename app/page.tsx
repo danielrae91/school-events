@@ -346,27 +346,27 @@ export default function HomePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+                className="flex items-center justify-center w-8 h-8 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+                title="Previous month"
               >
-                ←
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
               <button
                 onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+                className="flex items-center justify-center w-8 h-8 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+                title="Next month"
               >
-                →
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>
           
-          {/* Mobile: Hide calendar grid, show message */}
-          <div className="block sm:hidden p-4 text-center text-gray-400">
-            <p className="text-sm">Calendar view available on larger screens</p>
-            <p className="text-xs mt-1">See upcoming events above</p>
-          </div>
-          
-          {/* Calendar Grid - Hidden on mobile */}
-          <div className="p-4 hidden sm:block">
+          {/* Calendar Grid - Now visible on all screen sizes */}
+          <div className="p-4">
             <div className="grid grid-cols-7 gap-1 mb-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                 <div key={day} className="text-center text-gray-400 text-sm font-medium py-2">
@@ -393,16 +393,23 @@ export default function HomePage() {
                         {events.slice(0, 2).map((event, i) => (
                           <div
                             key={i}
-                            className="text-xs bg-purple-600 text-white px-1 py-0.5 rounded truncate cursor-pointer hover:bg-purple-500"
+                            className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer transition-colors ${
+                              isMultiDayEvent(event)
+                                ? 'bg-orange-500 hover:bg-orange-400 text-white'
+                                : 'bg-purple-500 hover:bg-purple-400 text-white'
+                            }`}
                             onClick={() => setSelectedEvent(event)}
-                            title={event.title}
+                            title={`${event.title}${isMultiDayEvent(event) ? ' (Multi-day)' : ''}${event.start_time ? ` at ${event.start_time}` : ''}`}
                           >
-                            {event.title}
+                            <span className="font-medium">{event.title}</span>
+                            {event.start_time && (
+                              <span className="ml-1 opacity-75">{event.start_time}</span>
+                            )}
                           </div>
                         ))}
                         {events.length > 2 && (
-                          <div className="text-xs text-gray-400 text-center">
-                            +{events.length - 2}
+                          <div className="text-xs text-gray-400 text-center font-medium">
+                            +{events.length - 2} more
                           </div>
                         )}
                       </div>

@@ -724,24 +724,18 @@ export default function AdminPage() {
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      {events.map((event) => (
-                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
-                          event.needs_enrichment 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {event.needs_enrichment ? 'Needs Enrichment' : 'Complete'}
-                        </span>
-                      ))}
-                      {events.map((event) => (
-                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
-                          event.source === 'suggestion'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {event.source === 'suggestion' ? 'User Suggested' : 'Email Generated'}
-                        </span>
-                      ))}
+                      <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                        Total Events: {events.length}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                        Needs Enrichment: {events.filter(e => e.needs_enrichment).length}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                        User Suggested: {events.filter(e => e.source === 'suggestion').length}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                        Email Generated: {events.filter(e => e.source !== 'suggestion').length}
+                      </span>
                     </div>
                     <div className="space-x-2">
                       <button
