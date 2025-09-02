@@ -14,9 +14,6 @@ export function generateICalFeed(events: StoredEvent[]): string {
     }
   })
 
-  // Force calendar refresh by updating feed timestamp
-  calendar.lastModified(new Date())
-
   for (const event of events) {
     try {
       const calEvent: any = {
