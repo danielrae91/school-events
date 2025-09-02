@@ -87,7 +87,15 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
     // Parse and validate the JSON response
     let parsedResponse
     try {
-      parsedResponse = JSON.parse(responseText)
+      // Remove markdown code blocks if present
+      let cleanedResponse = responseText.trim()
+      if (cleanedResponse.startsWith('```json')) {
+        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedResponse.startsWith('```')) {
+        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      
+      parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', responseText)
       throw new Error('Invalid JSON response from OpenAI')
