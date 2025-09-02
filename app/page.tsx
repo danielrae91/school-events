@@ -51,6 +51,46 @@ export default function HomePage() {
     })
   }
 
+  const formatEventDuration = (event: StoredEvent) => {
+    const startDate = formatDate(event.start_date)
+    const endDate = event.end_date && event.end_date !== event.start_date 
+      ? formatDate(event.end_date) 
+      : null
+    
+    let timeStr = ''
+    if (event.start_time) {
+      timeStr = formatTime(event.start_time)
+      if (event.end_time && event.end_time !== event.start_time) {
+        timeStr += ` - ${formatTime(event.end_time)}`
+      }
+    }
+
+    if (endDate) {
+      return `${startDate} - ${endDate}${timeStr ? ` (${timeStr})` : ''}`
+    } else {
+      return `${startDate}${timeStr ? ` at ${timeStr}` : ''}`
+    }
+  }
+
+  const getDaysUntilEvent = (dateStr: string) => {
+    const eventDate = new Date(dateStr)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    eventDate.setHours(0, 0, 0, 0)
+    
+    const diffTime = eventDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Tomorrow'
+    if (diffDays > 0) return `In ${diffDays} days`
+    return 'Past'
+  }
+
+  const isMultiDayEvent = (event: StoredEvent) => {
+    return event.end_date && event.end_date !== event.start_date
+  }
+
   const getCalendarUrl = () => {
     return `${window.location.origin}/calendar`
   }
@@ -105,7 +145,12 @@ export default function HomePage() {
     date.setDate(startDate.getDate() + i)
 
     const dateStr = date.toISOString().split('T')[0]
-    const dayEvents = events.filter(event => event.start_date === dateStr)
+    // Include events that start on this day OR span across this day
+    const dayEvents = events.filter(event => {
+      const eventStart = event.start_date
+      const eventEnd = event.end_date || event.start_date
+      return dateStr >= eventStart && dateStr <= eventEnd
+    })
     const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
     const isToday = dateStr === today.toISOString().split('T')[0]
 
@@ -202,11 +247,16 @@ export default function HomePage() {
                     {events.slice(0, 2).map((event) => (
                       <div 
                         key={event.id}
-                        className="text-xs bg-purple-600 text-white rounded px-1 py-0.5 truncate cursor-pointer hover:bg-purple-500"
-                        title={event.title}
+                        className={`text-xs rounded px-1 py-0.5 truncate cursor-pointer transition-colors ${
+                          isMultiDayEvent(event) 
+                            ? 'bg-orange-600 hover:bg-orange-500 text-white' 
+                            : 'bg-purple-600 hover:bg-purple-500 text-white'
+                        }`}
+                        title={`${event.title}${isMultiDayEvent(event) ? ' (Multi-day)' : ''}`}
                         onClick={() => setSelectedEvent(event)}
                       >
                         {getEventEmoji(event.title)} {event.title}
+                        {isMultiDayEvent(event) && <span className="ml-1">📅</span>}
                       </div>
                     ))}
                     {events.length > 2 && (
@@ -247,11 +297,19 @@ export default function HomePage() {
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{getEventEmoji(event.title)}</span>
                     <div className="flex-1">
-                      <h3 className="text-white font-semibold">{event.title}</h3>
-                      <p className="text-gray-300 text-sm">{formatDate(event.start_date)}</p>
-                      {event.location && (
-                        <p className="text-gray-400 text-sm">{event.location}</p>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-white font-semibold">{event.title}</h3>
+                        {isMultiDayEvent(event) && (
+                          <span className="text-xs bg-orange-600 text-white px-2 py-0.5 rounded-full">Multi-day</span>
+                        )}
+                      </div>
+                      <p className="text-gray-300 text-sm">{formatEventDuration(event)}</p>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <span className="text-purple-400 font-medium">{getDaysUntilEvent(event.start_date)}</span>
+                        {event.location && (
+                          <span className="text-gray-400">• {event.location}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -340,16 +398,10 @@ export default function HomePage() {
               <div className="p-6 space-y-4">
                 <div className="space-y-3">
                   <div>
-                    <p className="text-gray-400 text-sm">Date</p>
-                    <p className="text-white">{formatDate(selectedEvent.start_date)}</p>
+                    <p className="text-gray-400 text-sm">When</p>
+                    <p className="text-white">{formatEventDuration(selectedEvent)}</p>
+                    <p className="text-purple-400 text-sm font-medium">{getDaysUntilEvent(selectedEvent.start_date)}</p>
                   </div>
-                  
-                  {selectedEvent.start_time && (
-                    <div>
-                      <p className="text-gray-400 text-sm">Time</p>
-                      <p className="text-white">{formatTime(selectedEvent.start_time)}</p>
-                    </div>
-                  )}
                   
                   {selectedEvent.location && (
                     <div>
@@ -362,6 +414,13 @@ export default function HomePage() {
                     <div>
                       <p className="text-gray-400 text-sm">Description</p>
                       <p className="text-gray-200 text-sm">{selectedEvent.description}</p>
+                    </div>
+                  )}
+
+                  {isMultiDayEvent(selectedEvent) && (
+                    <div className="bg-orange-900/30 border border-orange-600 rounded-lg p-3">
+                      <p className="text-orange-300 text-sm font-medium">📅 Multi-day Event</p>
+                      <p className="text-orange-200 text-xs">This event spans multiple days</p>
                     </div>
                   )}
                 </div>
