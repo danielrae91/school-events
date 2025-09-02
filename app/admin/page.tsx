@@ -25,7 +25,6 @@ export default function AdminPage() {
       setIsAuthenticated(true)
       // Pass token directly to avoid state timing issues
       fetchEventsWithToken(token)
-      fetchLogsWithToken(token)
       fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
     } else {
@@ -33,21 +32,7 @@ export default function AdminPage() {
     }
   }, [])
 
-  const fetchLogs = async () => {
-    const token = localStorage.getItem('admin_token')
-    if (!token) return
-    try {
-      const response = await fetch('/api/admin/logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        // setLogs(data.logs || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch logs:', err)
-    }
-  }
+  // Logs functionality removed
 
   const fetchSuggestionsWithToken = async (token: string) => {
     try {
@@ -63,19 +48,7 @@ export default function AdminPage() {
     }
   }
 
-  const fetchLogsWithToken = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        // setLogs(data.logs || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch logs:', err)
-    }
-  }
+  // Logs functionality removed
 
   const fetchSettings = async () => {
     const token = localStorage.getItem('admin_token')
@@ -136,7 +109,7 @@ export default function AdminPage() {
         body: JSON.stringify({ logId })
       })
       if (response.ok) {
-        fetchLogs()
+        // Logs removed
         fetchEvents()
         alert('Email processing retried successfully!')
       }
@@ -157,7 +130,7 @@ export default function AdminPage() {
         }
       })
       if (response.ok) {
-        fetchLogs()
+        // Logs removed
         alert('Log deleted successfully!')
       }
     } catch (err) {
@@ -833,7 +806,7 @@ export default function AdminPage() {
                 <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>
                 <div className="space-x-2">
                   <button
-                    onClick={fetchLogs}
+                    onClick={() => {}}
                     className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
                   >
                     Refresh
