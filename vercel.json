@@ -3,13 +3,5 @@
     "app/api/inbound/route.ts": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "OPENAI_API_KEY": "@openai_api_key",
-    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
-    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token",
-    "ADMIN_TOKEN": "@admin_token",
-    "FEED_SECRET": "@feed_secret",
-    "CLOUDMAILIN_SECRET": "@cloudmailin_secret"
   }
 }
