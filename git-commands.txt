@@ -1,0 +1,28 @@
+# Commands to push to GitHub (run these after installing Git)
+
+# 1. Initialize Git repository
+git init
+
+# 2. Add all files (excluding .env files - they're already in .gitignore)
+git add .
+
+# 3. Create initial commit
+git commit -m "🎓 Initial commit: Complete school newsletter to iCal system with CloudMailin integration
+
+- Automated email processing via CloudMailin webhooks
+- GPT-4 powered event extraction with regex fallback
+- Redis-based event storage with deduplication
+- iCal feed generation for all major calendar apps
+- Admin panel for event management
+- Production-ready Vercel deployment configuration
+- Comprehensive documentation and setup guides"
+
+# 4. Add GitHub remote (replace with your actual repo URL)
+git remote add origin https://github.com/danielrae91/school-events.git
+
+# 5. Push to GitHub
+git push -u origin main
+
+# Alternative if main branch doesn't exist:
+# git branch -M main
+# git push -u origin main
