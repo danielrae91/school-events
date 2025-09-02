@@ -73,13 +73,13 @@ export async function POST(
     // Parse email content
     let emailContent
     try {
-      emailContent = JSON.parse(logData.emailContent || '{}')
+      emailContent = JSON.parse((logData.emailContent as string) || '{}')
     } catch (e) {
       return NextResponse.json({ error: 'Invalid email content in log' }, { status: 400 })
     }
 
     // Increment retry count
-    const retryCount = parseInt(logData.retryCount || '0') + 1
+    const retryCount = parseInt((logData.retryCount as string) || '0') + 1
 
     // Update log status for retry
     await redis.hset(logKey, {
@@ -95,11 +95,16 @@ export async function POST(
       console.log(`[${new Date().toISOString()}] [info] Retrying email processing for log ${logId} (attempt ${retryCount})`)
       
       // Parse newsletter content with GPT-4
-      const events = await parseNewsletterWithGPT(
-        emailContent.subject,
-        emailContent.plain,
-        emailContent.html
-      )
+      const contentToProcess = `
+NEWSLETTER SUBJECT: ${emailContent.subject || ''}
+
+NEWSLETTER CONTENT:
+${emailContent.plain || ''}
+
+${emailContent.html ? `\nHTML CONTENT:\n${emailContent.html}` : ''}
+      `.trim()
+      
+      const events = await parseNewsletterWithGPT(contentToProcess, logId)
       
       console.log(`[${new Date().toISOString()}] [info] Retry GPT returned ${events.length} events for log ${logId}`)
 

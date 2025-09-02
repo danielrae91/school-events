@@ -26,11 +26,16 @@ export async function POST(request: NextRequest) {
     const emailContent = JSON.parse(emailContentStr)
     
     // Retry processing with GPT
-    const events = await parseNewsletterWithGPT(
-      emailContent.subject,
-      emailContent.plain,
-      emailContent.html
-    )
+    const contentToProcess = `
+NEWSLETTER SUBJECT: ${emailContent.subject || ''}
+
+NEWSLETTER CONTENT:
+${emailContent.plain || ''}
+
+${emailContent.html ? `\nHTML CONTENT:\n${emailContent.html}` : ''}
+    `.trim()
+    
+    const events = await parseNewsletterWithGPT(contentToProcess)
 
     // Store events (with deduplication)
     const storedEvents = []

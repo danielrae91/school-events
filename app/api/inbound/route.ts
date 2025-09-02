@@ -20,7 +20,16 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
     console.log(`[${new Date().toISOString()}] [info] Calling GPT for log ${logId}`)
     
     // Parse newsletter content with GPT-4
-    const events = await parseNewsletterWithGPT(subject, plain, html)
+    const contentToProcess = `
+NEWSLETTER SUBJECT: ${subject || ''}
+
+NEWSLETTER CONTENT:
+${plain || ''}
+
+${html ? `\nHTML CONTENT:\n${html}` : ''}
+    `.trim()
+    
+    const events = await parseNewsletterWithGPT(contentToProcess, logId)
     console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
 
     // Update status to show GPT completed

@@ -3,13 +3,15 @@ import { Event, EventSchema, OpenAIResponseSchema } from './types'
 import { redis } from './db'
 import { z } from 'zod'
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing OPENAI_API_KEY environment variable')
+// Only throw error if we're actually trying to use OpenAI (not during build)
+const openaiKey = process.env.OPENAI_API_KEY
+if (!openaiKey && process.env.NODE_ENV !== 'development') {
+  console.warn('Missing OPENAI_API_KEY environment variable')
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+const openai = openaiKey ? new OpenAI({
+  apiKey: openaiKey,
+}) : null
 
 const EXTRACTION_PROMPT = `You are an expert at extracting school events from newsletter content. Extract ALL date-based events from the provided newsletter text.
 
@@ -44,40 +46,30 @@ Return ONLY valid JSON in this format:
   ]
 }`
 
-export async function parseNewsletterWithGPT(
-  subject: string,
-  textBody: string,
-  htmlBody?: string
-): Promise<Event[]> {
+export async function parseNewsletterWithGPT(content: string, logId?: string): Promise<Event[]> {
   try {
-    console.log('Starting GPT parsing for subject:', subject)
-    console.log('Text body length:', textBody?.length || 0)
-    console.log('HTML body length:', htmlBody?.length || 0)
-    
-    // Get custom GPT prompt from Redis, fallback to default
-    const customPrompt = await redis.get('gpt_prompt') as string
-    const promptToUse = customPrompt || EXTRACTION_PROMPT
-    
-    console.log('Using prompt length:', promptToUse?.length || 0)
-    console.log('Prompt is custom:', !!customPrompt)
+    // Check if OpenAI is available
+    if (!openai) {
+      throw new Error('OpenAI API key not configured')
+    }
 
-    const content = `
-NEWSLETTER SUBJECT: ${subject}
-
-NEWSLETTER CONTENT:
-${textBody}
-
-${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
-    `.trim()
+    // Log GPT parsing start
+    if (logId) {
+      await redis.hset(`email_log:${logId}`, {
+        stage: 'gpt_parsing',
+        gptStarted: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+    }
 
     console.log('Calling OpenAI with content length:', content.length)
 
-    const response = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: promptToUse
+          content: EXTRACTION_PROMPT
         },
         {
           role: 'user',
@@ -88,9 +80,9 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
       max_tokens: 2000
     })
 
-    console.log('OpenAI response received, choices:', response.choices?.length || 0)
+    console.log('OpenAI response received, choices:', completion.choices?.length || 0)
 
-    const responseText = response.choices[0]?.message?.content
+    const responseText = completion.choices[0]?.message?.content
     console.log('OpenAI response text:', responseText)
     
     if (!responseText) {
@@ -154,7 +146,7 @@ ${htmlBody ? `\nHTML CONTENT:\n${htmlBody}` : ''}
     console.error('Error parsing newsletter with GPT:', error)
     
     // Fallback: try regex-based extraction
-    return parseNewsletterWithRegex(subject, textBody)
+    return parseNewsletterWithRegex('', content)
   }
 }
 

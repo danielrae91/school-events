@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
         // Parse JSON fields safely
         try {
           if (logData.createdEvents) {
-            logData.createdEventsArray = JSON.parse(logData.createdEvents)
+            logData.createdEventsArray = JSON.parse(logData.createdEvents as string)
           }
           if (logData.createdEventTitles) {
-            logData.createdEventTitlesArray = JSON.parse(logData.createdEventTitles)
+            logData.createdEventTitlesArray = JSON.parse(logData.createdEventTitles as string)
           }
         } catch (e) {
           // Keep original string if parsing fails
