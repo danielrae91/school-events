@@ -264,41 +264,45 @@ export default function HomePage() {
               {upcomingEvents.map((event) => (
                 <div
                   key={event.id}
+                  className="bg-slate-700 border border-slate-600 rounded-xl p-4 cursor-pointer hover:bg-slate-600 transition-colors"
                   onClick={() => setSelectedEvent(event)}
-                  className="bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg p-3 sm:p-4 cursor-pointer transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-600 rounded-lg flex items-center justify-center text-sm sm:text-lg flex-shrink-0">
                         {getEventEmoji(event.title)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-sm sm:text-base leading-tight mb-1">{event.title}</h3>
-                        <div className="flex items-center gap-2 mb-1">
-                          {isMultiDayEvent(event) && (
-                            <span className="inline-block bg-orange-400 text-orange-900 text-xs px-2 py-0.5 rounded-full">
-                              Multi-day
-                            </span>
-                          )}
+                        <h3 className="font-semibold text-white text-sm sm:text-base leading-tight mb-2 line-clamp-2">{event.title}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs text-gray-400">
+                          <span className="text-purple-400 font-medium">
+                            {(() => {
+                              const today = new Date()
+                              const eventDate = new Date(event.start_date)
+                              const diffTime = eventDate.getTime() - today.getTime()
+                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                              
+                              if (diffDays === 0) return 'Today'
+                              if (diffDays === 1) return 'Tomorrow'
+                              if (diffDays > 1) return `In ${diffDays} days`
+                              return 'Past'
+                            })()}
+                          </span>
+                          <span className="hidden sm:inline">•</span>
+                          <span>{formatDate(event.start_date)} {event.start_time && `at ${event.start_time}`}</span>
                         </div>
-                        {event.location && (
-                          <p className="text-gray-400 text-xs sm:text-sm flex items-center gap-1 truncate">
-                            📍 <span className="truncate">{event.location}</span>
-                          </p>
+                        {isMultiDayEvent(event) && (
+                          <span className="inline-block bg-orange-400 text-orange-900 text-xs px-2 py-0.5 rounded-full mt-1">
+                            Multi-day
+                          </span>
                         )}
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-purple-300 font-semibold text-xs sm:text-sm mb-1">
-                        {getDaysUntilEvent(event.start_date)}
-                      </div>
-                      <div className="text-gray-300 text-xs sm:text-sm">
-                        {formatDate(event.start_date)}
-                      </div>
-                      {event.start_time && (
-                        <div className="text-gray-400 text-xs">
-                          {formatTime(event.start_time)}
-                        </div>
+                    <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                      {event.location && (
+                        <p className="text-gray-400 text-xs flex items-center gap-1 sm:hidden truncate max-w-[150px]">
+                          📍 <span className="truncate">{event.location}</span>
+                        </p>
                       )}
                       <button
                         onClick={(e) => {
@@ -308,12 +312,18 @@ export default function HomePage() {
                           const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`
                           window.open(googleUrl, '_blank')
                         }}
-                        className="mt-2 bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-slate-500"
+                        className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs font-medium transition-colors border border-slate-500 flex-shrink-0"
                         title="Add to Calendar"
                       >
-                        Add to Calendar
+                        <span className="sm:hidden">+</span>
+                        <span className="hidden sm:inline">Add</span>
                       </button>
                     </div>
+                    {event.location && (
+                      <p className="text-gray-400 text-xs hidden sm:flex items-center gap-1 absolute top-4 right-16 max-w-[120px] truncate">
+                        📍 <span className="truncate">{event.location}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -324,30 +334,33 @@ export default function HomePage() {
         {/* Calendar */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl mb-8">
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
-            <button
-              onClick={prevMonth}
-              className="text-white hover:text-purple-400 p-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-semibold text-white">
-                {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </h2>
+            <h2 className="text-xl font-semibold text-white">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                →
+              </button>
               <button
                 onClick={() => setShowSuggestEventModal(true)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                className="ml-4 bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md text-sm transition-colors"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Suggest
+                + Suggest Event
               </button>
             </div>
-            
+          </div>
+          
+          {/* Mobile: Hide calendar grid, show message */}
+          <div className="block sm:hidden p-4 text-center text-gray-400">
+            <p className="text-sm">Calendar view available on larger screens</p>
+            <p className="text-xs mt-1">See upcoming events above</p>
             <button
               onClick={nextMonth}
               className="text-white hover:text-purple-400 p-2"
@@ -361,7 +374,7 @@ export default function HomePage() {
           <div className="p-4">
             <div className="grid grid-cols-7 gap-1 mb-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center text-sm font-medium text-gray-400 py-2">
+                <div key={day} className="text-center text-gray-400 text-sm font-medium py-2">
                   {day}
                 </div>
               ))}
