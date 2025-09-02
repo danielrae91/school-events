@@ -164,6 +164,27 @@ export default function AdminPage() {
     }
   }
 
+  const cleanupRedis = async () => {
+    if (!confirm('This will remove orphaned entries from Redis. Continue?')) return
+    
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/cleanup', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert(`Cleanup complete: ${data.orphanedEntriesRemoved} orphaned entries removed`)
+        fetchEvents()
+      }
+    } catch (err) {
+      setError('Failed to cleanup Redis data')
+    }
+  }
+
   const handleLogin = () => {
     if (adminToken) {
       localStorage.setItem('admin_token', adminToken)
@@ -423,6 +444,12 @@ export default function AdminPage() {
                     className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
                   >
                     Debug Redis
+                  </button>
+                  <button
+                    onClick={cleanupRedis}
+                    className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                  >
+                    Cleanup Redis
                   </button>
                 </div>
               </div>

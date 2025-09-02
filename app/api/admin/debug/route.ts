@@ -22,12 +22,24 @@ export async function GET(request: NextRequest) {
       sampleEvents.push({ key, data: eventData })
     }
 
+    // Check for orphaned entries in sorted set
+    const orphanedEntries = []
+    for (const item of eventsList) {
+      const eventId = Array.isArray(item) ? item[0] : item
+      const keyExists = eventKeys.includes(`tk:event:${eventId}`)
+      if (!keyExists) {
+        orphanedEntries.push(eventId)
+      }
+    }
+
     return NextResponse.json({
       totalEventKeys: eventKeys.length,
       eventKeysPreview: eventKeys.slice(0, 10),
       eventsListCount: eventsList.length,
       eventsListPreview: eventsList.slice(0, 10),
-      sampleEvents
+      sampleEvents,
+      orphanedEntries,
+      mismatchDetected: orphanedEntries.length > 0
     })
   } catch (error) {
     console.error('Debug error:', error)
