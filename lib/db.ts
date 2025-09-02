@@ -113,7 +113,7 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
 export async function getLastEmailUpdate(): Promise<string | null> {
   try {
     const timestamp = await redis.get('tk:last_successful_email')
-    return timestamp
+    return timestamp as string | null
   } catch (error) {
     console.error('Error getting last email update:', error)
     return null
