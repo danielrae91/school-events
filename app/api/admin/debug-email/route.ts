@@ -31,12 +31,13 @@ export async function GET(request: NextRequest) {
     })
 
     // Get GPT prompt status
-    const gptPrompt = await redis.get('gpt_prompt') as string | null
+    const gptPrompt = await redis.get('gpt_prompt')
+    const promptString = typeof gptPrompt === 'string' ? gptPrompt : null
     
     return NextResponse.json({
       logs,
-      gptPromptExists: !!gptPrompt,
-      gptPromptLength: gptPrompt?.length || 0,
+      gptPromptExists: !!promptString,
+      gptPromptLength: promptString?.length || 0,
       openaiKeyExists: !!process.env.OPENAI_API_KEY,
       totalLogKeys: keys.length
     })
