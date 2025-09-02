@@ -30,7 +30,7 @@ export async function storeEvent(event: Event): Promise<StoredEvent> {
   }
 
   // Store event as hash
-  await redis.hset(`tk:event:${id}`, storedEvent)
+  await redis.hset(`tk:event:${id}`, storedEvent as unknown as Record<string, unknown>)
   
   // Add to sorted set for chronological retrieval (score = timestamp of start_date)
   const startTimestamp = new Date(event.start_date).getTime()
@@ -44,7 +44,7 @@ export async function getEvent(id: string): Promise<StoredEvent | null> {
   const event = await redis.hgetall(`tk:event:${id}`)
   if (!event || Object.keys(event).length === 0) return null
   
-  return event as StoredEvent
+  return event as unknown as StoredEvent
 }
 
 // Get all events sorted by date
@@ -72,7 +72,7 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
     updated_at: new Date().toISOString()
   }
 
-  await redis.hset(`tk:event:${id}`, updated)
+  await redis.hset(`tk:event:${id}`, updated as unknown as Record<string, unknown>)
   
   // Update sorted set if start_date changed
   if (updates.start_date && updates.start_date !== existing.start_date) {
