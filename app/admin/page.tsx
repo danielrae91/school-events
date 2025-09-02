@@ -19,6 +19,8 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [gptPrompt, setGptPrompt] = useState('')
+  const [messages, setMessages] = useState<any[]>([])
+  const [showMessageModal, setShowMessageModal] = useState(false)
 
   // Check authentication
   useEffect(() => {
@@ -415,6 +417,16 @@ export default function AdminPage() {
                 Suggestions ({suggestions.length})
               </button>
               <button
+                onClick={() => setActiveTab('messages')}
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'messages' 
+                    ? 'bg-purple-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Messages
+              </button>
+              <button
                 onClick={() => setActiveTab('settings')}
                 className={`px-4 py-2 text-sm font-medium rounded-md ${
                   activeTab === 'settings' 
@@ -460,11 +472,6 @@ export default function AdminPage() {
                           <p className="text-sm text-gray-600">
                             Suggested on {new Date(suggestion.created_at).toLocaleDateString()}
                           </p>
-                          {suggestion.contact_name && (
-                            <p className="text-sm text-gray-600">
-                              Contact: {suggestion.contact_name} {suggestion.contact_email && `(${suggestion.contact_email})`}
-                            </p>
-                          )}
                         </div>
                         <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
                           Suggestion
@@ -492,7 +499,7 @@ export default function AdminPage() {
                       
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setEditingSuggestion(suggestion.id)}
+                          onClick={() => setEditingSuggestion(suggestion)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                         >
                           Edit & Approve
@@ -514,8 +521,12 @@ export default function AdminPage() {
                                   })
                                 })
                                 if (response.ok) {
-                                  fetchSuggestionsWithToken(adminToken)
-                                  fetchEventsWithToken(adminToken)
+                                  await fetchSuggestionsWithToken(adminToken)
+                                  await fetchEventsWithToken(adminToken)
+                                  alert('Suggestion approved and event created!')
+                                } else {
+                                  const error = await response.json()
+                                  alert(`Failed to approve suggestion: ${error.error}`)
                                 }
                               } catch (err) {
                                 console.error('Failed to approve suggestion:', err)
@@ -567,7 +578,7 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <h3 className="text-lg font-medium mb-4">Edit Suggestion Before Approval</h3>
                 {(() => {
-                  const suggestion = suggestions.find(s => s.id === editingSuggestion)
+                  const suggestion = editingSuggestion
                   if (!suggestion) return null
                   
                   return (
@@ -599,8 +610,12 @@ export default function AdminPage() {
                         })
                         if (response.ok) {
                           setEditingSuggestion(null)
-                          fetchSuggestionsWithToken(adminToken)
-                          fetchEventsWithToken(adminToken)
+                          await fetchSuggestionsWithToken(adminToken)
+                          await fetchEventsWithToken(adminToken)
+                          alert('Suggestion approved and event created!')
+                        } else {
+                          const error = await response.json()
+                          alert(`Failed to approve suggestion: ${error.error}`)
                         }
                       } catch (err) {
                         console.error('Failed to approve edited suggestion:', err)
@@ -916,6 +931,31 @@ export default function AdminPage() {
             </div>
           )}
 
+          {activeTab === 'messages' && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-medium text-gray-900">Messages & Feedback</h2>
+                <button
+                  onClick={() => setShowMessageModal(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Send Message
+                </button>
+              </div>
+              
+              <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Messages and feedback from users will appear here. Use the "Send Message" button to broadcast updates or announcements.
+                  </p>
+                </div>
+                <div className="px-6 py-8 text-center text-gray-500">
+                  <p>No messages yet. This feature is ready for implementation.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'settings' && (
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Settings</h2>
@@ -944,6 +984,80 @@ export default function AdminPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Message Modal */}
+          {showMessageModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                <h3 className="text-lg font-medium mb-4">Send Message</h3>
+                <form onSubmit={(e) => {
+                  e.preventDefault()
+                  const formData = new FormData(e.target as HTMLFormElement)
+                  const message = {
+                    title: formData.get('title'),
+                    content: formData.get('content'),
+                    timestamp: new Date().toISOString(),
+                    type: formData.get('type')
+                  }
+                  // TODO: Implement message storage and broadcasting
+                  console.log('Message to send:', message)
+                  alert('Message functionality ready for implementation!')
+                  setShowMessageModal(false)
+                }}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <input
+                        name="title"
+                        type="text"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                        placeholder="Message title"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                      <select
+                        name="type"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      >
+                        <option value="announcement">Announcement</option>
+                        <option value="update">Update</option>
+                        <option value="reminder">Reminder</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                      <textarea
+                        name="content"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 h-32"
+                        placeholder="Your message content..."
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowMessageModal(false)}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md"
+                    >
+                      Send Message
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
@@ -1003,8 +1117,8 @@ function EventListItem({
           <div className="mt-1 text-sm text-gray-600">
             <p>{event.description}</p>
             <div className="mt-2 flex space-x-4">
-              <span>📅 {event.start_date}</span>
-              {event.start_time && <span>🕐 {event.start_time}</span>}
+              <span>📅 {event.start_date}{event.end_date && event.end_date !== event.start_date ? ` - ${event.end_date}` : ''}</span>
+              {event.start_time && <span>🕐 {event.start_time}{event.end_time && event.end_time !== event.start_time ? ` - ${event.end_time}` : ''}</span>}
               {event.location && <span>📍 {event.location}</span>}
             </div>
           </div>
