@@ -112,7 +112,8 @@ export default function HomePage() {
 
   const handleGoogleCalendar = () => {
     const calendarUrl = getCalendarUrl()
-    const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
+    const webcalUrl = calendarUrl.replace(/^https?:\/\//, 'webcal://')
+    const googleUrl = `https://calendar.google.com/calendar/r?cid=${webcalUrl}`
     window.open(googleUrl, '_blank')
   }
 
