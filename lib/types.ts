@@ -25,8 +25,17 @@ export type Event = z.infer<typeof EventSchema>
 
 export interface StoredEvent extends Event {
   id: string
+  title: string
+  description?: string
+  location?: string
+  start_date: string
+  start_time?: string
+  end_date?: string
+  end_time?: string
   created_at: string
   updated_at: string
+  needs_enrichment?: boolean
+  source?: string
 }
 
 // CloudMailin inbound webhook payload (JSON Normalized format)

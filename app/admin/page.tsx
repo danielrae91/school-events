@@ -8,7 +8,8 @@ export default function AdminPage() {
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'settings'>('events')
+  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'suggestions' | 'settings'>('events')
+  const [suggestions, setSuggestions] = useState<any[]>([])
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [adminToken, setAdminToken] = useState('')
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
@@ -25,6 +26,7 @@ export default function AdminPage() {
       // Pass token directly to avoid state timing issues
       fetchEventsWithToken(token)
       fetchLogsWithToken(token)
+      fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
     } else {
       setLoading(false)
@@ -44,6 +46,20 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
+    }
+  }
+
+  const fetchSuggestionsWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/suggestions', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setSuggestions(data.suggestions || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch suggestions:', err)
     }
   }
 
@@ -404,30 +420,40 @@ export default function AdminPage() {
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('events')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'events'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'events' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Events
+                Events ({events.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('suggestions')}
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'suggestions' 
+                    ? 'bg-green-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Suggestions ({suggestions.length})
               </button>
               <button
                 onClick={() => setActiveTab('logs')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'logs'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'logs' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Email Logs
+                Logs ({logs.length})
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'settings'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'settings' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 Settings
@@ -442,6 +468,127 @@ export default function AdminPage() {
           )}
 
           {/* Tab Content */}
+          {activeTab === 'suggestions' && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Event Suggestions</h2>
+                <button
+                  onClick={() => fetchSuggestionsWithToken(adminToken)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {suggestions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No pending suggestions
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {suggestions.map((suggestion) => (
+                    <div key={suggestion.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg">{suggestion.title}</h3>
+                          <p className="text-sm text-gray-600">
+                            Suggested on {new Date(suggestion.created_at).toLocaleDateString()}
+                          </p>
+                          {suggestion.contact_name && (
+                            <p className="text-sm text-gray-600">
+                              Contact: {suggestion.contact_name} {suggestion.contact_email && `(${suggestion.contact_email})`}
+                            </p>
+                          )}
+                        </div>
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                          Suggestion
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                        <div>
+                          <strong>Date:</strong> {suggestion.start_date}
+                          {suggestion.start_time && ` at ${suggestion.start_time}`}
+                        </div>
+                        {suggestion.location && (
+                          <div>
+                            <strong>Location:</strong> {suggestion.location}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {suggestion.description && (
+                        <div className="mb-3">
+                          <strong>Description:</strong>
+                          <p className="text-sm text-gray-700 mt-1">{suggestion.description}</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (confirm('Approve this suggestion and create event?')) {
+                              try {
+                                const response = await fetch('/api/admin/suggestions', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${adminToken}`,
+                                    'Content-Type': 'application/json'
+                                  },
+                                  body: JSON.stringify({
+                                    action: 'approve',
+                                    suggestionId: suggestion.id,
+                                    eventData: suggestion
+                                  })
+                                })
+                                if (response.ok) {
+                                  fetchSuggestionsWithToken(adminToken)
+                                  fetchEventsWithToken(adminToken)
+                                }
+                              } catch (err) {
+                                console.error('Failed to approve suggestion:', err)
+                              }
+                            }
+                          }}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm('Reject this suggestion?')) {
+                              try {
+                                const response = await fetch('/api/admin/suggestions', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${adminToken}`,
+                                    'Content-Type': 'application/json'
+                                  },
+                                  body: JSON.stringify({
+                                    action: 'reject',
+                                    suggestionId: suggestion.id
+                                  })
+                                })
+                                if (response.ok) {
+                                  fetchSuggestionsWithToken(adminToken)
+                                }
+                              } catch (err) {
+                                console.error('Failed to reject suggestion:', err)
+                              }
+                            }
+                          }}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'events' && (
             <div>
               <div className="flex justify-between items-center mb-4">
@@ -465,19 +612,39 @@ export default function AdminPage() {
               {events.length > 0 && (
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-600">
-                        {selectedEvents.size} of {events.length} selected
-                      </span>
-                      <div className="space-x-2">
-                        <button
-                          onClick={selectAllEvents}
-                          className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
-                        >
-                          Select All
-                        </button>
-                        <button
-                          onClick={clearSelection}
+                    <div className="flex items-center space-x-2">
+                      {events.map((event) => (
+                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
+                          event.needs_enrichment 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {event.needs_enrichment ? 'Needs Enrichment' : 'Complete'}
+                        </span>
+                      ))}
+                      {events.map((event) => (
+                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
+                          event.source === 'suggestion'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {event.source === 'suggestion' ? 'User Suggested' : 'Email Generated'}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="space-x-2">
+                      <button
+                        onClick={selectAllEvents}
+                        className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        onClick={clearSelection}
+                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded"
+                      >
+                        Clear
+                      </button>
                           className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded"
                         >
                           Clear

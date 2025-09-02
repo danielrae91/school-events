@@ -112,21 +112,8 @@ export default function HomePage() {
 
   const handleGoogleCalendar = () => {
     const calendarUrl = getCalendarUrl()
-    // Try the webcal protocol first for better mobile support
-    const webcalUrl = calendarUrl.replace('https://', 'webcal://')
-    
-    // For mobile devices, try webcal first, fallback to Google Calendar
-    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      window.location.href = webcalUrl
-      // Fallback to Google Calendar after a short delay
-      setTimeout(() => {
-        const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarUrl)}`
-        window.open(googleUrl, '_blank')
-      }, 1000)
-    } else {
-      const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarUrl)}`
-      window.open(googleUrl, '_blank')
-    }
+    const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
+    window.open(googleUrl, '_blank')
   }
 
   const handleAppleCalendar = () => {
@@ -230,8 +217,8 @@ export default function HomePage() {
 
         {/* Calendar Subscription Section */}
         <div className="bg-gray-800/30 backdrop-blur-sm rounded-lg p-3 mb-6">
-          <h2 className="text-sm font-medium mb-2 text-center text-gray-300">📅 Subscribe to Calendar</h2>
-          <div className="flex flex-wrap gap-2">
+          <h2 className="text-sm font-medium mb-3 text-center text-gray-300">📅 Subscribe to Calendar</h2>
+          <div className="flex flex-wrap justify-center gap-2">
             <button
               onClick={handleGoogleCalendar}
               className="bg-slate-700 hover:bg-slate-600 text-gray-300 hover:text-white border border-slate-600 px-3 py-1.5 rounded text-sm transition-colors flex items-center gap-2"
@@ -307,15 +294,19 @@ export default function HomePage() {
                   className="bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg p-3 sm:p-4 cursor-pointer transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-                      <div className="text-xl sm:text-2xl flex-shrink-0">{getEventEmoji(event.title)}</div>
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center text-lg flex-shrink-0">
+                        {getEventEmoji(event.title)}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-white text-sm sm:text-base leading-tight mb-1">{event.title}</h3>
-                        {isMultiDayEvent(event) && (
-                          <span className="inline-block bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full mb-1">
-                            Multi-day
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 mb-1">
+                          {isMultiDayEvent(event) && (
+                            <span className="inline-block bg-orange-600 text-white text-xs px-2 py-0.5 rounded-full">
+                              Multi-day
+                            </span>
+                          )}
+                        </div>
                         {event.location && (
                           <p className="text-gray-400 text-xs sm:text-sm flex items-center gap-1 truncate">
                             📍 <span className="truncate">{event.location}</span>
