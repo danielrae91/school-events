@@ -11,6 +11,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<StoredEvent | null>(null)
   const [showAddEventModal, setShowAddEventModal] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null)
 
   useEffect(() => {
     fetchEvents()
@@ -19,12 +20,22 @@ export default function HomePage() {
   const fetchEvents = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/events')
-      if (!response.ok) {
+      const [eventsResponse, updateResponse] = await Promise.all([
+        fetch('/api/events'),
+        fetch('/api/last-update')
+      ])
+      
+      if (!eventsResponse.ok) {
         throw new Error('Failed to fetch events')
       }
-      const data = await response.json()
-      setEvents(data.events || [])
+      
+      const eventsData = await eventsResponse.json()
+      setEvents(eventsData.events || [])
+      
+      if (updateResponse.ok) {
+        const updateData = await updateResponse.json()
+        setLastUpdate(updateData.formatted)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load events')
     } finally {
@@ -195,6 +206,11 @@ export default function HomePage() {
             Te Kura O Take Kārara
           </h1>
           <p className="text-gray-400">School Events</p>
+          {lastUpdate && (
+            <p className="text-gray-500 text-sm mt-2">
+              Last updated: {lastUpdate}
+            </p>
+          )}
         </div>
 
         {/* Calendar Subscription Section */}

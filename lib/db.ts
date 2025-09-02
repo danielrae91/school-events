@@ -32,8 +32,8 @@ export async function storeEvent(event: Event): Promise<StoredEvent> {
   const storedEvent: StoredEvent = {
     ...event,
     id,
-    created_at: now,
-    updated_at: now
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }
 
   // Filter out null/undefined values for Redis storage
@@ -44,12 +44,14 @@ export async function storeEvent(event: Event): Promise<StoredEvent> {
     }
   }
 
-  // Store event as hash
   await redis.hset(`tk:event:${id}`, cleanedEvent)
   
   // Add to sorted set for chronological retrieval (score = timestamp of start_date)
   const startTimestamp = new Date(event.start_date).getTime()
   await redis.zadd('tk:events:by_date', { score: startTimestamp, member: id })
+
+  // Update last successful email timestamp when new events are created
+  await setLastEmailUpdate()
 
   return storedEvent
 }
@@ -105,6 +107,26 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
   }
 
   return updated
+}
+
+// Get last successful email processing timestamp
+export async function getLastEmailUpdate(): Promise<string | null> {
+  try {
+    const timestamp = await redis.get('tk:last_successful_email')
+    return timestamp
+  } catch (error) {
+    console.error('Error getting last email update:', error)
+    return null
+  }
+}
+
+// Set last successful email processing timestamp
+export async function setLastEmailUpdate(): Promise<void> {
+  try {
+    await redis.set('tk:last_successful_email', new Date().toISOString())
+  } catch (error) {
+    console.error('Error setting last email update:', error)
+  }
 }
 
 // Delete event
