@@ -272,12 +272,14 @@ export default function HomePage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
-                      {event.location && (
-                        <p className="text-gray-400 text-xs flex items-center gap-1 sm:hidden truncate max-w-[150px]">
-                          📍 <span className="truncate">{event.location}</span>
-                        </p>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        {event.location && (
+                          <p className="text-gray-400 text-xs flex items-center gap-1 truncate">
+                            📍 <span className="truncate">{event.location}</span>
+                          </p>
+                        )}
+                      </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -289,15 +291,9 @@ export default function HomePage() {
                         className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs font-medium transition-colors border border-slate-500 flex-shrink-0"
                         title="Add to Calendar"
                       >
-                        <span className="sm:hidden">+</span>
-                        <span className="hidden sm:inline">Add</span>
+                        Add to Calendar
                       </button>
                     </div>
-                    {event.location && (
-                      <p className="text-gray-400 text-xs hidden sm:flex items-center gap-1 absolute top-4 right-16 max-w-[120px] truncate">
-                        📍 <span className="truncate">{event.location}</span>
-                      </p>
-                    )}
                   </div>
                 </div>
               ))}
@@ -343,95 +339,14 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Calendar */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl mb-8">
-          <div className="flex items-center justify-between p-4 border-b border-slate-700">
-            <h2 className="text-xl font-semibold text-white">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
-              >
-                ←
-              </button>
-              <button
-                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
-              >
-                →
-              </button>
-              <button
-                onClick={() => setShowSuggestEventModal(true)}
-                className="ml-4 bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded-md text-sm transition-colors"
-              >
-                + Suggest Event
-              </button>
-            </div>
-          </div>
-          
-          {/* Mobile: Hide calendar grid, show message */}
-          <div className="block sm:hidden p-4 text-center text-gray-400">
-            <p className="text-sm">Calendar view available on larger screens</p>
-            <p className="text-xs mt-1">See upcoming events above</p>
-            <button
-              onClick={nextMonth}
-              className="text-white hover:text-purple-400 p-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-          
-          <div className="p-4">
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center text-gray-400 text-sm font-medium py-2">
-                  {day}
-                </div>
-              ))}
-            </div>
-            
-            <div className="grid grid-cols-7 gap-1">
-              {monthCalendar.map(({ date, dateStr, events, isCurrentMonth, isToday }) => (
-                <div 
-                  key={dateStr}
-                  className={`
-                    min-h-[60px] sm:min-h-[80px] p-1 sm:p-2 border border-slate-700 cursor-pointer transition-colors
-                    ${isCurrentMonth ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-900 text-gray-600'}
-                    ${isToday ? 'bg-purple-900 border-purple-500' : ''}
-                  `}
-                >
-                  <div className={`text-xs sm:text-sm font-medium mb-1 ${isToday ? 'text-purple-300' : isCurrentMonth ? 'text-white' : 'text-gray-600'}`}>
-                    {date.getDate()}
-                  </div>
-                  <div className="space-y-0.5 sm:space-y-1">
-                    {events.slice(0, 3).map((event) => (
-                      <div 
-                        key={event.id}
-                        className={`text-xs rounded px-1 py-0.5 truncate cursor-pointer transition-colors ${
-                          isMultiDayEvent(event) 
-                            ? 'bg-orange-600 hover:bg-orange-500 text-white' 
-                            : 'bg-purple-600 hover:bg-purple-500 text-white'
-                        }`}
-                        title={`${event.title}${isMultiDayEvent(event) ? ' (Multi-day)' : ''}`}
-                        onClick={() => setSelectedEvent(event)}
-                      >
-                        <span className="hidden sm:inline">{getEventEmoji(event.title)} </span>
-                        <span className="text-xs">{event.title}</span>
-                        {isMultiDayEvent(event) && <span className="ml-1 hidden sm:inline">📅</span>}
-                      </div>
-                    ))}
-                    {events.length > 2 && (
-                      <div className="text-xs text-gray-500">
-                        +{events.length - 2}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Suggest Event Section */}
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-8 text-center">
+          <button
+            onClick={() => setShowSuggestEventModal(true)}
+            className="bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded text-xs transition-colors"
+          >
+            Suggest Event
+          </button>
         </div>
 
 
