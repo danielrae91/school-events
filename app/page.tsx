@@ -1,13 +1,10 @@
+'use client'
+
 import Link from 'next/link'
 
 export default function HomePage() {
-  const feedUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}/calendar.ics`
-    : 'http://localhost:3000/calendar.ics'
-  
-  const feedUrlWithSecret = process.env.FEED_SECRET 
-    ? `${feedUrl}?key=${process.env.FEED_SECRET}`
-    : feedUrl
+  // Build the feed URL at build time - no environment variables in client component
+  const feedUrl = '/calendar'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -35,10 +32,10 @@ export default function HomePage() {
                   <h4 className="text-md font-medium text-gray-900 mb-2">Calendar Feed URL:</h4>
                   <div className="flex items-center space-x-2">
                     <code className="flex-1 bg-gray-100 px-3 py-2 rounded-md text-sm font-mono break-all">
-                      {feedUrlWithSecret}
+                      {feedUrl}
                     </code>
                     <button
-                      onClick={() => navigator.clipboard.writeText(feedUrlWithSecret)}
+                      onClick={() => navigator.clipboard.writeText(feedUrl)}
                       className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap"
                     >
                       Copy

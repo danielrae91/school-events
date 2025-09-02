@@ -4,8 +4,7 @@ import { generateICalFeed, validateICalFeed } from '@/lib/ics'
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const providedKey = searchParams.get('key')
+    const providedKey = request.nextUrl.searchParams.get('key')
     
     // Check feed secret if configured
     if (process.env.FEED_SECRET && providedKey !== process.env.FEED_SECRET) {
