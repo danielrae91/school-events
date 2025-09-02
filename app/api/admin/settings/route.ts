@@ -11,8 +11,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get GPT prompt from Redis
-    const gptPrompt = await redis.get('gpt_prompt') || ''
+    // Get GPT prompt from Redis, set default if empty
+    let gptPrompt = await redis.get('gpt_prompt') as string
+    
+    if (!gptPrompt) {
+      // Set default prompt
+      const defaultPrompt = `You are an expert at extracting school events from newsletter content. Extract ALL date-based events from the provided newsletter text.
+
+For each event, provide:
+- title: Short, clear event name
+- description: Include all relevant details (dress code, items to bring, etc.)
+- start_date: YYYY-MM-DD format
+- end_date: Only if multi-day event, YYYY-MM-DD format
+- start_time: HH:MM format if time is mentioned
+- end_time: HH:MM format if end time is mentioned
+- location: If specified
+- needs_enrichment: true if information is missing, vague, or references "Hero", "TBD", or similar placeholders
+
+Important rules:
+1. Only extract events with specific dates (not "next week" or "soon")
+2. Convert relative dates to absolute dates based on newsletter date
+3. Mark needs_enrichment=true for incomplete information
+4. Include recurring events as separate entries if dates are specified
+5. Be conservative - only extract clear, actionable events
+
+Return ONLY valid JSON in this format:
+{
+  "events": [
+    {
+      "title": "Event Name",
+      "description": "Event details",
+      "start_date": "2024-03-15",
+      "start_time": "09:00",
+      "location": "School Hall",
+      "needs_enrichment": false
+    }
+  ]
+}`
+      
+      await redis.set('gpt_prompt', defaultPrompt)
+      gptPrompt = defaultPrompt
+    }
 
     return NextResponse.json({ gptPrompt })
   } catch (error) {

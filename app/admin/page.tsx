@@ -21,18 +21,35 @@ export default function AdminPage() {
     if (token) {
       setAdminToken(token)
       setIsAuthenticated(true)
-      fetchEvents()
-      fetchLogs()
-      fetchSettings()
+      // Pass token directly to avoid state timing issues
+      fetchEventsWithToken(token)
+      fetchLogsWithToken(token)
+      fetchSettingsWithToken(token)
     } else {
       setLoading(false)
     }
   }, [])
 
   const fetchLogs = async () => {
+    const token = localStorage.getItem('admin_token')
+    if (!token) return
     try {
       const response = await fetch('/api/admin/logs', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setLogs(data.logs || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch logs:', err)
+    }
+  }
+
+  const fetchLogsWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/logs', {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
         const data = await response.json()
@@ -44,9 +61,25 @@ export default function AdminPage() {
   }
 
   const fetchSettings = async () => {
+    const token = localStorage.getItem('admin_token')
+    if (!token) return
     try {
       const response = await fetch('/api/admin/settings', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setGptPrompt(data.gptPrompt || '')
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err)
+    }
+  }
+
+  const fetchSettingsWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
         const data = await response.json()
@@ -115,18 +148,32 @@ export default function AdminPage() {
       setLoading(true)
       const response = await fetch('/api/events', {
         headers: {
-          'Authorization': `Bearer ${adminToken}`
+          'Cache-Control': 'no-cache'
         }
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch events')
-      }
-      
+      if (!response.ok) throw new Error('Failed to fetch events')
       const data = await response.json()
       setEvents(data.events || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch events')
+      setError('Failed to load events')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchEventsWithToken = async (token: string) => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/events', {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      if (!response.ok) throw new Error('Failed to fetch events')
+      const data = await response.json()
+      setEvents(data.events || [])
+    } catch (err) {
+      setError('Failed to load events')
     } finally {
       setLoading(false)
     }
