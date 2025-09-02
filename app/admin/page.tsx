@@ -185,6 +185,27 @@ export default function AdminPage() {
     }
   }
 
+  const dedupeEvents = async () => {
+    if (!confirm('This will remove duplicate events with same title and date. Continue?')) return
+    
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/dedupe', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert(`Deduplication complete: ${data.duplicatesRemoved} duplicate events removed from ${data.duplicateGroups} groups`)
+        fetchEvents()
+      }
+    } catch (err) {
+      setError('Failed to deduplicate events')
+    }
+  }
+
   const handleLogin = () => {
     if (adminToken) {
       localStorage.setItem('admin_token', adminToken)
@@ -450,6 +471,12 @@ export default function AdminPage() {
                     className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
                   >
                     Cleanup Redis
+                  </button>
+                  <button
+                    onClick={dedupeEvents}
+                    className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                  >
+                    Remove Duplicates
                   </button>
                 </div>
               </div>

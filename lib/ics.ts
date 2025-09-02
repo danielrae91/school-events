@@ -11,7 +11,9 @@ export function generateICalFeed(events: StoredEvent[]): string {
       company: 'TK Newsletter',
       product: 'School Events',
       language: 'EN'
-    }
+    },
+    // Force calendar refresh by updating feed timestamp
+    lastModified: new Date()
   })
 
   for (const event of events) {
@@ -36,6 +38,10 @@ export function generateICalFeed(events: StoredEvent[]): string {
       if (event.needs_enrichment) {
         calEvent.description += '\n\n⚠️ This event may need additional details.'
       }
+
+      // Add last modified timestamp to force calendar refresh
+      calEvent.lastModified = new Date(event.updated_at)
+      calEvent.sequence = Math.floor(new Date(event.updated_at).getTime() / 1000)
 
       calendar.createEvent(calEvent)
     } catch (error) {

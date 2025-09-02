@@ -17,11 +17,18 @@ export function generateEventId(title: string, startDate: string): string {
   return hash.substring(0, 12)
 }
 
-// Store event in Redis
+// Store event in Redis (with duplicate prevention)
 export async function storeEvent(event: Event): Promise<StoredEvent> {
   const id = generateEventId(event.title, event.start_date)
-  const now = new Date().toISOString()
   
+  // Check if event already exists
+  const existing = await getEvent(id)
+  if (existing) {
+    console.log(`Duplicate event prevented: ${event.title} on ${event.start_date}`)
+    return existing // Return existing event instead of creating duplicate
+  }
+  
+  const now = new Date().toISOString()
   const storedEvent: StoredEvent = {
     ...event,
     id,
