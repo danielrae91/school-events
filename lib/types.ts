@@ -5,19 +5,19 @@ export const EventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
-  end_date: z.string().optional().refine(
+  end_date: z.string().nullable().optional().refine(
     (val) => !val || val === '' || /^\d{4}-\d{2}-\d{2}$/.test(val),
     'Invalid date format (YYYY-MM-DD)'
   ),
-  start_time: z.string().optional().refine(
+  start_time: z.string().nullable().optional().refine(
     (val) => !val || val === '' || /^\d{2}:\d{2}$/.test(val),
     'Invalid time format (HH:MM)'
   ),
-  end_time: z.string().optional().refine(
+  end_time: z.string().nullable().optional().refine(
     (val) => !val || val === '' || /^\d{2}:\d{2}$/.test(val),
     'Invalid time format (HH:MM)'
   ),
-  location: z.string().optional(),
+  location: z.string().nullable().optional(),
   needs_enrichment: z.boolean().default(false)
 })
 

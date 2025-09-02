@@ -29,8 +29,16 @@ export async function storeEvent(event: Event): Promise<StoredEvent> {
     updated_at: now
   }
 
+  // Filter out null/undefined values for Redis storage
+  const cleanedEvent: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(storedEvent)) {
+    if (value !== null && value !== undefined) {
+      cleanedEvent[key] = value
+    }
+  }
+
   // Store event as hash
-  await redis.hset(`tk:event:${id}`, storedEvent as unknown as Record<string, unknown>)
+  await redis.hset(`tk:event:${id}`, cleanedEvent)
   
   // Add to sorted set for chronological retrieval (score = timestamp of start_date)
   const startTimestamp = new Date(event.start_date).getTime()
@@ -72,7 +80,15 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
     updated_at: new Date().toISOString()
   }
 
-  await redis.hset(`tk:event:${id}`, updated as unknown as Record<string, unknown>)
+  // Filter out null/undefined values for Redis storage
+  const cleanedEvent: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(updated)) {
+    if (value !== null && value !== undefined) {
+      cleanedEvent[key] = value
+    }
+  }
+
+  await redis.hset(`tk:event:${id}`, cleanedEvent)
   
   // Update sorted set if start_date changed
   if (updates.start_date && updates.start_date !== existing.start_date) {
