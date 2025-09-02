@@ -107,7 +107,7 @@ export default function HomePage() {
   }
 
   const getCalendarUrl = () => {
-    return `${window.location.origin}/calendar`
+    return `${window.location.origin}/calendar.ics`
   }
 
   const handleGoogleCalendar = () => {
