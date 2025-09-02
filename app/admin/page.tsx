@@ -19,8 +19,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [gptPrompt, setGptPrompt] = useState('')
-  const [messages, setMessages] = useState<any[]>([])
-  const [showMessageModal, setShowMessageModal] = useState(false)
+  const [feedback, setFeedback] = useState<any[]>([])
 
   // Check authentication
   useEffect(() => {
@@ -934,23 +933,17 @@ export default function AdminPage() {
           {activeTab === 'messages' && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-gray-900">Messages & Feedback</h2>
-                <button
-                  onClick={() => setShowMessageModal(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Send Message
-                </button>
+                <h2 className="text-lg font-medium text-gray-900">User Feedback</h2>
               </div>
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <p className="text-sm text-gray-600">
-                    Messages and feedback from users will appear here. Use the "Send Message" button to broadcast updates or announcements.
+                    Feedback and messages from users will appear here.
                   </p>
                 </div>
                 <div className="px-6 py-8 text-center text-gray-500">
-                  <p>No messages yet. This feature is ready for implementation.</p>
+                  <p>No feedback yet</p>
                 </div>
               </div>
             </div>
@@ -988,79 +981,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Message Modal */}
-          {showMessageModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                <h3 className="text-lg font-medium mb-4">Send Message</h3>
-                <form onSubmit={(e) => {
-                  e.preventDefault()
-                  const formData = new FormData(e.target as HTMLFormElement)
-                  const message = {
-                    title: formData.get('title'),
-                    content: formData.get('content'),
-                    timestamp: new Date().toISOString(),
-                    type: formData.get('type')
-                  }
-                  // TODO: Implement message storage and broadcasting
-                  console.log('Message to send:', message)
-                  alert('Message functionality ready for implementation!')
-                  setShowMessageModal(false)
-                }}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                      <input
-                        name="title"
-                        type="text"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
-                        placeholder="Message title"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                      <select
-                        name="type"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      >
-                        <option value="announcement">Announcement</option>
-                        <option value="update">Update</option>
-                        <option value="reminder">Reminder</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                      <textarea
-                        name="content"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 h-32"
-                        placeholder="Your message content..."
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end space-x-3 mt-6">
-                    <button
-                      type="button"
-                      onClick={() => setShowMessageModal(false)}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md"
-                    >
-                      Send Message
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
 
           {(editingEvent || showAddForm) && (
             <EventForm
