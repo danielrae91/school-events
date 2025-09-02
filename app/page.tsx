@@ -57,7 +57,7 @@ export default function HomePage() {
 
   const handleGoogleCalendar = () => {
     const calendarUrl = getCalendarUrl()
-    const googleUrl = `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${encodeURIComponent(calendarUrl)}`
+    const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarUrl)}`
     window.open(googleUrl, '_blank')
   }
 
