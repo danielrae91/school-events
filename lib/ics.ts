@@ -33,9 +33,12 @@ export function generateICalFeed(events: StoredEvent[]): string {
         calEvent.description += '\n\n⚠️ This event may need additional details.'
       }
 
-      // Add last modified timestamp to force calendar refresh
+      // Add last modified timestamp and sequence to force calendar refresh
       calEvent.lastModified = new Date(event.updated_at)
       calEvent.sequence = Math.floor(new Date(event.updated_at).getTime() / 1000)
+      
+      // Add revision number to UID to force update recognition
+      calEvent.uid = `${event.id}-rev${calEvent.sequence}@school-events`
 
       calendar.createEvent(calEvent)
     } catch (error) {

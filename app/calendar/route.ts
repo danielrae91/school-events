@@ -30,11 +30,13 @@ export async function GET(request: NextRequest) {
     return new NextResponse(icsContent, {
       status: 200,
       headers: {
-        'Content-Type': 'text/calendar',
+        'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': 'attachment; filename="school-events.ics"',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         'Pragma': 'no-cache',
         'Expires': '0',
+        'ETag': `"${Date.now()}"`,
+        'Last-Modified': new Date().toUTCString(),
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
