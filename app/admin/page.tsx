@@ -128,6 +128,26 @@ export default function AdminPage() {
     }
   }
 
+  const deleteLog = async (logId: string) => {
+    if (!confirm('Are you sure you want to delete this log?')) return
+    
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch(`/api/admin/logs/${logId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (response.ok) {
+        fetchLogs()
+        alert('Log deleted successfully!')
+      }
+    } catch (err) {
+      setError('Failed to delete log')
+    }
+  }
+
   const handleLogin = () => {
     if (adminToken) {
       localStorage.setItem('admin_token', adminToken)
@@ -428,14 +448,22 @@ export default function AdminPage() {
                               {log.gptCompleted && <p>GPT completed: {new Date(log.gptCompleted).toLocaleString()}</p>}
                             </div>
                           </div>
-                          {(log.status === 'error' || log.status === 'processing' || log.status === 'processing_gpt' || log.status === 'processing_events') && (
+                          <div className="flex space-x-2">
+                            {(log.status === 'error' || log.status === 'processing' || log.status === 'processing_gpt' || log.status === 'processing_events') && (
+                              <button
+                                onClick={() => retryFailedEmail(log.id)}
+                                className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                              >
+                                Retry
+                              </button>
+                            )}
                             <button
-                              onClick={() => retryFailedEmail(log.id)}
-                              className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                              onClick={() => deleteLog(log.id)}
+                              className="text-red-600 hover:text-red-900 text-sm font-medium"
                             >
-                              Retry
+                              Delete
                             </button>
-                          )}
+                          </div>
                         </div>
                       </li>
                     ))
@@ -614,7 +642,7 @@ function EventForm({
               <label className="block text-sm font-medium text-gray-700">End Date</label>
               <input
                 type="date"
-                value={formData.end_date}
+                value={formData.end_date || ''}
                 onChange={(e) => setFormData({...formData, end_date: e.target.value})}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
@@ -626,7 +654,7 @@ function EventForm({
               <label className="block text-sm font-medium text-gray-700">Start Time</label>
               <input
                 type="time"
-                value={formData.start_time}
+                value={formData.start_time || ''}
                 onChange={(e) => setFormData({...formData, start_time: e.target.value})}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
@@ -635,7 +663,7 @@ function EventForm({
               <label className="block text-sm font-medium text-gray-700">End Time</label>
               <input
                 type="time"
-                value={formData.end_time}
+                value={formData.end_time || ''}
                 onChange={(e) => setFormData({...formData, end_time: e.target.value})}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               />
@@ -646,7 +674,7 @@ function EventForm({
             <label className="block text-sm font-medium text-gray-700">Location</label>
             <input
               type="text"
-              value={formData.location}
+              value={formData.location || ''}
               onChange={(e) => setFormData({...formData, location: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
             />
