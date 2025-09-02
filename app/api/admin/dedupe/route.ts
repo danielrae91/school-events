@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Group events by title+date combination
     for (const key of eventKeys) {
       const eventData = await redis.hgetall(key)
-      if (eventData.title && eventData.start_date) {
+      if (eventData && eventData.title && eventData.start_date) {
         const signature = `${eventData.title}:${eventData.start_date}`
         if (!duplicateGroups[signature]) {
           duplicateGroups[signature] = []

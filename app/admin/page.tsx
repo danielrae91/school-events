@@ -5,15 +5,16 @@ import { StoredEvent, Event } from '@/lib/types'
 
 export default function AdminPage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
-  const [loading, setLoading] = useState(true)
+  const [logs, setLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'settings'>('events')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [adminToken, setAdminToken] = useState('')
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [adminToken, setAdminToken] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'settings'>('events')
-  const [logs, setLogs] = useState<any[]>([])
   const [gptPrompt, setGptPrompt] = useState('')
+  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
 
   // Check authentication
   useEffect(() => {
@@ -203,6 +204,46 @@ export default function AdminPage() {
       }
     } catch (err) {
       setError('Failed to deduplicate events')
+    }
+  }
+
+  const toggleEventSelection = (eventId: string) => {
+    const newSelection = new Set(selectedEvents)
+    if (newSelection.has(eventId)) {
+      newSelection.delete(eventId)
+    } else {
+      newSelection.add(eventId)
+    }
+    setSelectedEvents(newSelection)
+  }
+
+  const selectAllEvents = () => {
+    setSelectedEvents(new Set(events.map(e => e.id)))
+  }
+
+  const clearSelection = () => {
+    setSelectedEvents(new Set())
+  }
+
+  const bulkDeleteEvents = async () => {
+    if (selectedEvents.size === 0) return
+    if (!confirm(`Delete ${selectedEvents.size} selected events?`)) return
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const deletePromises = Array.from(selectedEvents).map(eventId =>
+        fetch(`/api/events/${eventId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      )
+      
+      await Promise.all(deletePromises)
+      setSelectedEvents(new Set())
+      fetchEvents()
+      alert(`${selectedEvents.size} events deleted successfully`)
+    } catch (err) {
+      setError('Failed to delete selected events')
     }
   }
 
@@ -404,7 +445,7 @@ export default function AdminPage() {
           {activeTab === 'events' && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Event Management</h2>
+                <h2 className="text-lg font-medium text-gray-900">Events</h2>
                 <div className="space-x-2">
                   <button
                     onClick={() => setShowAddForm(true)}
@@ -420,6 +461,40 @@ export default function AdminPage() {
                   </button>
                 </div>
               </div>
+              
+              {events.length > 0 && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <span className="text-sm text-gray-600">
+                        {selectedEvents.size} of {events.length} selected
+                      </span>
+                      <div className="space-x-2">
+                        <button
+                          onClick={selectAllEvents}
+                          className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          onClick={clearSelection}
+                          className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                    {selectedEvents.size > 0 && (
+                      <button
+                        onClick={bulkDeleteEvents}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
+                      >
+                        Delete Selected ({selectedEvents.size})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               
               {loading ? (
                 <div className="text-center py-8">
@@ -440,6 +515,8 @@ export default function AdminPage() {
                           event={event}
                           onEdit={setEditingEvent}
                           onDelete={handleDeleteEvent}
+                          isSelected={selectedEvents.has(event.id)}
+                          onToggleSelect={() => toggleEventSelection(event.id)}
                         />
                       ))
                     )}
@@ -603,15 +680,29 @@ export default function AdminPage() {
 function EventListItem({ 
   event, 
   onEdit, 
-  onDelete 
+  onDelete,
+  isSelected,
+  onToggleSelect
 }: { 
   event: StoredEvent
   onEdit: (event: StoredEvent) => void
   onDelete: (id: string) => void
+  isSelected?: boolean
+  onToggleSelect?: () => void
 }) {
   return (
     <li className="px-6 py-4">
       <div className="flex items-center justify-between">
+        {onToggleSelect && (
+          <div className="mr-4">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelect}
+              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            />
+          </div>
+        )}
         <div className="flex-1">
           <div className="flex items-center">
             <h3 className="text-lg font-medium text-gray-900">{event.title}</h3>

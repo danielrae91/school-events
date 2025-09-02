@@ -65,6 +65,14 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Check admin authorization
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    
+    if (!token || token !== process.env.ADMIN_TOKEN) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const deleted = await deleteEvent(params.id)
     
     if (!deleted) {
