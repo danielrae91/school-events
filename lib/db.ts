@@ -30,10 +30,18 @@ export async function storeEvent(event: Event): Promise<StoredEvent> {
   
   const now = new Date().toISOString()
   const storedEvent: StoredEvent = {
-    ...event,
     id,
+    title: event.title,
+    description: event.description || undefined,
+    location: event.location || undefined,
+    start_date: event.start_date,
+    start_time: event.start_time || undefined,
+    end_date: event.end_date || undefined,
+    end_time: event.end_time || undefined,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    needs_enrichment: event.needs_enrichment || false,
+    source: 'email'
   }
 
   // Filter out null/undefined values for Redis storage
@@ -85,7 +93,14 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
 
   const updated: StoredEvent = {
     ...existing,
-    ...updates,
+    title: updates.title || existing.title,
+    description: updates.description !== undefined ? updates.description : existing.description,
+    location: updates.location !== undefined ? (updates.location || undefined) : existing.location,
+    start_date: updates.start_date || existing.start_date,
+    start_time: updates.start_time !== undefined ? (updates.start_time || undefined) : existing.start_time,
+    end_date: updates.end_date !== undefined ? (updates.end_date || undefined) : existing.end_date,
+    end_time: updates.end_time !== undefined ? (updates.end_time || undefined) : existing.end_time,
+    needs_enrichment: updates.needs_enrichment !== undefined ? updates.needs_enrichment : existing.needs_enrichment,
     updated_at: new Date().toISOString()
   }
 
