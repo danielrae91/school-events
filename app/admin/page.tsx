@@ -32,6 +32,7 @@ export default function AdminPage() {
       fetchEventsWithToken(token)
       fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
+      fetchFeedback(token)
     } else {
       setLoading(false)
     }
@@ -82,6 +83,20 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err)
+    }
+  }
+
+  const fetchFeedback = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/feedback', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setFeedback(data.feedback || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch feedback:', err)
     }
   }
 

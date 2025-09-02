@@ -70,46 +70,44 @@ export default function HomePage() {
     }
   }
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
-  const formatTime = (timeStr: string) => {
-    const [hours, minutes] = timeStr.split(':')
-    const date = new Date()
-    date.setHours(parseInt(hours), parseInt(minutes))
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
+  const formatEventDate = (startDate: string, endDate?: string, startTime?: string, endTime?: string) => {
+    const start = new Date(startDate)
+    const end = endDate ? new Date(endDate) : start
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
+      })
+    }
+    
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(':')
+      const hour = parseInt(hours)
+      const ampm = hour >= 12 ? 'PM' : 'AM'
+      const displayHour = hour % 12 || 12
+      return `${displayHour}:${minutes} ${ampm}`
+    }
+    
+    let dateStr = formatDate(start)
+    if (endDate && startDate !== endDate) {
+      dateStr += ` - ${formatDate(end)}`
+    }
+    
+    if (startTime) {
+      const timeStr = formatTime(startTime)
+      if (endTime && endTime !== startTime) {
+        dateStr += ` (${timeStr} - ${formatTime(endTime)})`
+      } else {
+        dateStr += ` (${timeStr})`
+      }
+    }
+    
+    return dateStr
   }
 
   const formatEventDuration = (event: StoredEvent) => {
-    const startDate = formatDate(event.start_date)
-    const endDate = event.end_date && event.end_date !== event.start_date 
-      ? formatDate(event.end_date) 
-      : null
-    
-    let timeStr = ''
-    if (event.start_time) {
-      timeStr = formatTime(event.start_time)
-      if (event.end_time && event.end_time !== event.start_time) {
-        timeStr += ` - ${formatTime(event.end_time)}`
-      }
-    }
-
-    if (endDate) {
-      return `${startDate} - ${endDate}${timeStr ? ` (${timeStr})` : ''}`
-    } else {
-      return `${startDate}${timeStr ? ` at ${timeStr}` : ''}`
-    }
+    return formatEventDate(event.start_date, event.end_date, event.start_time, event.end_time)
   }
 
   const getDaysUntilEvent = (dateStr: string, timeStr?: string) => {
