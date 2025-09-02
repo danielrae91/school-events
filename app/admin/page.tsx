@@ -5,11 +5,11 @@ import { StoredEvent, Event } from '@/lib/types'
 
 export default function AdminPage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
-  const [logs, setLogs] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'suggestions' | 'settings'>('events')
   const [suggestions, setSuggestions] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'events' | 'logs' | 'suggestions' | 'settings'>('events')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [adminToken, setAdminToken] = useState('')
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
@@ -526,8 +526,14 @@ export default function AdminPage() {
                       
                       <div className="flex gap-2">
                         <button
+                          onClick={() => setEditingSuggestion(suggestion.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Edit & Approve
+                        </button>
+                        <button
                           onClick={async () => {
-                            if (confirm('Approve this suggestion and create event?')) {
+                            if (confirm('Approve this suggestion as-is and create event?')) {
                               try {
                                 const response = await fetch('/api/admin/suggestions', {
                                   method: 'POST',
@@ -586,6 +592,148 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Edit Suggestion Modal */}
+          {editingSuggestion && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <h3 className="text-lg font-medium mb-4">Edit Suggestion Before Approval</h3>
+                {(() => {
+                  const suggestion = suggestions.find(s => s.id === editingSuggestion)
+                  if (!suggestion) return null
+                  
+                  return (
+                    <form onSubmit={async (e) => {
+                      e.preventDefault()
+                      const formData = new FormData(e.target as HTMLFormElement)
+                      const editedData = {
+                        title: formData.get('title'),
+                        description: formData.get('description'),
+                        location: formData.get('location'),
+                        start_date: formData.get('start_date'),
+                        start_time: formData.get('start_time'),
+                        end_date: formData.get('end_date'),
+                        end_time: formData.get('end_time')
+                      }
+                      
+                      try {
+                        const response = await fetch('/api/admin/suggestions', {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            action: 'approve',
+                            suggestionId: suggestion.id,
+                            eventData: editedData
+                          })
+                        })
+                        if (response.ok) {
+                          setEditingSuggestion(null)
+                          fetchSuggestionsWithToken(adminToken)
+                          fetchEventsWithToken(adminToken)
+                        }
+                      } catch (err) {
+                        console.error('Failed to approve edited suggestion:', err)
+                      }
+                    }}>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                          <input
+                            name="title"
+                            type="text"
+                            defaultValue={suggestion.title}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2"
+                            required
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <textarea
+                            name="description"
+                            defaultValue={suggestion.description || ''}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 h-24"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                          <input
+                            name="location"
+                            type="text"
+                            defaultValue={suggestion.location || ''}
+                            className="w-full border border-gray-300 rounded-md px-3 py-2"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                            <input
+                              name="start_date"
+                              type="date"
+                              defaultValue={suggestion.start_date}
+                              className="w-full border border-gray-300 rounded-md px-3 py-2"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                            <input
+                              name="start_time"
+                              type="time"
+                              defaultValue={suggestion.start_time || ''}
+                              className="w-full border border-gray-300 rounded-md px-3 py-2"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                            <input
+                              name="end_date"
+                              type="date"
+                              defaultValue={suggestion.end_date || ''}
+                              className="w-full border border-gray-300 rounded-md px-3 py-2"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                            <input
+                              name="end_time"
+                              type="time"
+                              defaultValue={suggestion.end_time || ''}
+                              className="w-full border border-gray-300 rounded-md px-3 py-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-3 mt-6">
+                        <button
+                          type="submit"
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+                        >
+                          Approve & Create Event
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingSuggestion(null)}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )
+                })()}
+              </div>
             </div>
           )}
 
