@@ -110,7 +110,7 @@ export default function HomePage() {
 
   const handleGoogleCalendar = () => {
     const calendarUrl = getCalendarUrl()
-    const googleUrl = `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?url=${encodeURIComponent(calendarUrl)}`
+    const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarUrl)}`
     window.open(googleUrl, '_blank')
   }
 
@@ -328,6 +328,16 @@ export default function HomePage() {
                           {formatTime(event.start_time)}
                         </div>
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.open(`/api/event-ics/${event.id}`, '_blank')
+                        }}
+                        className="mt-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                        title="Add to Calendar"
+                      >
+                        📅 Add
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -385,7 +395,7 @@ export default function HomePage() {
                     {date.getDate()}
                   </div>
                   <div className="space-y-0.5 sm:space-y-1">
-                    {events.slice(0, 2).map((event) => (
+                    {events.slice(0, 3).map((event) => (
                       <div 
                         key={event.id}
                         className={`text-xs rounded px-1 py-0.5 truncate cursor-pointer transition-colors ${

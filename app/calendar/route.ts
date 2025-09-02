@@ -31,8 +31,10 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="school-events.ics"',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Content-Disposition': 'inline; filename="school-events.ics"',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
         'X-Events-Count': events.length.toString()
       }
     })
