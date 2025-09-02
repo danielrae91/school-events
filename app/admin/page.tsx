@@ -8,22 +8,20 @@ import { Toast, useToast } from '@/components/Toast'
 export default function AdminPage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
-  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
-  const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
-  const [editingSuggestion, setEditingSuggestion] = useState<StoredEvent | null>(null)
-  const [selectedLog, setSelectedLog] = useState<any>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [debugEmailData, setDebugEmailData] = useState<any>(null)
-  const [adminToken, setAdminToken] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [gptPrompt, setGptPrompt] = useState('')
-  const [emailLogs, setEmailLogs] = useState<any[]>([])
   const [feedback, setFeedback] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'settings'>('events')
+  const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'stats' | 'logs' | 'settings'>('events')
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [adminToken, setAdminToken] = useState('')
+  const [gptPrompt, setGptPrompt] = useState('')
   const { toasts, removeToast, showSuccess, showError, showInfo } = useToast()
+  const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
 
   // Check authentication
   useEffect(() => {
@@ -36,25 +34,10 @@ export default function AdminPage() {
       fetchLogsWithToken(token)
       fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
-      fetchFeedback(token)
     } else {
       setLoading(false)
     }
   }, [])
-
-  const fetchFeedback = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/feedback', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setFeedback(data.feedback || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch feedback:', err)
-    }
-  }
 
   const fetchLogs = async () => {
     const token = localStorage.getItem('admin_token')
@@ -65,7 +48,7 @@ export default function AdminPage() {
       })
       if (response.ok) {
         const data = await response.json()
-        // Handle logs data
+        // setLogs(data.logs || [])
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
@@ -426,7 +409,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Toast toasts={toasts} removeToast={removeToast} />
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
@@ -463,20 +445,10 @@ export default function AdminPage() {
                 Suggestions ({suggestions.length})
               </button>
               <button
-                onClick={() => setActiveTab('feedback')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'feedback' 
-                    ? 'bg-orange-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Feedback ({feedback.length})
-              </button>
-              <button
                 onClick={() => setActiveTab('settings')}
                 className={`px-4 py-2 text-sm font-medium rounded-md ${
                   activeTab === 'settings' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-blue-600 text-white' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -895,12 +867,12 @@ export default function AdminPage() {
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
-                  {emailLogs.length === 0 ? (
+                  {logs.length === 0 ? (
                     <li className="px-6 py-8 text-center text-gray-500">
                       No email processing logs found.
                     </li>
                   ) : (
-                    emailLogs.map((log: any, index: number) => (
+                    logs.map((log, index) => (
                       <li key={index} className="px-6 py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -958,49 +930,6 @@ export default function AdminPage() {
                     ))
                   )}
                 </ul>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'feedback' && (
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">User Feedback</h2>
-                <button
-                  onClick={() => fetchFeedback(adminToken)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Refresh
-                </button>
-              </div>
-              
-              <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                {feedback.length === 0 ? (
-                  <div className="px-6 py-8 text-center text-gray-500">
-                    <p>No feedback received yet</p>
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-gray-200">
-                    {feedback.map((item, index) => (
-                      <li key={index} className="px-6 py-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                              <span className="ml-2 text-sm text-gray-500">({item.email})</span>
-                            </div>
-                            <div className="mt-1 text-sm text-gray-600">
-                              <p>{item.message}</p>
-                            </div>
-                            <div className="mt-2 text-xs text-gray-400">
-                              Submitted: {new Date(item.timestamp || item.created_at).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             </div>
           )}

@@ -82,7 +82,7 @@ export default function HomePage() {
         setStats(data)
       }
     } catch (err) {
-      // Silently fail stats fetch
+      console.error('Failed to fetch stats:', err)
     }
   }
 
@@ -183,7 +183,7 @@ export default function HomePage() {
   }).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
 
   // Calendar state and functions 
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 8, 1)) // September 2025 where events exist
+  const [currentDate, setCurrentDate] = useState(new Date()) // Start with current month
   const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
 
   const prevMonth = () => {
@@ -209,7 +209,7 @@ export default function HomePage() {
     const dayEvents = events.filter(event => {
       const eventStart = event.start_date
       const eventEnd = event.end_date || event.start_date
-      // Fix: Check if current day falls within event date range
+      // Check if current day falls within event date range
       return dateStr >= eventStart && dateStr <= eventEnd
     })
     
@@ -224,14 +224,14 @@ export default function HomePage() {
           end: e.end_date,
           startMonth: e.start_date.substring(0, 7)
         })),
-        viewingMonth: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
+        viewingMonth: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`,
+        sampleDateStr: dateStr,
+        sampleEventMatches: events.filter(event => {
+          const eventStart = event.start_date
+          const eventEnd = event.end_date || event.start_date
+          return dateStr >= eventStart && dateStr <= eventEnd
+        }).map(e => ({ title: e.title, start: e.start_date, end: e.end_date, matches: `${dateStr} >= ${e.start_date} && ${dateStr} <= ${e.end_date || e.start_date}` }))
       })
-    }
-    
-    // Debug specific day if it has events
-    if (dayEvents.length > 0) {
-      console.log(`Day ${dateStr} (${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}) has ${dayEvents.length} events:`, 
-        dayEvents.map(e => ({ title: e.title, start: e.start_date, end: e.end_date })))
     }
     const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
     const isToday = dateStr === today.toISOString().split('T')[0]

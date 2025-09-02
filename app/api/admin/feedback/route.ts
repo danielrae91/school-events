@@ -21,8 +21,17 @@ export async function GET(request: NextRequest) {
     for (const feedbackId of feedbackList) {
       const feedbackData = await redis.get(feedbackId)
       if (feedbackData) {
-        const parsedData = JSON.parse(feedbackData as string)
-        feedback.push(parsedData)
+        try {
+          // Handle both string and object responses from Redis
+          const parsedData = typeof feedbackData === 'string' 
+            ? JSON.parse(feedbackData) 
+            : feedbackData
+          feedback.push(parsedData)
+        } catch (error) {
+          console.error('Error parsing feedback data:', error, 'Data:', feedbackData)
+          // Skip malformed feedback entries
+          continue
+        }
       }
     }
 

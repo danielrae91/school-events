@@ -3,16 +3,8 @@ import { redis } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check admin authorization
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const token = authHeader.split(' ')[1]
-    if (token !== process.env.ADMIN_TOKEN) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
+    // Allow public access to stats for main page display
+    // Admin authorization only required for admin panel access
 
     // Get stats from Redis
     const [
