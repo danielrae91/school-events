@@ -6,10 +6,26 @@ import { createHash, createHmac } from 'crypto'
 
 // Async function to process email without blocking webhook response
 async function processEmailAsync(logId: string, subject: string, plain: string, html?: string) {
+  console.log(`Starting async processing for log ${logId}`)
+  
   try {
+    // Update status to show processing started
+    await redis.hset(`email_log:${logId}`, {
+      status: 'processing_gpt',
+      processingStarted: new Date().toISOString()
+    })
+
     // Parse newsletter content with GPT-4
+    console.log(`Calling GPT for log ${logId}`)
     const events = await parseNewsletterWithGPT(subject, plain, html)
-    console.log(`Extracted ${events.length} events from newsletter`)
+    console.log(`GPT returned ${events.length} events for log ${logId}`)
+
+    // Update status to show GPT completed
+    await redis.hset(`email_log:${logId}`, {
+      status: 'processing_events',
+      gptCompleted: new Date().toISOString(),
+      eventsExtracted: events.length
+    })
 
     // Store events (with deduplication)
     const storedEvents = []
@@ -31,6 +47,7 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
         
       } catch (error) {
         console.error('Error storing event:', event.title, error)
+        skippedEvents.push(`${event.title} (storage error)`)
       }
     }
 
@@ -38,17 +55,22 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
     await redis.hset(`email_log:${logId}`, {
       status: 'success',
       eventsProcessed: storedEvents.length,
-      eventsSkipped: skippedEvents.length
+      eventsSkipped: skippedEvents.length,
+      completedAt: new Date().toISOString()
     })
 
-    console.log(`Email processing complete: ${storedEvents.length} stored, ${skippedEvents.length} skipped`)
+    console.log(`Email processing complete for ${logId}: ${storedEvents.length} stored, ${skippedEvents.length} skipped`)
 
   } catch (error) {
-    console.error('Async email processing error:', error)
-    // Update log with error
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`Async email processing error for ${logId}:`, error)
+    
+    // Update log with detailed error
     await redis.hset(`email_log:${logId}`, {
       status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage,
+      errorDetails: error instanceof Error ? error.stack : 'No stack trace',
+      failedAt: new Date().toISOString()
     })
   }
 }

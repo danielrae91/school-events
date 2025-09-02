@@ -398,20 +398,37 @@ export default function AdminPage() {
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 log.status === 'success' ? 'bg-green-100 text-green-800' :
                                 log.status === 'error' ? 'bg-red-100 text-red-800' :
+                                log.status === 'processing_gpt' ? 'bg-blue-100 text-blue-800' :
+                                log.status === 'processing_events' ? 'bg-purple-100 text-purple-800' :
                                 'bg-yellow-100 text-yellow-800'
                               }`}>
-                                {log.status}
+                                {log.status === 'processing_gpt' ? 'GPT Processing' :
+                                 log.status === 'processing_events' ? 'Storing Events' :
+                                 log.status}
                               </span>
                               <h3 className="ml-3 text-sm font-medium text-gray-900">{log.subject}</h3>
                             </div>
                             <div className="mt-1 text-sm text-gray-600">
                               <p>From: {log.from}</p>
                               <p>Received: {new Date(log.timestamp).toLocaleString()}</p>
-                              {log.error && <p className="text-red-600">Error: {log.error}</p>}
+                              {log.error && (
+                                <div className="mt-2 p-2 bg-red-50 rounded border">
+                                  <p className="text-red-600 font-medium">Error: {log.error}</p>
+                                  {log.errorDetails && (
+                                    <details className="mt-1">
+                                      <summary className="text-red-500 cursor-pointer text-xs">Stack trace</summary>
+                                      <pre className="text-xs text-red-400 mt-1 whitespace-pre-wrap">{log.errorDetails}</pre>
+                                    </details>
+                                  )}
+                                </div>
+                              )}
                               {log.eventsProcessed && <p>Events processed: {log.eventsProcessed}</p>}
+                              {log.eventsExtracted && <p>Events extracted by GPT: {log.eventsExtracted}</p>}
+                              {log.processingStarted && <p>Processing started: {new Date(log.processingStarted).toLocaleString()}</p>}
+                              {log.gptCompleted && <p>GPT completed: {new Date(log.gptCompleted).toLocaleString()}</p>}
                             </div>
                           </div>
-                          {log.status === 'error' && (
+                          {(log.status === 'error' || log.status === 'processing' || log.status === 'processing_gpt' || log.status === 'processing_events') && (
                             <button
                               onClick={() => retryFailedEmail(log.id)}
                               className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
