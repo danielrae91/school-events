@@ -145,6 +145,14 @@ export async function parseNewsletterWithGPT(content: string, logId?: string): P
 
   } catch (error) {
     console.error('Error parsing newsletter with GPT:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      openaiError: error
+    })
+    
+    // Log error for debugging
+    console.error('GPT parsing failed, falling back to regex extraction')
     
     // Fallback: try regex-based extraction
     return parseNewsletterWithRegex('', content)

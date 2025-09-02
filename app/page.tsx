@@ -19,7 +19,30 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchEvents()
+    trackPageView()
   }, [])
+
+  const trackPageView = async () => {
+    try {
+      // Get visitor ID from localStorage or create new one
+      let visitorId = localStorage.getItem('visitor_id')
+      if (!visitorId) {
+        visitorId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+        localStorage.setItem('visitor_id', visitorId)
+      }
+
+      await fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'page_view',
+          visitorId 
+        })
+      })
+    } catch (error) {
+      // Silently fail tracking
+    }
+  }
 
   const fetchEvents = async () => {
     try {
@@ -323,8 +346,12 @@ export default function HomePage() {
                       </div>
                     </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
+                      onClick={async () => {
+                        await fetch('/api/track', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
+                        })
                         const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
                         const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
                         const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`
@@ -581,13 +608,15 @@ export default function HomePage() {
                 {/* Action Buttons */}
                 <div className="space-y-3">
                   <button
-                    onClick={() => {
-                      const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
-                      const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
-                      const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEvent.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
-                      window.open(googleUrl, '_blank')
+                    onClick={async () => {
+                      await fetch('/api/track', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'subscribe_click', visitorId: localStorage.getItem('visitor_id') })
+                      })
+                      window.open('https://calendar.google.com/calendar/r?cid=webcal://school-events.vercel.app/calendar.ics', '_blank')
                     }}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 font-medium shadow-lg hover:shadow-blue-500/25"
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

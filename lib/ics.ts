@@ -5,7 +5,7 @@ export function generateICalFeed(events: StoredEvent[]): string {
   const calendar = ical({
     name: 'School Events Calendar',
     description: 'Automated school newsletter events feed',
-    url: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/calendar.ics` : 'http://localhost:3000/calendar.ics',
+    url: 'https://school-events.vercel.app/calendar.ics',
     prodId: '-//TK Newsletter//School Events//EN'
   })
 
