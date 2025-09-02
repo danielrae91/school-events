@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { StoredEvent, Event } from '@/lib/types'
+import { StoredEvent, type Event } from '@/lib/types'
 import { Toast, useToast } from '@/components/Toast'
 
 export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [events, setEvents] = useState<StoredEvent[]>([])
-  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [suggestions, setSuggestions] = useState<StoredEvent[]>([])
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
   const [editingSuggestion, setEditingSuggestion] = useState<StoredEvent | null>(null)
@@ -18,11 +23,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [gptPrompt, setGptPrompt] = useState('')
-  const [emailLogs, setEmailLogs] = useState<any[]>([])
   const [feedback, setFeedback] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'settings'>('events')
   const { toasts, removeToast, showSuccess, showError, showInfo } = useToast()
 
   // Check authentication
@@ -33,44 +34,17 @@ export default function AdminPage() {
       setIsAuthenticated(true)
       // Pass token directly to avoid state timing issues
       fetchEventsWithToken(token)
-      fetchLogsWithToken(token)
       fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
       fetchFeedback(token)
+      fetchStats(token)
+      fetchEmailLogs(token)
     } else {
       setLoading(false)
     }
   }, [])
 
-  const fetchFeedback = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/feedback', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setFeedback(data.feedback || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch feedback:', err)
-    }
-  }
-
-  const fetchLogs = async () => {
-    const token = localStorage.getItem('admin_token')
-    if (!token) return
-    try {
-      const response = await fetch('/api/admin/logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        // Handle logs data
-      }
-    } catch (err) {
-      console.error('Failed to fetch logs:', err)
-    }
-  }
+  // Logs functionality removed
 
   const fetchSuggestionsWithToken = async (token: string) => {
     try {
@@ -86,19 +60,7 @@ export default function AdminPage() {
     }
   }
 
-  const fetchLogsWithToken = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        // setLogs(data.logs || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch logs:', err)
-    }
-  }
+  // Logs functionality removed
 
   const fetchSettings = async () => {
     const token = localStorage.getItem('admin_token')
@@ -130,6 +92,48 @@ export default function AdminPage() {
     }
   }
 
+  const fetchFeedback = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/feedback', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setFeedback(data.feedback || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch feedback:', err)
+    }
+  }
+
+  const fetchStats = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch stats:', err)
+    }
+  }
+
+  const fetchEmailLogs = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/email-logs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setEmailLogs(data.logs || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch email logs:', err)
+    }
+  }
+
   const saveSettings = async () => {
     try {
       const response = await fetch('/api/admin/settings', {
@@ -141,7 +145,7 @@ export default function AdminPage() {
         body: JSON.stringify({ gptPrompt })
       })
       if (response.ok) {
-        alert('Settings saved successfully!')
+        showSuccess('Settings Saved', 'GPT prompt updated successfully!')
       }
     } catch (err) {
       setError('Failed to save settings')
@@ -159,9 +163,9 @@ export default function AdminPage() {
         body: JSON.stringify({ logId })
       })
       if (response.ok) {
-        fetchLogs()
+        fetchEmailLogs(adminToken)
         fetchEvents()
-        alert('Email processing retried successfully!')
+        showSuccess('Email Retried', 'Email processing retried successfully!')
       }
     } catch (err) {
       setError('Failed to retry email processing')
@@ -180,8 +184,8 @@ export default function AdminPage() {
         }
       })
       if (response.ok) {
-        fetchLogs()
-        alert('Log deleted successfully!')
+        fetchEmailLogs(adminToken)
+        showSuccess('Log Deleted', 'Email log deleted successfully!')
       }
     } catch (err) {
       setError('Failed to delete log')
@@ -198,7 +202,7 @@ export default function AdminPage() {
       })
       const data = await response.json()
       console.log('Redis Debug Data:', data)
-      alert(`Redis Debug: ${data.totalEventKeys} event keys found. Check console for details.`)
+      showInfo('Redis Debug', `${data.totalEventKeys} event keys found. Check console for details.`)
     } catch (err) {
       setError('Failed to debug Redis data')
     }
@@ -217,7 +221,7 @@ export default function AdminPage() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert(`Cleanup complete: ${data.orphanedEntriesRemoved} orphaned entries removed`)
+        showSuccess('Cleanup Complete', `${data.orphanedEntriesRemoved} orphaned entries removed`)
         fetchEvents()
       }
     } catch (err) {
@@ -238,7 +242,7 @@ export default function AdminPage() {
       })
       const data = await response.json()
       if (response.ok) {
-        alert(`Deduplication complete: ${data.duplicatesRemoved} duplicate events removed from ${data.duplicateGroups} groups`)
+        showSuccess('Deduplication Complete', `${data.duplicatesRemoved} duplicate events removed from ${data.duplicateGroups} groups`)
         fetchEvents()
       }
     } catch (err) {
@@ -280,7 +284,7 @@ export default function AdminPage() {
       await Promise.all(deletePromises)
       setSelectedEvents(new Set())
       fetchEvents()
-      alert(`${selectedEvents.size} events deleted successfully`)
+      showSuccess('Events Deleted', `${selectedEvents.size} events deleted successfully`)
     } catch (err) {
       setError('Failed to delete selected events')
     }
@@ -393,30 +397,30 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Admin Access
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">
+              Admin Dashboard
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Enter admin token to manage events
+            <p className="text-gray-400">
+              Enter admin token to access management tools
             </p>
           </div>
-          <div className="mt-8 space-y-6">
+          <div className="space-y-6">
             <input
               type="password"
               value={adminToken}
               onChange={(e) => setAdminToken(e.target.value)}
               placeholder="Admin Token"
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
             />
             <button
               onClick={handleLogin}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Access Admin Panel
+              Access Admin Dashboard
             </button>
           </div>
         </div>
@@ -425,65 +429,220 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Toast toasts={toasts} removeToast={removeToast} />
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Admin Dashboard</h1>
+            <p className="text-gray-400">Manage events, feedback, and system settings</p>
+          </div>
+          <div className="flex gap-4">
+            <Link
+              href="/"
+              className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Back to Calendar
+            </Link>
             <button
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Logout
             </button>
           </div>
+        </div>
 
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('events')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'events' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Events ({events.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('suggestions')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'suggestions' 
-                    ? 'bg-green-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Suggestions ({suggestions.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('feedback')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'feedback' 
-                    ? 'bg-orange-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Feedback ({feedback.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'settings' 
-                    ? 'bg-purple-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Settings
-              </button>
-            </nav>
+        {/* Dashboard Overview */}
+        {activeTab === 'dashboard' && (
+          <div className="mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-300 text-sm font-medium">Total Events</p>
+                    <p className="text-3xl font-bold text-white">{events.length}</p>
+                  </div>
+                  <div className="text-blue-400">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-orange-600/20 to-orange-700/20 border border-orange-500/30 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-orange-300 text-sm font-medium">Pending Suggestions</p>
+                    <p className="text-3xl font-bold text-white">{suggestions.length}</p>
+                  </div>
+                  <div className="text-orange-400">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-600/20 to-green-700/20 border border-green-500/30 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-300 text-sm font-medium">User Feedback</p>
+                    <p className="text-3xl font-bold text-white">{feedback.length}</p>
+                  </div>
+                  <div className="text-green-400">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-600/20 to-purple-700/20 border border-purple-500/30 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-300 text-sm font-medium">Email Logs</p>
+                    <p className="text-3xl font-bold text-white">{emailLogs.length}</p>
+                  </div>
+                  <div className="text-purple-400">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {stats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-gradient-to-br from-emerald-600/20 to-emerald-700/20 border border-emerald-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-emerald-300 text-sm font-medium">Page Views</p>
+                      <p className="text-3xl font-bold text-white">{stats.pageViews?.toLocaleString() || '0'}</p>
+                    </div>
+                    <div className="text-emerald-400">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-cyan-600/20 to-cyan-700/20 border border-cyan-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-cyan-300 text-sm font-medium">Unique Visitors</p>
+                      <p className="text-3xl font-bold text-white">{stats.uniqueViews?.toLocaleString() || '0'}</p>
+                    </div>
+                    <div className="text-cyan-400">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-indigo-600/20 to-indigo-700/20 border border-indigo-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-indigo-300 text-sm font-medium">Subscribe Clicks</p>
+                      <p className="text-3xl font-bold text-white">{stats.subscribeClicks?.toLocaleString() || '0'}</p>
+                    </div>
+                    <div className="text-indigo-400">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-pink-600/20 to-pink-700/20 border border-pink-500/30 rounded-xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-pink-300 text-sm font-medium">Calendar Adds</p>
+                      <p className="text-3xl font-bold text-white">{stats.addToCalendarClicks?.toLocaleString() || '0'}</p>
+                    </div>
+                    <div className="text-pink-400">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <nav className="flex space-x-4">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+                activeTab === 'dashboard' 
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' 
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              📊 Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+                activeTab === 'events' 
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' 
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              📅 Events ({events.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('suggestions')}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+                activeTab === 'suggestions' 
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' 
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              💡 Suggestions ({suggestions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('feedback')}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+                activeTab === 'feedback' 
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' 
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              💬 Feedback ({feedback.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('email-logs')}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+                activeTab === 'email-logs' 
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' 
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              📧 Email Logs ({emailLogs.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`px-6 py-3 rounded-lg transition-colors font-medium ${
+                activeTab === 'settings' 
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' 
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700'
+              }`}
+            >
+              ⚙️ Settings
+            </button>
+          </nav>
+        </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -518,11 +677,6 @@ export default function AdminPage() {
                           <p className="text-sm text-gray-600">
                             Suggested on {new Date(suggestion.created_at).toLocaleDateString()}
                           </p>
-                          {suggestion.contact_name && (
-                            <p className="text-sm text-gray-600">
-                              Contact: {suggestion.contact_name} {suggestion.contact_email && `(${suggestion.contact_email})`}
-                            </p>
-                          )}
                         </div>
                         <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
                           Suggestion
@@ -550,7 +704,7 @@ export default function AdminPage() {
                       
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setEditingSuggestion(suggestion.id)}
+                          onClick={() => setEditingSuggestion(suggestion)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
                         >
                           Edit & Approve
@@ -572,8 +726,12 @@ export default function AdminPage() {
                                   })
                                 })
                                 if (response.ok) {
-                                  fetchSuggestionsWithToken(adminToken)
-                                  fetchEventsWithToken(adminToken)
+                                  await fetchSuggestionsWithToken(adminToken)
+                                  await fetchEventsWithToken(adminToken)
+                                  alert('Suggestion approved and event created!')
+                                } else {
+                                  const error = await response.json()
+                                  alert(`Failed to approve suggestion: ${error.error}`)
                                 }
                               } catch (err) {
                                 console.error('Failed to approve suggestion:', err)
@@ -625,7 +783,7 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <h3 className="text-lg font-medium mb-4">Edit Suggestion Before Approval</h3>
                 {(() => {
-                  const suggestion = suggestions.find(s => s.id === editingSuggestion)
+                  const suggestion = editingSuggestion
                   if (!suggestion) return null
                   
                   return (
@@ -657,8 +815,12 @@ export default function AdminPage() {
                         })
                         if (response.ok) {
                           setEditingSuggestion(null)
-                          fetchSuggestionsWithToken(adminToken)
-                          fetchEventsWithToken(adminToken)
+                          await fetchSuggestionsWithToken(adminToken)
+                          await fetchEventsWithToken(adminToken)
+                          alert('Suggestion approved and event created!')
+                        } else {
+                          const error = await response.json()
+                          alert(`Failed to approve suggestion: ${error.error}`)
                         }
                       } catch (err) {
                         console.error('Failed to approve edited suggestion:', err)
@@ -778,6 +940,24 @@ export default function AdminPage() {
                   >
                     Refresh
                   </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/admin/debug-email', {
+                          headers: { 'Authorization': `Bearer ${adminToken}` }
+                        })
+                        const data = await response.json()
+                        console.log('Email Debug Data:', data)
+                        alert(`Email Debug:\n- Recent logs: ${data.totalLogKeys}\n- GPT prompt exists: ${data.gptPromptExists}\n- OpenAI key exists: ${data.openaiKeyExists}\nCheck console for details.`)
+                      } catch (err) {
+                        console.error('Debug failed:', err)
+                        alert('Debug failed - check console')
+                      }
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Debug Email
+                  </button>
                 </div>
               </div>
               
@@ -785,24 +965,18 @@ export default function AdminPage() {
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      {events.map((event) => (
-                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
-                          event.needs_enrichment 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {event.needs_enrichment ? 'Needs Enrichment' : 'Complete'}
-                        </span>
-                      ))}
-                      {events.map((event) => (
-                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
-                          event.source === 'suggestion'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {event.source === 'suggestion' ? 'User Suggested' : 'Email Generated'}
-                        </span>
-                      ))}
+                      <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                        Total Events: {events.length}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                        Needs Enrichment: {events.filter(e => e.needs_enrichment).length}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                        User Suggested: {events.filter(e => e.source === 'suggestion').length}
+                      </span>
+                      <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                        Email Generated: {events.filter(e => e.source !== 'suggestion').length}
+                      </span>
                     </div>
                     <div className="space-x-2">
                       <button
@@ -867,7 +1041,7 @@ export default function AdminPage() {
                 <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>
                 <div className="space-x-2">
                   <button
-                    onClick={fetchLogs}
+                    onClick={() => {}}
                     className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
                   >
                     Refresh
@@ -895,12 +1069,12 @@ export default function AdminPage() {
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
-                  {emailLogs.length === 0 ? (
+                  {[].length === 0 ? (
                     <li className="px-6 py-8 text-center text-gray-500">
                       No email processing logs found.
                     </li>
                   ) : (
-                    emailLogs.map((log: any, index: number) => (
+                    [].map((log: any, index: number) => (
                       <li key={index} className="px-6 py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -962,45 +1136,21 @@ export default function AdminPage() {
             </div>
           )}
 
-          {activeTab === 'feedback' && (
+          {activeTab === 'messages' && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">User Feedback</h2>
-                <button
-                  onClick={() => fetchFeedback(adminToken)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Refresh
-                </button>
+                <h2 className="text-lg font-medium text-gray-900">User Feedback</h2>
               </div>
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                {feedback.length === 0 ? (
-                  <div className="px-6 py-8 text-center text-gray-500">
-                    <p>No feedback received yet</p>
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-gray-200">
-                    {feedback.map((item, index) => (
-                      <li key={index} className="px-6 py-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                              <span className="ml-2 text-sm text-gray-500">({item.email})</span>
-                            </div>
-                            <div className="mt-1 text-sm text-gray-600">
-                              <p>{item.message}</p>
-                            </div>
-                            <div className="mt-2 text-xs text-gray-400">
-                              Submitted: {new Date(item.timestamp || item.created_at).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Feedback and messages from users will appear here.
+                  </p>
+                </div>
+                <div className="px-6 py-8 text-center text-gray-500">
+                  <p>No feedback yet</p>
+                </div>
               </div>
             </div>
           )}
@@ -1036,6 +1186,7 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+
 
           {(editingEvent || showAddForm) && (
             <EventForm
@@ -1092,8 +1243,8 @@ function EventListItem({
           <div className="mt-1 text-sm text-gray-600">
             <p>{event.description}</p>
             <div className="mt-2 flex space-x-4">
-              <span>📅 {event.start_date}</span>
-              {event.start_time && <span>🕐 {event.start_time}</span>}
+              <span>📅 {event.start_date}{event.end_date && event.end_date !== event.start_date ? ` - ${event.end_date}` : ''}</span>
+              {event.start_time && <span>🕐 {event.start_time}{event.end_time && event.end_time !== event.start_time ? ` - ${event.end_time}` : ''}</span>}
               {event.location && <span>📍 {event.location}</span>}
             </div>
           </div>

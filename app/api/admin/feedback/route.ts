@@ -15,16 +15,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get feedback list from Redis
-    const feedbackList = await redis.lrange('feedback_list', 0, -1)
+    const feedbackList = await redis.get('feedback:list') as string[] || []
     const feedback = []
 
     for (const feedbackId of feedbackList) {
-      const feedbackData = await redis.hgetall(`feedback:${feedbackId}`)
-      if (feedbackData && Object.keys(feedbackData).length > 0) {
-        feedback.push({
-          id: feedbackId,
-          ...feedbackData
-        })
+      const feedbackData = await redis.get(feedbackId)
+      if (feedbackData) {
+        const parsedData = JSON.parse(feedbackData as string)
+        feedback.push(parsedData)
       }
     }
 

@@ -4,9 +4,11 @@ import { useState } from 'react'
 
 interface FeedbackModalProps {
   onClose: () => void
+  showSuccess: (title: string, message: string) => void
+  showError: (title: string, message: string) => void
 }
 
-export default function FeedbackModal({ onClose }: FeedbackModalProps) {
+export default function FeedbackModal({ onClose, showSuccess, showError }: FeedbackModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -31,14 +33,14 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
       })
 
       if (response.ok) {
-        alert('Thank you for your feedback!')
+        showSuccess('Feedback Sent', 'Thank you for your feedback!')
         onClose()
       } else {
-        alert('Failed to send feedback. Please try again.')
+        showError('Failed to Send', 'Failed to send feedback. Please try again.')
       }
     } catch (error) {
       console.error('Error sending feedback:', error)
-      alert('Failed to send feedback. Please try again.')
+      showError('Error', 'Failed to send feedback. Please try again.')
     } finally {
       setIsSubmitting(false)
     }

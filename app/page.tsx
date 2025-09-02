@@ -6,6 +6,7 @@ import { StoredEvent } from '@/lib/types'
 import AddEventModal from '@/components/AddEventModal'
 import SuggestEventModal from '@/components/SuggestEventModal'
 import FeedbackModal from '@/components/FeedbackModal'
+import { Toast, useToast } from '@/components/Toast'
 
 export default function HomePage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
@@ -16,10 +17,13 @@ export default function HomePage() {
   const [showSuggestEventModal, setShowSuggestEventModal] = useState(false)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
+  const [stats, setStats] = useState<any>(null)
+  const { toasts, removeToast, showSuccess, showError } = useToast()
 
   useEffect(() => {
     fetchEvents()
     trackPageView()
+    fetchStats()
   }, [])
 
   const trackPageView = async () => {
@@ -67,6 +71,18 @@ export default function HomePage() {
       setError(err instanceof Error ? err.message : 'Failed to load events')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats')
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (err) {
+      // Silently fail stats fetch
     }
   }
 
@@ -258,6 +274,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      <Toast toasts={toasts} removeToast={removeToast} />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -463,13 +480,10 @@ export default function HomePage() {
         {/* Subscribe to Calendar */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-6 text-center text-white flex items-center justify-center gap-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
             Subscribe to Calendar
           </h2>
           <p className="text-gray-300 text-center mb-6">
-            Add our school events calendar to your personal calendar app to stay updated automatically.
+            Add TK's school events calendar to your personal calendar app to stay updated automatically.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -518,9 +532,63 @@ export default function HomePage() {
         </div>
 
 
+        {/* Stats Section */}
+        {stats && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-center text-white flex items-center justify-center gap-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Site Statistics
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl p-4 text-center">
+                <div className="text-blue-400 mb-2">
+                  <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </div>
+                <p className="text-2xl font-bold text-white">{stats.pageViews?.toLocaleString() || '0'}</p>
+                <p className="text-blue-300 text-sm">Page Views</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-600/20 to-green-700/20 border border-green-500/30 rounded-xl p-4 text-center">
+                <div className="text-green-400 mb-2">
+                  <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <p className="text-2xl font-bold text-white">{stats.uniqueViews?.toLocaleString() || '0'}</p>
+                <p className="text-green-300 text-sm">Unique Visitors</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-purple-600/20 to-purple-700/20 border border-purple-500/30 rounded-xl p-4 text-center">
+                <div className="text-purple-400 mb-2">
+                  <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-2xl font-bold text-white">{stats.subscribeClicks?.toLocaleString() || '0'}</p>
+                <p className="text-purple-300 text-sm">Subscribe Clicks</p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-orange-600/20 to-orange-700/20 border border-orange-500/30 rounded-xl p-4 text-center">
+                <div className="text-orange-400 mb-2">
+                  <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <p className="text-2xl font-bold text-white">{stats.addToCalendarClicks?.toLocaleString() || '0'}</p>
+                <p className="text-orange-300 text-sm">Calendar Adds</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="text-center py-6 text-gray-500 text-sm flex items-center justify-center gap-4">
-          <span>Made by a TK Parent - </span>
+          <span>Made by a TK Parent</span>
           <button
             onClick={() => setShowFeedbackModal(true)}
             className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
@@ -693,6 +761,8 @@ export default function HomePage() {
         {showFeedbackModal && (
           <FeedbackModal 
             onClose={() => setShowFeedbackModal(false)}
+            showSuccess={showSuccess}
+            showError={showError}
           />
         )}
       </div>
