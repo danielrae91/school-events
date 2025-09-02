@@ -6,16 +6,56 @@ import { createHash, createHmac } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const rawBody = await request.text()
-    console.log('Raw CloudMailin payload:', rawBody.substring(0, 500))
+    // CloudMailin sends different content types, handle both JSON and form data
+    const contentType = request.headers.get('content-type') || ''
+    console.log('Content-Type:', contentType)
     
-    let body
-    try {
-      body = JSON.parse(rawBody)
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError)
-      console.error('Raw body that failed to parse:', rawBody.substring(0, 1000))
-      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+    let body: any
+    
+    if (contentType.includes('application/json')) {
+      // Handle JSON payload
+      const rawBody = await request.text()
+      console.log('Raw JSON payload:', rawBody.substring(0, 500))
+      
+      try {
+        body = JSON.parse(rawBody)
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError)
+        console.error('Raw body that failed to parse:', rawBody.substring(0, 1000))
+        return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+      }
+    } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+      // Handle form data payload
+      const formData = await request.formData()
+      console.log('Form data keys:', Array.from(formData.keys()))
+      
+      // CloudMailin sends form data with a 'message' field containing JSON
+      const messageField = formData.get('message')
+      if (messageField) {
+        try {
+          body = JSON.parse(messageField.toString())
+        } catch (parseError) {
+          console.error('Form data JSON parse error:', parseError)
+          return NextResponse.json({ error: 'Invalid form data JSON' }, { status: 400 })
+        }
+      } else {
+        // Convert form data to object
+        body = {} as any
+        formData.forEach((value, key) => {
+          (body as any)[key] = value.toString()
+        })
+      }
+    } else {
+      // Fallback: try to parse as JSON
+      const rawBody = await request.text()
+      console.log('Unknown content type, trying JSON parse:', rawBody.substring(0, 500))
+      
+      try {
+        body = JSON.parse(rawBody)
+      } catch (parseError) {
+        console.error('Fallback JSON parse error:', parseError)
+        return NextResponse.json({ error: 'Unsupported content type or invalid payload' }, { status: 400 })
+      }
     }
     
     // Validate CloudMailin webhook signature if secret is provided
