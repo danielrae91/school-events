@@ -867,12 +867,12 @@ export default function AdminPage() {
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
-                  {logs.length === 0 ? (
+                  {emailLogs.length === 0 ? (
                     <li className="px-6 py-8 text-center text-gray-500">
                       No email processing logs found.
                     </li>
                   ) : (
-                    logs.map((log, index) => (
+                    emailLogs.map((log, index) => (
                       <li key={index} className="px-6 py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
