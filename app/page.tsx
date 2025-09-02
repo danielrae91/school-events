@@ -107,7 +107,7 @@ export default function HomePage() {
   }
 
   const getCalendarUrl = () => {
-    return `${window.location.origin}/calendar.ics`
+    return `${window.location.origin}/calendar`
   }
 
   const handleGoogleCalendar = () => {
@@ -273,10 +273,10 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1">
+                      <div className="flex-1 mr-2">
                         {event.location && (
-                          <p className="text-gray-400 text-xs flex items-center gap-1 truncate">
-                            📍 <span className="truncate">{event.location}</span>
+                          <p className="text-gray-400 text-xs flex items-center gap-1">
+                            📍 <span className="truncate max-w-[120px] sm:max-w-none">{event.location}</span>
                           </p>
                         )}
                       </div>
@@ -307,7 +307,7 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-1">
             <button
               onClick={() => {
-                const calendarUrl = getCalendarUrl()
+                const calendarUrl = `${window.location.origin}/calendar.ics`
                 const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
                 window.open(googleUrl, '_blank')
               }}
@@ -336,6 +336,81 @@ export default function HomePage() {
             >
               Copy URL
             </button>
+          </div>
+        </div>
+
+        {/* Calendar */}
+        <div className="bg-slate-800 border border-slate-700 rounded-xl mb-8">
+          <div className="flex items-center justify-between p-4 border-b border-slate-700">
+            <h2 className="text-xl font-semibold text-white">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                →
+              </button>
+            </div>
+          </div>
+          
+          {/* Mobile: Hide calendar grid, show message */}
+          <div className="block sm:hidden p-4 text-center text-gray-400">
+            <p className="text-sm">Calendar view available on larger screens</p>
+            <p className="text-xs mt-1">See upcoming events above</p>
+          </div>
+          
+          {/* Calendar Grid - Hidden on mobile */}
+          <div className="p-4 hidden sm:block">
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center text-gray-400 text-sm font-medium py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-7 gap-1">
+              {monthCalendar.map(({ date, dateStr, events, isCurrentMonth, isToday }) => (
+                <div 
+                  key={dateStr}
+                  className={`
+                    aspect-square p-1 text-sm border border-slate-700 rounded-lg
+                    ${isCurrentMonth ? 'text-white' : 'text-gray-600'}
+                    ${isToday ? 'bg-purple-600 border-purple-500' : 'hover:bg-slate-700'}
+                    ${events.length > 0 ? 'bg-slate-700' : ''}
+                  `}
+                >
+                  <div className="h-full flex flex-col">
+                    <div className="text-center mb-1">{date.getDate()}</div>
+                    {events.length > 0 && (
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        {events.slice(0, 2).map((event, i) => (
+                          <div
+                            key={i}
+                            className="text-xs bg-purple-600 text-white px-1 py-0.5 rounded truncate cursor-pointer hover:bg-purple-500"
+                            onClick={() => setSelectedEvent(event)}
+                            title={event.title}
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                        {events.length > 2 && (
+                          <div className="text-xs text-gray-400 text-center">
+                            +{events.length - 2}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
