@@ -23,7 +23,7 @@ export const EventSchema = z.object({
 
 export type Event = z.infer<typeof EventSchema>
 
-export interface StoredEvent extends Event {
+export interface StoredEvent {
   id: string
   title: string
   description?: string

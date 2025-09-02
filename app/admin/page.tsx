@@ -645,20 +645,15 @@ export default function AdminPage() {
                       >
                         Clear
                       </button>
-                          className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded"
+                      {selectedEvents.size > 0 && (
+                        <button
+                          onClick={bulkDeleteEvents}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
                         >
-                          Clear
+                          Delete Selected ({selectedEvents.size})
                         </button>
-                      </div>
+                      )}
                     </div>
-                    {selectedEvents.size > 0 && (
-                      <button
-                        onClick={bulkDeleteEvents}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
-                      >
-                        Delete Selected ({selectedEvents.size})
-                      </button>
-                    )}
                   </div>
                 </div>
               )}
