@@ -4,6 +4,55 @@ import { parseNewsletterWithGPT } from '@/lib/parseNewsletter'
 import { storeEvent, eventExists, redis } from '@/lib/db'
 import { createHash, createHmac } from 'crypto'
 
+// Async function to process email without blocking webhook response
+async function processEmailAsync(logId: string, subject: string, plain: string, html?: string) {
+  try {
+    // Parse newsletter content with GPT-4
+    const events = await parseNewsletterWithGPT(subject, plain, html)
+    console.log(`Extracted ${events.length} events from newsletter`)
+
+    // Store events (with deduplication)
+    const storedEvents = []
+    const skippedEvents = []
+
+    for (const event of events) {
+      try {
+        const exists = await eventExists(event.title, event.start_date)
+        
+        if (exists) {
+          skippedEvents.push(event.title)
+          console.log(`Skipping duplicate event: ${event.title} on ${event.start_date}`)
+          continue
+        }
+
+        const stored = await storeEvent(event)
+        storedEvents.push(stored)
+        console.log(`Stored event: ${event.title} on ${event.start_date}`)
+        
+      } catch (error) {
+        console.error('Error storing event:', event.title, error)
+      }
+    }
+
+    // Update log with success
+    await redis.hset(`email_log:${logId}`, {
+      status: 'success',
+      eventsProcessed: storedEvents.length,
+      eventsSkipped: skippedEvents.length
+    })
+
+    console.log(`Email processing complete: ${storedEvents.length} stored, ${skippedEvents.length} skipped`)
+
+  } catch (error) {
+    console.error('Async email processing error:', error)
+    // Update log with error
+    await redis.hset(`email_log:${logId}`, {
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get the raw body for signature verification
@@ -102,67 +151,20 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    try {
-      // Store initial log
-      await redis.hset(`email_log:${logId}`, logData)
+    // Store initial log
+    await redis.hset(`email_log:${logId}`, logData)
 
-      // Parse newsletter content with GPT-4
-      const events = await parseNewsletterWithGPT(
-        email.headers.subject,
-        email.plain,
-        email.html
-      )
+    // Process email asynchronously to avoid timeout
+    processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
+      console.error('Async email processing failed:', error)
+    })
 
-      console.log(`Extracted ${events.length} events from newsletter`)
-
-      // Store events (with deduplication)
-      const storedEvents = []
-      const skippedEvents = []
-
-      for (const event of events) {
-        try {
-          // Check if event already exists
-          const exists = await eventExists(event.title, event.start_date)
-          
-          if (exists) {
-            skippedEvents.push(event.title)
-            console.log(`Skipping duplicate event: ${event.title} on ${event.start_date}`)
-            continue
-          }
-
-          // Store new event
-          const stored = await storeEvent(event)
-          storedEvents.push(stored)
-          console.log(`Stored event: ${event.title} on ${event.start_date}`)
-          
-        } catch (error) {
-          console.error('Error storing event:', event.title, error)
-        }
-      }
-
-      // Update log with success
-      await redis.hset(`email_log:${logId}`, {
-        status: 'success',
-        eventsProcessed: storedEvents.length,
-        eventsSkipped: skippedEvents.length
-      })
-
-      return NextResponse.json({
-        success: true,
-        message: `Processed newsletter: ${storedEvents.length} new events stored, ${skippedEvents.length} duplicates skipped`,
-        events_stored: storedEvents.length,
-        events_skipped: skippedEvents.length,
-        skipped_titles: skippedEvents
-      })
-
-    } catch (processingError) {
-      // Update log with error
-      await redis.hset(`email_log:${logId}`, {
-        status: 'error',
-        error: processingError instanceof Error ? processingError.message : 'Unknown error'
-      })
-      throw processingError
-    }
+    // Return immediately to avoid CloudMailin timeout
+    return NextResponse.json({
+      success: true,
+      message: 'Email received and queued for processing',
+      log_id: logId
+    })
 
   } catch (error) {
     console.error('Error processing inbound email:', error)
