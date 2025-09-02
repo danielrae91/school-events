@@ -222,11 +222,22 @@ export default function HomePage() {
             <button
               onClick={() => {
                 const calendarUrl = getCalendarUrl()
+                const googleUrl = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarUrl)}`
+                window.open(googleUrl, '_blank')
+              }}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs transition-colors"
+            >
+              Add to Google
+            </button>
+            
+            <button
+              onClick={() => {
+                const calendarUrl = getCalendarUrl()
                 window.open(calendarUrl, '_blank')
               }}
               className="bg-slate-600 hover:bg-slate-500 text-white px-2 py-1 rounded text-xs transition-colors"
             >
-              Subscribe
+              Other Apps
             </button>
             
             <button
