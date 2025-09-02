@@ -6,7 +6,17 @@ import { createHash, createHmac } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+    console.log('Raw CloudMailin payload:', rawBody.substring(0, 500))
+    
+    let body
+    try {
+      body = JSON.parse(rawBody)
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError)
+      console.error('Raw body that failed to parse:', rawBody.substring(0, 1000))
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+    }
     
     // Validate CloudMailin webhook signature if secret is provided
     if (process.env.CLOUDMAILIN_SECRET) {

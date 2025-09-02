@@ -33,8 +33,8 @@ export default function HomePage() {
   }
 
   const handleGoogleCalendar = () => {
-    const calendarUrl = encodeURIComponent(getCalendarUrl())
-    window.open(`https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${calendarUrl}`, '_blank')
+    const calendarUrl = getCalendarUrl()
+    window.open(`https://calendar.google.com/calendar/render?cid=${encodeURIComponent(calendarUrl)}`, '_blank')
   }
 
   const handleAppleCalendar = () => {
@@ -69,18 +69,38 @@ export default function HomePage() {
     })
   }
 
+  const today = new Date()
+  const fourteenDaysFromNow = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
+  
   const sortedEvents = events
-    .filter(event => new Date(event.start_date) >= new Date(new Date().toDateString()))
+    .filter(event => {
+      const eventDate = new Date(event.start_date)
+      return eventDate >= today && eventDate <= fourteenDaysFromNow
+    })
     .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+
+  // Generate calendar grid for next 14 days
+  const generateCalendarDays = () => {
+    const days = []
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(today.getTime() + i * 24 * 60 * 60 * 1000)
+      const dateStr = date.toISOString().split('T')[0]
+      const dayEvents = events.filter(event => event.start_date === dateStr)
+      days.push({ date, dateStr, events: dayEvents })
+    }
+    return days
+  }
+
+  const calendarDays = generateCalendarDays()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">
-            <span className="block">🎓 School Events</span>
-            <span className="block text-indigo-600 text-3xl">Stay Connected</span>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+            <span className="block">Te Kura O Take Kārara</span>
+            <span className="block text-indigo-600 text-2xl">Upcoming Events</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Never miss an important school event. View upcoming events and subscribe to our calendar.
@@ -132,6 +152,52 @@ export default function HomePage() {
                 📋 Copy URL
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            📅 Next 14 Days
+          </h2>
+          
+          <div className="grid grid-cols-7 gap-2 mb-4">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                {day}
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-7 gap-2">
+            {calendarDays.map(({ date, dateStr, events }) => {
+              const isToday = dateStr === today.toISOString().split('T')[0]
+              const hasEvents = events.length > 0
+              
+              return (
+                <div 
+                  key={dateStr}
+                  className={`
+                    min-h-[80px] p-2 rounded-lg border transition-all duration-200
+                    ${isToday ? 'bg-indigo-100 border-indigo-300' : 'bg-gray-50 border-gray-200'}
+                    ${hasEvents ? 'hover:shadow-md cursor-pointer' : ''}
+                  `}
+                >
+                  <div className={`text-sm font-medium mb-1 ${isToday ? 'text-indigo-900' : 'text-gray-900'}`}>
+                    {date.getDate()}
+                  </div>
+                  {events.map((event, idx) => (
+                    <div 
+                      key={event.id}
+                      className="text-xs bg-indigo-600 text-white rounded px-1 py-0.5 mb-1 truncate"
+                      title={event.title}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -233,22 +299,8 @@ export default function HomePage() {
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">🔄 Auto-Updates</h3>
-            <p className="text-gray-600 mb-4">
-              Events are automatically extracted from school newsletters and updated in real-time.
-            </p>
-            <Link 
-              href="/admin"
-              className="inline-flex items-center space-x-2 text-indigo-600 hover:text-indigo-800 font-medium"
-            >
-              <span>⚙️</span>
-              <span>Admin Panel</span>
-            </Link>
-          </div>
-          
           <p className="text-sm text-gray-500">
-            Powered by AI • Automated event extraction from school newsletters
+            Made by a TK Parent
           </p>
         </div>
       </div>
