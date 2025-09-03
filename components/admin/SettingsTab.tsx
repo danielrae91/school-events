@@ -158,6 +158,28 @@ Return ONLY valid JSON in this format:
     }
   }
 
+  const handleManualCalendarSync = async () => {
+    if (!confirm('Are you sure you want to manually sync all events to Google Calendar? This will check for duplicates and update the calendar.')) return
+    
+    try {
+      const response = await fetch('/api/admin/manual-sync', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      })
+      if (response.ok) {
+        const result = await response.json()
+        alert(`Calendar sync completed successfully. ${result.message || 'Events synced to Google Calendar.'}`)
+        onRefresh()
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to sync calendar: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (err) {
+      console.error('Failed to sync calendar:', err)
+      alert('Failed to sync calendar')
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -260,10 +282,20 @@ Return ONLY valid JSON in this format:
                   </svg>
                   Delete All Events & Reparse
                 </button>
+                <button
+                  onClick={handleManualCalendarSync}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Sync to Google Calendar
+                </button>
               </div>
               <div className="text-sm text-slate-400">
                 <p><strong>Retry All:</strong> Reprocess all stored emails to extract events</p>
                 <p><strong>Delete & Reparse:</strong> Remove all events and reprocess all stored emails from scratch</p>
+                <p><strong>Sync to Google Calendar:</strong> Manually sync all events to Google Calendar with deduplication</p>
               </div>
             </div>
           </div>

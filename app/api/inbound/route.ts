@@ -82,6 +82,18 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
       completedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
+    
+    // Update admin panel log format
+    await redis.set(`log:${logId}`, JSON.stringify({
+      id: `log:${logId}`,
+      subject: subject,
+      status: 'completed',
+      created_at: new Date().toISOString(),
+      processed_at: new Date().toISOString(),
+      eventsExtracted: events.length,
+      eventsProcessed: storedEvents.length,
+      eventsSkipped: skippedEvents.length
+    }))
 
     console.log(`[${new Date().toISOString()}] [info] Email processing complete for ${logId}: ${storedEvents.length} stored, ${skippedEvents.length} skipped`)
 
@@ -131,6 +143,16 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
         failedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
+      
+      // Update admin panel log format
+      await redis.set(`log:${logId}`, JSON.stringify({
+        id: `log:${logId}`,
+        subject: subject,
+        status: 'failed',
+        error: errorMessage,
+        created_at: new Date().toISOString(),
+        processed_at: new Date().toISOString()
+      }))
     }
   }
 }
@@ -243,8 +265,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Store initial log
+    // Store initial log in both formats for compatibility
     await redis.hset(`email_log:${logId}`, logData)
+    await redis.set(`log:${logId}`, JSON.stringify({
+      id: `log:${logId}`,
+      subject: email.headers.subject,
+      status: 'processing',
+      created_at: new Date().toISOString()
+    }))
+    
+    // Add to logs list for admin panel
+    const logsList = await redis.get('logs:list') as string[] || []
+    logsList.unshift(`log:${logId}`)
+    await redis.set('logs:list', logsList)
 
     // Process email asynchronously to avoid timeout
     processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
