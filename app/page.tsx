@@ -37,7 +37,43 @@ export default function HomePage() {
     }
     
     checkPWAMode()
+  }, [])
+
+  // Handle deep links when events are loaded
+  useEffect(() => {
+    if (events.length === 0) return
     
+    const urlParams = new URLSearchParams(window.location.search)
+    const eventId = urlParams.get('event')
+    const action = urlParams.get('action')
+    
+    if (eventId) {
+      // Find and show the specific event
+      const event = events.find(e => e.id === eventId)
+      if (event) {
+        setSelectedEvent(event)
+      }
+    } else if (action) {
+      switch (action) {
+        case 'suggest':
+          setShowSuggestEventModal(true)
+          break
+        case 'contact':
+          setShowFeedbackModal(true)
+          break
+        case 'how':
+          setShowHowModal(true)
+          break
+      }
+    }
+    
+    // Clean up URL after handling deep link
+    if (eventId || action) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [events])
+
+  useEffect(() => {
     // PWA install prompt detection
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
@@ -483,13 +519,13 @@ export default function HomePage() {
                         onClick={(e) => {
                           e.stopPropagation()
                           const formattedDate = formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)
-                          const eventIcsUrl = `${window.location.origin}/api/events/${event.id}/ics`
-                          const shareText = `Event: ${event.title} - When: ${formattedDate}${event.location ? ` - Where: ${event.location}` : ''} - ${eventIcsUrl}`
+                          const eventUrl = `${window.location.origin}/?event=${event.id}`
+                          const shareText = `Event: ${event.title} - When: ${formattedDate}${event.location ? ` - Where: ${event.location}` : ''} - View details: ${eventUrl}`
                           
                           const shareData = {
                             title: event.title,
                             text: shareText,
-                            url: `${window.location.origin}/`
+                            url: eventUrl
                           }
                           if (navigator.share) {
                             navigator.share(shareData)
@@ -675,9 +711,24 @@ END:VCALENDAR`
             <h2 className="text-xl font-semibold text-white">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowSuggestEventModal(true)}
+                onClick={() => {
+                  const url = `${window.location.origin}/?action=suggest`
+                  if (navigator.share) {
+                    navigator.share({
+                      title: 'TK Events - Suggest Event',
+                      url: url
+                    })
+                  } else {
+                    navigator.clipboard.writeText(url)
+                    toast.success('Link copied to clipboard!')
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setShowSuggestEventModal(true)
+                }}
                 className="flex items-center justify-center w-8 h-8 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white mr-2"
-                title="Suggest Event"
+                title="Right-click to open directly, left-click to share"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -817,15 +868,47 @@ END:VCALENDAR`
           <span>Made by a TK Parent</span>
           <span>—</span>
           <button
-            onClick={() => setShowHowModal(true)}
+            onClick={() => {
+              const url = `${window.location.origin}/?action=how`
+              if (navigator.share) {
+                navigator.share({
+                  title: 'TK Events - How it Works',
+                  url: url
+                })
+              } else {
+                navigator.clipboard.writeText(url)
+                toast.success('Link copied to clipboard!')
+              }
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setShowHowModal(true)
+            }}
             className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
+            title="Right-click to open directly, left-click to share"
           >
             How/Why
           </button>
           <span>—</span>
           <button
-            onClick={() => setShowFeedbackModal(true)}
+            onClick={() => {
+              const url = `${window.location.origin}/?action=contact`
+              if (navigator.share) {
+                navigator.share({
+                  title: 'TK Events - Contact',
+                  url: url
+                })
+              } else {
+                navigator.clipboard.writeText(url)
+                toast.success('Link copied to clipboard!')
+              }
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setShowFeedbackModal(true)
+            }}
             className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
+            title="Right-click to open directly, left-click to share"
           >
             Contact
           </button>
@@ -1012,8 +1095,8 @@ END:VCALENDAR`
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => {
-                          const eventIcsUrl = `${window.location.origin}/api/events/${selectedEvent.id}/ics`
-                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - ${eventIcsUrl}`
+                          const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
+                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - View details: ${eventUrl}`
                           navigator.clipboard.writeText(shareText)
                           toast.success('Event details copied to clipboard!')
                         }}
@@ -1027,14 +1110,14 @@ END:VCALENDAR`
                       
                       <button
                         onClick={() => {
-                          const eventIcsUrl = `${window.location.origin}/api/events/${selectedEvent.id}/ics`
-                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - ${eventIcsUrl}`
+                          const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
+                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - View details: ${eventUrl}`
                           
                           if (navigator.share) {
                             navigator.share({
                               title: selectedEvent.title,
                               text: shareText,
-                              url: window.location.origin
+                              url: eventUrl
                             })
                           } else {
                             navigator.clipboard.writeText(shareText)
