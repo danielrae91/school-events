@@ -430,7 +430,7 @@ export default function HomePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             <div>
-              <p className="font-medium">Install TK Dates</p>
+              <p className="font-medium">Install TK Events</p>
               <p className="text-sm text-purple-100">Add to your home screen for quick access</p>
             </div>
           </div>
@@ -452,7 +452,7 @@ export default function HomePage() {
       )}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-3xl font-bold text-white mb-2">TK Dates</h1>
+          <h1 className="text-4xl sm:text-3xl font-bold text-white mb-2">TK Events</h1>
           <p className="text-gray-400">Te Kura o Take Karara Events</p>
           {lastUpdate && (
             <p className="text-gray-500 text-sm mt-2">
@@ -1370,7 +1370,7 @@ END:VCALENDAR`
               <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
                 <div className="mb-6">
                   <p className="text-gray-300 text-lg leading-relaxed">
-                    TK Dates automatically converts school newsletter emails into a clean, accessible event calendar using AI technology.
+                    TK Events automatically converts school newsletter emails into a clean, accessible event calendar using AI technology.
                   </p>
                 </div>
 

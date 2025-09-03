@@ -504,26 +504,15 @@ function AdminPageContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        {/* Header */}
-        <div ref={headerRef} className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-slate-400">Manage events, suggestions, feedback, and settings</p>
-        </div>
-          
           <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Admin Token
-              </label>
-              <input
-                type="password"
-                value={loginToken}
-                onChange={(e) => setLoginToken(e.target.value)}
-                className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Enter admin token"
-                required
-              />
-            </div>
+            <input
+              type="password"
+              value={loginToken}
+              onChange={(e) => setLoginToken(e.target.value)}
+              className="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="Password"
+              required
+            />
             
             {error && (
               <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 text-red-300 text-sm">

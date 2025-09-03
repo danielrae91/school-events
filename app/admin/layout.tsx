@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'TK Dates Admin',
+  title: 'TK Events Admin',
   description: 'Admin panel for TK Events - Te Kura o Take Karara',
 }
 

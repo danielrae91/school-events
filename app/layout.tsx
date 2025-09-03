@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TK Dates',
+  title: 'TK Events',
   description: 'Stay updated with TK school events and activities',
   keywords: 'school events, calendar, newsletter, ical, feed, Te Kura o Take Karara',
   manifest: '/manifest.json',
@@ -33,7 +33,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="TK Dates" />
+        <meta name="apple-mobile-web-app-title" content="TK Events" />
         <meta name="theme-color" content="#7c3aed" />
         <link rel="apple-touch-icon" href="/favicon-calendar.svg" />
       </head>
