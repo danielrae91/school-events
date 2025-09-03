@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
 
 interface SuggestEventModalProps {
   onClose: () => void
@@ -21,6 +22,22 @@ export default function SuggestEventModal({ onClose, onEventSuggested }: Suggest
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // Entrance animation
+    const tl = gsap.timeline()
+    tl.fromTo(overlayRef.current, 
+      { opacity: 0 }, 
+      { opacity: 1, duration: 0.3, ease: "power2.out" }
+    )
+    .fromTo(modalRef.current, 
+      { opacity: 0, scale: 0.9, y: 50 }, 
+      { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }, 
+      "-=0.1"
+    )
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,14 +73,27 @@ export default function SuggestEventModal({ onClose, onEventSuggested }: Suggest
     }))
   }
 
+  const handleClose = () => {
+    // Exit animation
+    const tl = gsap.timeline()
+    tl.to(modalRef.current, 
+      { opacity: 0, scale: 0.9, y: 50, duration: 0.3, ease: "power2.in" }
+    )
+    .to(overlayRef.current, 
+      { opacity: 0, duration: 0.2, ease: "power2.in" }, 
+      "-=0.1"
+    )
+    .call(() => onClose())
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-800 border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div ref={overlayRef} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div ref={modalRef} className="bg-slate-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="bg-green-600 px-6 py-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">Suggest an Event</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white hover:text-gray-300 p-1"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

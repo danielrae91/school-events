@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
 
 interface FeedbackModalProps {
   onClose: () => void
@@ -13,6 +14,22 @@ export default function FeedbackModal({ onClose, showSuccess, showError }: Feedb
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // Entrance animation
+    const tl = gsap.timeline()
+    tl.fromTo(overlayRef.current, 
+      { opacity: 0 }, 
+      { opacity: 1, duration: 0.3, ease: "power2.out" }
+    )
+    .fromTo(modalRef.current, 
+      { opacity: 0, scale: 0.9, y: 50 }, 
+      { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "back.out(1.7)" }, 
+      "-=0.1"
+    )
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,14 +65,27 @@ export default function FeedbackModal({ onClose, showSuccess, showError }: Feedb
     }
   }
 
+  const handleClose = () => {
+    // Exit animation
+    const tl = gsap.timeline()
+    tl.to(modalRef.current, 
+      { opacity: 0, scale: 0.9, y: 50, duration: 0.3, ease: "power2.in" }
+    )
+    .to(overlayRef.current, 
+      { opacity: 0, duration: 0.2, ease: "power2.in" }, 
+      "-=0.1"
+    )
+    .call(() => onClose())
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-md w-full shadow-2xl">
+    <div ref={overlayRef} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div ref={modalRef} className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-white">Send Feedback</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white/80 hover:text-white transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
