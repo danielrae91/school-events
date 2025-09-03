@@ -32,3 +32,35 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { action, visitorId } = body
+
+    switch (action) {
+      case 'page_view':
+        await redis.incr('stats:page_views')
+        if (visitorId) {
+          await redis.sadd('stats:unique_visitors', visitorId)
+        }
+        break
+      
+      case 'calendarSubscription':
+        await redis.incr('stats:subscribe_clicks')
+        break
+      
+      case 'addToCalendar':
+        await redis.incr('stats:add_to_calendar_clicks')
+        break
+      
+      default:
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error tracking stats:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

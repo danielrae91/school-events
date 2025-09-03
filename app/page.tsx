@@ -50,10 +50,13 @@ export default function HomePage() {
 
   const trackAddToCalendar = async () => {
     try {
-      await fetch('/api/admin/stats', {
+      await fetch('/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'addToCalendar' })
+        body: JSON.stringify({ 
+          action: 'add_to_calendar_click',
+          visitorId: localStorage.getItem('visitor_id') || 'anonymous'
+        })
       })
     } catch (error) {
       console.error('Failed to track add to calendar:', error)
@@ -62,10 +65,13 @@ export default function HomePage() {
 
   const trackCalendarSubscription = async () => {
     try {
-      await fetch('/api/admin/stats', {
+      await fetch('/api/track', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'calendarSubscription' })
+        body: JSON.stringify({ 
+          action: 'subscribe_click',
+          visitorId: localStorage.getItem('visitor_id') || 'anonymous'
+        })
       })
     } catch (error) {
       console.error('Failed to track calendar subscription:', error)
@@ -198,13 +204,24 @@ export default function HomePage() {
 
   // Get upcoming events (next 7 days)
   const today = new Date()
+  today.setHours(0, 0, 0, 0) // Start of today
+  
   const nextWeek = new Date(today)
   nextWeek.setDate(today.getDate() + 7)
+  nextWeek.setHours(23, 59, 59, 999) // End of the 7th day
 
   const upcomingEvents = events.filter(event => {
     const eventDate = new Date(event.start_date)
+    eventDate.setHours(0, 0, 0, 0) // Normalize to start of day for comparison
+    
     return eventDate >= today && eventDate <= nextWeek
   }).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+  
+  // If no events in next 7 days, show next 5 upcoming events regardless of date
+  const fallbackEvents = upcomingEvents.length === 0 ? 
+    events.filter(event => new Date(event.start_date) >= new Date())
+          .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+          .slice(0, 5) : upcomingEvents
 
   // Calendar state and functions 
   const [currentDate, setCurrentDate] = useState(new Date()) // Start with current month
@@ -320,7 +337,7 @@ export default function HomePage() {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Upcoming Events
+            {upcomingEvents.length > 0 ? 'Next 7 Days' : 'Upcoming Events'}
           </h2>
           {loading ? (
             <div className="flex justify-center py-8">
@@ -330,13 +347,13 @@ export default function HomePage() {
             <div className="bg-red-900/50 border border-red-600 rounded-lg p-4 text-center">
               <p className="text-red-300">{error}</p>
             </div>
-          ) : upcomingEvents.length === 0 ? (
+          ) : fallbackEvents.length === 0 ? (
             <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-4 text-center">
-              <p className="text-blue-300">No upcoming events in the next 7 days</p>
+              <p className="text-blue-300">No upcoming events found</p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
-              {upcomingEvents.map((event) => (
+              {fallbackEvents.map((event) => (
                 <div
                   key={event.id}
                   className="group bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4 sm:p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"

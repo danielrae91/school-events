@@ -28,13 +28,12 @@ export default function AdminPage() {
     if (token) {
       setAdminToken(token)
       setIsAuthenticated(true)
-      // Pass token directly to avoid state timing issues
-      fetchEventsWithToken(token)
+      fetchEvents()
+      // Load initial data for all tabs
       fetchSuggestionsWithToken(token)
       fetchFeedbackWithToken(token)
       fetchStatsWithToken(token)
       fetchLogsWithToken(token)
-      fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
     } else {
       setLoading(false)
@@ -530,7 +529,10 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Event Suggestions</h2>
                 <button
-                  onClick={() => fetchSuggestionsWithToken(adminToken)}
+                  onClick={() => {
+                    const token = localStorage.getItem('admin_token')
+                    if (token) fetchSuggestionsWithToken(token)
+                  }}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Refresh
@@ -899,7 +901,10 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">User Feedback</h2>
                 <button
-                  onClick={() => fetchFeedbackWithToken(adminToken)}
+                  onClick={() => {
+                    const token = localStorage.getItem('admin_token')
+                    if (token) fetchFeedbackWithToken(token)
+                  }}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Refresh
@@ -940,7 +945,10 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Site Statistics</h2>
                 <button
-                  onClick={() => fetchStatsWithToken(adminToken)}
+                  onClick={() => {
+                    const token = localStorage.getItem('admin_token')
+                    if (token) fetchStatsWithToken(token)
+                  }}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Refresh
@@ -1035,7 +1043,10 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Email Processing Logs</h2>
                 <button
-                  onClick={() => fetchLogsWithToken(adminToken)}
+                  onClick={() => {
+                    const token = localStorage.getItem('admin_token')
+                    if (token) fetchLogsWithToken(token)
+                  }}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Refresh
