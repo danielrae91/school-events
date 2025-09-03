@@ -244,19 +244,19 @@ export default function HomePage() {
   const handleGoogleCalendar = () => {
     const calendarUrl = `${window.location.origin}/calendar.ics`
     const googleUrl = `https://calendar.google.com/calendar/u/0/r/addbyurl?cid=${encodeURIComponent(calendarUrl)}`
-    window.open(googleUrl, '_blank')
+    window.location.href = googleUrl
   }
 
   const handleAppleCalendar = () => {
     const calendarUrl = `${window.location.origin}/calendar.ics`
     const webcalUrl = calendarUrl.replace(/^https?:\/\//, 'webcal://')
-    window.open(webcalUrl, '_blank')
+    window.location.href = webcalUrl
   }
 
   const handleOutlookCalendar = () => {
     const calendarUrl = `${window.location.origin}/calendar.ics`
     const outlookUrl = `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent(calendarUrl)}`
-    window.open(outlookUrl, '_blank')
+    window.location.href = outlookUrl
   }
 
   // Get upcoming events - show next 5 upcoming events regardless of date

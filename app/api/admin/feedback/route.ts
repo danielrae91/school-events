@@ -70,7 +70,10 @@ export async function DELETE(request: NextRequest) {
     }
     
     // Update feedback list by removing deleted IDs
-    const updatedList = feedbackList.filter(id => !feedbackIds.includes(id.replace('feedback:', '')))
+    const updatedList = feedbackList.filter(id => {
+      const cleanId = id.replace('feedback:', '')
+      return !feedbackIds.includes(cleanId) && !feedbackIds.includes(id)
+    })
     await redis.set('feedback:list', updatedList)
 
     return NextResponse.json({ 
