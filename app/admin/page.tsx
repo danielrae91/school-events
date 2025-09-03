@@ -54,6 +54,7 @@ function AdminPageContent() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(true)
   const [feedbackLoading, setFeedbackLoading] = useState(true)
   const [logsLoading, setLogsLoading] = useState(true)
+  const [settingsLoading, setSettingsLoading] = useState(true)
   const [error, setError] = useState('')
   
   // Data state
@@ -151,6 +152,7 @@ function AdminPageContent() {
 
   // Data fetching functions
   const fetchEventsWithToken = async (token: string) => {
+    setLoading(true)
     try {
       const response = await fetch('/api/admin/events', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -161,6 +163,8 @@ function AdminPageContent() {
       }
     } catch (err) {
       console.error('Failed to fetch events:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -216,6 +220,7 @@ function AdminPageContent() {
   }
 
   const fetchSettingsWithToken = async (token: string) => {
+    setSettingsLoading(true)
     try {
       const response = await fetch('/api/admin/settings', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -226,6 +231,8 @@ function AdminPageContent() {
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err)
+    } finally {
+      setSettingsLoading(false)
     }
   }
 
@@ -645,7 +652,7 @@ function AdminPageContent() {
           {activeTab === 'settings' && (
             <SettingsTab
               settings={settings}
-              loading={loading}
+              loading={settingsLoading}
               adminToken={adminToken}
               onRefresh={() => fetchSettingsWithToken(adminToken)}
             />

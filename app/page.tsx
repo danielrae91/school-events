@@ -768,7 +768,9 @@ END:VCALENDAR`
             <h2 className="text-xl font-semibold text-white">{currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => {
+                onClick={() => setShowSuggestEventModal(true)}
+                onContextMenu={(e) => {
+                  e.preventDefault()
                   const url = `${window.location.origin}/?action=suggest`
                   if (navigator.share) {
                     navigator.share({
@@ -780,12 +782,8 @@ END:VCALENDAR`
                     toast.success('Link copied to clipboard!')
                   }
                 }}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  setShowSuggestEventModal(true)
-                }}
                 className="flex items-center justify-center w-8 h-8 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white mr-2"
-                title="Right-click to open directly, left-click to share"
+                title="Left-click to suggest event, right-click to share"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1041,8 +1039,8 @@ END:VCALENDAR`
 
         {/* Event Modal */}
         {selectedEvent && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-modal-in">
               <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -1274,20 +1272,31 @@ END:VCALENDAR`
           />
         )}
 
+        {/* Feedback Modal */}
+        {showFeedbackModal && (
+          <div className="animate-fade-in">
+            <FeedbackModal 
+              onClose={() => setShowFeedbackModal(false)}
+            />
+          </div>
+        )}
+
         {/* Suggest Event Modal */}
         {showSuggestEventModal && (
-          <SuggestEventModal 
-            onClose={() => setShowSuggestEventModal(false)}
-            onEventSuggested={() => {
-              // Could show a success message here
-            }}
-          />
+          <div className="animate-fade-in">
+            <SuggestEventModal 
+              onClose={() => setShowSuggestEventModal(false)}
+              onEventSuggested={() => {
+                // Could show a success message here
+              }}
+            />
+          </div>
         )}
 
         {/* How/Why Modal */}
         {showHowModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-modal-in">
               <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-white">How TK Events Works</h2>
@@ -1302,7 +1311,7 @@ END:VCALENDAR`
                 </div>
               </div>
               
-              <div className="p-6">
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
                 <div className="mb-6">
                   <p className="text-gray-300 text-lg leading-relaxed">
                     TK Dates automatically converts school newsletter emails into a clean, accessible event calendar using AI technology.
