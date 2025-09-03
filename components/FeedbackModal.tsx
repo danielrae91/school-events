@@ -28,7 +28,9 @@ export default function FeedbackModal({ onClose, showSuccess, showError }: Feedb
           name,
           email,
           message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          ipAddress: 'client-side' // Will be replaced server-side
         }),
       })
 

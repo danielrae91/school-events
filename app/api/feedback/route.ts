@@ -3,11 +3,15 @@ import { redis } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, message, timestamp } = await request.json()
+    const { name, email, message, timestamp, userAgent } = await request.json()
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+
+    // Get real IP address
+    const forwarded = request.headers.get('x-forwarded-for')
+    const realIp = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown'
 
     const feedbackId = `feedback:${Date.now()}`
     
@@ -17,6 +21,8 @@ export async function POST(request: NextRequest) {
       email,
       message,
       timestamp,
+      userAgent: userAgent || 'unknown',
+      ipAddress: realIp,
       created_at: new Date().toISOString()
     }
 

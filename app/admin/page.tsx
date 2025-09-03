@@ -74,11 +74,17 @@ export default function AdminPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
-        const data = await response.json()
-        setEmailLogs(data.logs || [])
+        const text = await response.text()
+        if (text.trim()) {
+          const data = JSON.parse(text)
+          setEmailLogs(data.logs || [])
+        } else {
+          setEmailLogs([])
+        }
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
+      setEmailLogs([])
     }
   }
 
@@ -623,14 +629,14 @@ export default function AdminPage() {
           {/* Tab Content */}
           {activeTab === 'suggestions' && (
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Event Suggestions</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Event Suggestions</h2>
                 <button
                   onClick={() => {
                     const token = localStorage.getItem('admin_token')
                     if (token) fetchSuggestionsWithToken(token)
                   }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Refresh
                 </button>
@@ -985,22 +991,22 @@ export default function AdminPage() {
 
           {activeTab === 'feedback' && (
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">User Feedback</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Feedback</h2>
                 <div className="space-x-2">
                   <button
                     onClick={() => {
                       const token = localStorage.getItem('admin_token')
                       if (token) fetchFeedbackWithToken(token)
                     }}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm"
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Refresh
                   </button>
                   {selectedFeedback.size > 0 && (
                     <button
                       onClick={bulkDeleteFeedback}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Delete Selected ({selectedFeedback.size})
                     </button>
@@ -1058,6 +1064,13 @@ export default function AdminPage() {
                                 {item.email && `From: ${item.email} • `}
                                 {new Date(item.timestamp).toLocaleString()}
                               </p>
+                              {(item.ipAddress || item.userAgent) && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {item.ipAddress && `IP: ${item.ipAddress}`}
+                                  {item.ipAddress && item.userAgent && ' • '}
+                                  {item.userAgent && `Browser: ${item.userAgent.split(' ')[0]}`}
+                                </p>
+                              )}
                             </div>
                             <button
                               onClick={async () => {
@@ -1097,41 +1110,35 @@ export default function AdminPage() {
 
           {activeTab === 'logs' && (
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Email Processing Logs</h2>
                 <div className="space-x-2">
                   <button
                     onClick={() => {
                       const token = localStorage.getItem('admin_token')
                       if (token) fetchLogsWithToken(token)
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Refresh
                   </button>
                   {selectedLogs.size > 0 && (
                     <button
                       onClick={bulkDeleteLogs}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Delete Selected ({selectedLogs.size})
                     </button>
                   )}
                   <button
-                    onClick={debugRedisData}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
-                  >
-                    Debug Redis
-                  </button>
-                  <button
                     onClick={cleanupRedis}
-                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Cleanup Redis
                   </button>
                   <button
                     onClick={dedupeEvents}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Dedupe Events
                   </button>

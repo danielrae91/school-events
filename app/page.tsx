@@ -317,13 +317,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-900">
       <Toast toasts={toasts} removeToast={removeToast} />
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Te Kura O Take Kārara
-          </h1>
-          <p className="text-gray-400">School Events</p>
+          <h1 className="text-4xl sm:text-3xl font-bold text-white mb-2">Te Kura o Take Karara</h1>
+          <p className="text-gray-400">School Events Calendar</p>
           {lastUpdate && (
             <p className="text-gray-500 text-sm mt-2">
               Last updated: {lastUpdate}
@@ -331,14 +328,10 @@ export default function HomePage() {
           )}
         </div>
 
-
         {/* Upcoming Events */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6 text-center text-white flex items-center justify-center gap-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {upcomingEvents.length > 0 ? 'Next 7 Days' : 'Upcoming Events'}
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Upcoming Events
           </h2>
           {loading ? (
             <div className="flex justify-center py-8">
@@ -400,21 +393,45 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                    <div className="relative flex-shrink-0 ml-2 dropdown-container">
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          setDropdownOpen(dropdownOpen === event.id ? null : event.id)
+                          const shareData = {
+                            title: event.title,
+                            text: `${event.title}${event.description ? ` - ${event.description}` : ''}`,
+                            url: window.location.href
+                          }
+                          if (navigator.share) {
+                            navigator.share(shareData)
+                          } else {
+                            navigator.clipboard.writeText(`${event.title}\n${event.description || ''}\n${window.location.href}`)
+                            // Toast will be shown by the system
+                          }
                         }}
-                        className="bg-slate-600 hover:bg-slate-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-slate-500 flex items-center gap-1"
-                        title="Add to Calendar"
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-purple-500 flex items-center gap-1"
+                        title="Share Event"
                       >
-                        <span className="hidden sm:inline">Add to Calendar</span>
-                        <span className="sm:hidden">+</span>
+                        <span className="hidden sm:inline">Share</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                         </svg>
                       </button>
+                      <div className="relative dropdown-container">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDropdownOpen(dropdownOpen === event.id ? null : event.id)
+                          }}
+                          className="bg-slate-600 hover:bg-slate-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-slate-500 flex items-center gap-1"
+                          title="Add to Calendar"
+                        >
+                          <span className="hidden sm:inline">Add to Calendar</span>
+                          <span className="sm:hidden">+</span>
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
                       {dropdownOpen === event.id && (
                         <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
                           <div className="py-1">
@@ -501,6 +518,7 @@ END:VCALENDAR`
                           </div>
                         </div>
                       )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -511,11 +529,11 @@ END:VCALENDAR`
 
 
         {/* Subscribe to Calendar Button */}
-        <div className="mb-6 text-center">
-          <div className="relative dropdown-container inline-block">
+        <div className="mb-6">
+          <div className="relative w-full max-w-md mx-auto">
             <button
               onClick={() => setDropdownOpen(dropdownOpen === 'subscribe' ? null : 'subscribe')}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+              className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
               title="Subscribe to Calendar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -527,7 +545,7 @@ END:VCALENDAR`
               </svg>
             </button>
             {dropdownOpen === 'subscribe' && (
-              <div className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[60]">
+              <div className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-[60]">
                 <div className="py-1">
                   <button
                     onClick={() => {
