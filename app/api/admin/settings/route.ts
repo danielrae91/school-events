@@ -89,10 +89,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { gptPrompt } = await request.json()
+    const { prompt } = await request.json()
+
+    // Validate prompt is not null or empty
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      return NextResponse.json({ error: 'Prompt cannot be empty' }, { status: 400 })
+    }
 
     // Save GPT prompt to Redis
-    await redis.set('gpt_prompt', gptPrompt)
+    await redis.set('gpt_prompt', prompt.trim())
 
     return NextResponse.json({ success: true })
   } catch (error) {

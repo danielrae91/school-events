@@ -55,6 +55,24 @@ export default function LogsTab({
     }
   }
 
+  const handleBulkRetryLogs = async () => {
+    if (!confirm('Are you sure you want to retry processing all stored emails? This may take several minutes.')) return
+    
+    try {
+      const response = await fetch('/api/admin/bulk-retry', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      })
+      if (response.ok) {
+        alert('Bulk retry started successfully')
+        onRefresh()
+      }
+    } catch (err) {
+      console.error('Failed to start bulk retry:', err)
+      alert('Failed to start bulk retry')
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -76,6 +94,15 @@ export default function LogsTab({
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Email Processing Logs</h2>
         <div className="flex gap-3">
+          <button
+            onClick={handleBulkRetryLogs}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Retry All
+          </button>
           <button
             onClick={onCleanupRedis}
             className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
