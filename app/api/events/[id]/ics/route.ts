@@ -72,7 +72,7 @@ END:VCALENDAR`
     return new NextResponse(icsContent, {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${eventData.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'event'}.ics"`,
+        'Content-Disposition': `attachment; filename="${(eventData.title as string)?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'event'}.ics"`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
