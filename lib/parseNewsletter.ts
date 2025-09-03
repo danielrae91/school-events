@@ -53,6 +53,20 @@ export async function parseNewsletterWithGPT(content: string, logId?: string): P
       throw new Error('OpenAI API key not configured')
     }
 
+    // Get custom GPT prompt from Redis, fallback to default
+    let promptToUse = EXTRACTION_PROMPT
+    try {
+      const customPrompt = await redis.get('gpt_prompt')
+      if (customPrompt && typeof customPrompt === 'string' && customPrompt.trim()) {
+        promptToUse = customPrompt
+        console.log('Using custom GPT prompt from admin settings')
+      } else {
+        console.log('Using default GPT prompt')
+      }
+    } catch (err) {
+      console.warn('Failed to fetch custom prompt, using default:', err)
+    }
+
     // Log GPT parsing start
     if (logId) {
       await redis.hset(`email_log:${logId}`, {
@@ -69,7 +83,7 @@ export async function parseNewsletterWithGPT(content: string, logId?: string): P
       messages: [
         {
           role: 'system',
-          content: EXTRACTION_PROMPT
+          content: promptToUse
         },
         {
           role: 'user',

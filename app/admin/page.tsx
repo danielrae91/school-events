@@ -18,6 +18,7 @@ export default function AdminPage() {
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
   const [emailLogs, setEmailLogs] = useState<any[]>([])
   const [feedback, setFeedback] = useState<any[]>([])
+  const [selectedFeedback, setSelectedFeedback] = useState<Set<number>>(new Set())
 
   // Check authentication
   useEffect(() => {
@@ -286,6 +287,63 @@ export default function AdminPage() {
     }
   }
 
+  const toggleFeedbackSelection = (index: number) => {
+    const newSelection = new Set(selectedFeedback)
+    if (newSelection.has(index)) {
+      newSelection.delete(index)
+    } else {
+      newSelection.add(index)
+    }
+    setSelectedFeedback(newSelection)
+  }
+
+  const selectAllFeedback = () => {
+    setSelectedFeedback(new Set(feedback.map((_, index) => index)))
+  }
+
+  const clearFeedbackSelection = () => {
+    setSelectedFeedback(new Set())
+  }
+
+  const bulkDeleteFeedback = async () => {
+    if (selectedFeedback.size === 0) return
+    if (!confirm(`Delete ${selectedFeedback.size} selected feedback items?`)) return
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const deletePromises = Array.from(selectedFeedback).map(index =>
+        fetch(`/api/admin/feedback/${index}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      )
+      
+      await Promise.all(deletePromises)
+      setSelectedFeedback(new Set())
+      fetchFeedbackWithToken(adminToken)
+      alert(`${selectedFeedback.size} feedback items deleted successfully`)
+    } catch (err) {
+      setError('Failed to delete selected feedback')
+    }
+  }
+
+  const resetStats = async () => {
+    if (!confirm('This will reset all statistics. Are you sure?')) return
+    
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/reset-stats', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        alert('Statistics reset successfully')
+      }
+    } catch (err) {
+      setError('Failed to reset statistics')
+    }
+  }
+
   const handleLogin = () => {
     if (adminToken) {
       localStorage.setItem('admin_token', adminToken)
@@ -438,60 +496,68 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {/* Tab Navigation */}
+          {/* Admin Navigation */}
           <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('events')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'events' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+            <div className="flex justify-between items-center">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('events')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'events' 
+                      ? 'border-indigo-500 text-indigo-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Events ({events.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('suggestions')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'suggestions' 
+                      ? 'border-green-500 text-green-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Suggestions ({suggestions.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('feedback')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'feedback' 
+                      ? 'border-yellow-500 text-yellow-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Feedback ({feedback.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('logs')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'logs' 
+                      ? 'border-red-500 text-red-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Logs ({emailLogs.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'settings' 
+                      ? 'border-purple-500 text-purple-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Settings
+                </button>
+              </nav>
+              <a
+                href="/"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
-                Events ({events.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('suggestions')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'suggestions' 
-                    ? 'bg-green-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Suggestions ({suggestions.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('feedback')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'feedback' 
-                    ? 'bg-yellow-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Feedback
-              </button>
-              <button
-                onClick={() => setActiveTab('logs')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'logs' 
-                    ? 'bg-red-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Logs
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'settings' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Settings
-              </button>
-            </nav>
+                ← Back to Calendar
+              </a>
+            </div>
           </div>
 
           {error && (
@@ -794,24 +860,15 @@ export default function AdminPage() {
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      {events.map((event) => (
-                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
-                          event.needs_enrichment 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {event.needs_enrichment ? 'Needs Enrichment' : 'Complete'}
-                        </span>
-                      ))}
-                      {events.map((event) => (
-                        <span key={event.id} className={`px-2 py-1 rounded-full text-xs ${
-                          event.source === 'suggestion'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {event.source === 'suggestion' ? 'User Suggested' : 'Email Generated'}
-                        </span>
-                      ))}
+                      <span className="text-sm text-gray-600">
+                        Total: {events.length} events
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        Needs Enrichment: {events.filter(e => e.needs_enrichment).length}
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        User Suggested: {events.filter(e => e.source === 'suggestion').length}
+                      </span>
                     </div>
                     <div className="space-x-2">
                       <button
@@ -873,12 +930,22 @@ export default function AdminPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">User Feedback</h2>
-                <button
-                  onClick={() => fetchFeedbackWithToken(adminToken)}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Refresh
-                </button>
+                <div className="space-x-2">
+                  <button
+                    onClick={() => fetchFeedbackWithToken(adminToken)}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm"
+                  >
+                    Refresh
+                  </button>
+                  {selectedFeedback.size > 0 && (
+                    <button
+                      onClick={bulkDeleteFeedback}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
+                    >
+                      Delete Selected ({selectedFeedback.size})
+                    </button>
+                  )}
+                </div>
               </div>
 
               {feedback.length === 0 ? (
@@ -886,25 +953,79 @@ export default function AdminPage() {
                   No feedback submitted yet.
                 </div>
               ) : (
-                <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                  <ul className="divide-y divide-gray-200">
-                    {feedback.map((item, index) => (
-                      <li key={index} className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {item.message}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {item.email && `From: ${item.email} • `}
-                              {new Date(item.timestamp).toLocaleString()}
-                            </p>
-                          </div>
+                <>
+                  {feedback.length > 0 && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">
+                          Total: {feedback.length} feedback items
+                        </span>
+                        <div className="space-x-2">
+                          <button
+                            onClick={selectAllFeedback}
+                            className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={clearFeedbackSelection}
+                            className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded"
+                          >
+                            Clear
+                          </button>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul className="divide-y divide-gray-200">
+                      {feedback.map((item, index) => (
+                        <li key={index} className="px-6 py-4">
+                          <div className="flex items-center justify-between">
+                            <div className="mr-4">
+                              <input
+                                type="checkbox"
+                                checked={selectedFeedback.has(index)}
+                                onChange={() => toggleFeedbackSelection(index)}
+                                className="h-4 w-4 text-yellow-600 border-gray-300 rounded"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">
+                                {item.message}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {item.email && `From: ${item.email} • `}
+                                {new Date(item.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                            <button
+                              onClick={async () => {
+                                if (confirm('Delete this feedback item?')) {
+                                  try {
+                                    const token = localStorage.getItem('admin_token')
+                                    const response = await fetch(`/api/admin/feedback/${index}`, {
+                                      method: 'DELETE',
+                                      headers: { 'Authorization': `Bearer ${token}` }
+                                    })
+                                    if (response.ok) {
+                                      fetchFeedbackWithToken(adminToken)
+                                    }
+                                  } catch (err) {
+                                    setError('Failed to delete feedback')
+                                  }
+                                }
+                              }}
+                              className="text-red-600 hover:text-red-900 text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -1015,7 +1136,7 @@ export default function AdminPage() {
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Settings</h2>
               
-              <div className="bg-white shadow sm:rounded-lg">
+              <div className="bg-white shadow sm:rounded-lg mb-6">
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">GPT Event Extraction Prompt</h3>
                   <div className="mt-2 max-w-xl text-sm text-gray-500">
@@ -1036,6 +1157,23 @@ export default function AdminPage() {
                       className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                     >
                       Save Prompt
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white shadow sm:rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Statistics</h3>
+                  <div className="mt-2 max-w-xl text-sm text-gray-500">
+                    <p>Reset all usage statistics and analytics data.</p>
+                  </div>
+                  <div className="mt-5">
+                    <button
+                      onClick={resetStats}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      Reset All Statistics
                     </button>
                   </div>
                 </div>
