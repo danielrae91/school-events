@@ -400,7 +400,8 @@ export default function HomePage() {
                         className="bg-slate-600 hover:bg-slate-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-slate-500 flex items-center gap-1"
                         title="Add to Calendar"
                       >
-                        Add to Calendar
+                        <span className="hidden sm:inline">Add to Calendar</span>
+                        <span className="sm:hidden">+</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>

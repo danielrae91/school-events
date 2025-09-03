@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [emailLogs, setEmailLogs] = useState<any[]>([])
   const [feedback, setFeedback] = useState<any[]>([])
   const [selectedFeedback, setSelectedFeedback] = useState<Set<number>>(new Set())
+  const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set())
 
   // Check authentication
   useEffect(() => {
@@ -305,23 +306,76 @@ export default function AdminPage() {
     setSelectedFeedback(new Set())
   }
 
+  const toggleLogSelection = (index: number) => {
+    const newSelection = new Set(selectedLogs)
+    if (newSelection.has(index)) {
+      newSelection.delete(index)
+    } else {
+      newSelection.add(index)
+    }
+    setSelectedLogs(newSelection)
+  }
+
+  const selectAllLogs = () => {
+    setSelectedLogs(new Set(emailLogs.map((_, index) => index)))
+  }
+
+  const clearLogSelection = () => {
+    setSelectedLogs(new Set())
+  }
+
+  const bulkDeleteLogs = async () => {
+    if (selectedLogs.size === 0) return
+    if (!confirm(`Delete ${selectedLogs.size} selected log items?`)) return
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const logIds = Array.from(selectedLogs).map(index => emailLogs[index].id)
+      
+      const deletePromises = logIds.map(logId =>
+        fetch('/api/admin/logs', {
+          method: 'DELETE',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ logId })
+        })
+      )
+      
+      await Promise.all(deletePromises)
+      setSelectedLogs(new Set())
+      const refreshToken = localStorage.getItem('admin_token')
+      if (refreshToken) fetchLogsWithToken(refreshToken)
+      alert(`${selectedLogs.size} log items deleted successfully`)
+    } catch (err) {
+      setError('Failed to delete selected logs')
+    }
+  }
+
   const bulkDeleteFeedback = async () => {
     if (selectedFeedback.size === 0) return
     if (!confirm(`Delete ${selectedFeedback.size} selected feedback items?`)) return
 
     try {
       const token = localStorage.getItem('admin_token')
-      const deletePromises = Array.from(selectedFeedback).map(index =>
-        fetch(`/api/admin/feedback/${index}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      )
+      const feedbackIds = Array.from(selectedFeedback).map(index => feedback[index].id)
       
-      await Promise.all(deletePromises)
-      setSelectedFeedback(new Set())
-      fetchFeedbackWithToken(adminToken)
-      alert(`${selectedFeedback.size} feedback items deleted successfully`)
+      const response = await fetch('/api/admin/feedback', {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ feedbackIds })
+      })
+      
+      if (response.ok) {
+        setSelectedFeedback(new Set())
+        const token = localStorage.getItem('admin_token')
+        if (token) fetchFeedbackWithToken(token)
+        alert(`${selectedFeedback.size} feedback items deleted successfully`)
+      }
     } catch (err) {
       setError('Failed to delete selected feedback')
     }
@@ -1010,12 +1064,17 @@ export default function AdminPage() {
                                 if (confirm('Delete this feedback item?')) {
                                   try {
                                     const token = localStorage.getItem('admin_token')
-                                    const response = await fetch(`/api/admin/feedback/${index}`, {
+                                    const response = await fetch('/api/admin/feedback', {
                                       method: 'DELETE',
-                                      headers: { 'Authorization': `Bearer ${token}` }
+                                      headers: { 
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                      },
+                                      body: JSON.stringify({ feedbackIds: [item.id] })
                                     })
                                     if (response.ok) {
-                                      fetchFeedbackWithToken(adminToken)
+                                      const token = localStorage.getItem('admin_token')
+                                      if (token) fetchFeedbackWithToken(token)
                                     }
                                   } catch (err) {
                                     setError('Failed to delete feedback')
@@ -1050,6 +1109,14 @@ export default function AdminPage() {
                   >
                     Refresh
                   </button>
+                  {selectedLogs.size > 0 && (
+                    <button
+                      onClick={bulkDeleteLogs}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
+                    >
+                      Delete Selected ({selectedLogs.size})
+                    </button>
+                  )}
                   <button
                     onClick={debugRedisData}
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
@@ -1071,6 +1138,29 @@ export default function AdminPage() {
                 </div>
               </div>
               
+              {emailLogs.length > 0 && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      Total: {emailLogs.length} log items
+                    </span>
+                    <div className="space-x-2">
+                      <button
+                        onClick={selectAllLogs}
+                        className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        onClick={clearLogSelection}
+                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
                   {emailLogs.length === 0 ? (
@@ -1081,6 +1171,14 @@ export default function AdminPage() {
                     emailLogs.map((log, index) => (
                       <li key={index} className="px-6 py-4">
                         <div className="flex items-center justify-between">
+                          <div className="mr-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedLogs.has(index)}
+                              onChange={() => toggleLogSelection(index)}
+                              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                            />
+                          </div>
                           <div className="flex-1">
                             <div className="flex items-center">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
