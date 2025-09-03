@@ -329,8 +329,23 @@ export default function HomePage() {
     return eventDate >= today && eventDate <= nextWeek
   }).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
   
-  // Always show next 5 upcoming events regardless of date range
-  const fallbackEvents = events.filter(event => new Date(event.start_date) >= today)
+  // Get today's events
+  const todaysEvents = events.filter(event => {
+    const eventDate = new Date(event.start_date)
+    eventDate.setHours(0, 0, 0, 0)
+    const todayDate = new Date(today)
+    todayDate.setHours(0, 0, 0, 0)
+    return eventDate.getTime() === todayDate.getTime()
+  }).sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+
+  // Get upcoming events (excluding today's events)
+  const fallbackEvents = events.filter(event => {
+    const eventDate = new Date(event.start_date)
+    eventDate.setHours(0, 0, 0, 0)
+    const todayDate = new Date(today)
+    todayDate.setHours(0, 0, 0, 0)
+    return eventDate.getTime() > todayDate.getTime()
+  })
     .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
     .slice(0, 5)
 
@@ -460,6 +475,114 @@ export default function HomePage() {
             </p>
           )}
         </div>
+
+        {/* Today's Events */}
+        {todaysEvents.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Today's Events
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
+              {todaysEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="group bg-gradient-to-br from-amber-800 to-orange-900 border border-amber-600/50 rounded-2xl p-4 sm:p-6 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer"
+                  onClick={() => {
+                    setSelectedEvent(event)
+                    window.history.pushState({}, '', `/?event=${event.id}`)
+                  }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
+                            <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-amber-200 transition-colors break-words">
+                              {event.title}
+                            </h3>
+                            {isMultiDayEvent(event) && (
+                              <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full whitespace-nowrap font-medium mt-1 sm:mt-0 self-start">
+                                Multi-day
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col space-y-1 sm:space-y-2 text-amber-100 text-sm">
+                            <div className="flex items-center space-x-2">
+                              <svg className="w-4 h-4 text-amber-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <p className="font-medium">{formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="font-medium text-amber-200">{getDaysUntilEvent(event.start_date, event.start_time)}</span>
+                            </div>
+                            {event.location && (
+                              <div className="flex items-center space-x-2">
+                                <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span className="truncate">{event.location}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const formattedDate = formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)
+                          const eventUrl = `${window.location.origin}/?event=${event.id}`
+                          const shareText = `Event: ${event.title} - When: ${formattedDate}${event.location ? ` - Where: ${event.location}` : ''} - View details: ${eventUrl}`
+                          
+                          const shareData = {
+                            title: event.title,
+                            text: shareText,
+                            url: eventUrl
+                          }
+                          if (navigator.share) {
+                            navigator.share(shareData)
+                          } else {
+                            navigator.clipboard.writeText(shareText)
+                          }
+                        }}
+                        className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-amber-500 flex items-center gap-1"
+                        title="Share Event"
+                      >
+                        <span className="hidden sm:inline">Share</span>
+                        <span className="sm:hidden">Share</span>
+                        <svg className="w-3 h-3 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {todaysEvents.length === 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Today's Events
+            </h2>
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center">
+              <div className="text-gray-400 mb-2">
+                <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-gray-400 text-sm">No events today</p>
+            </div>
+          </div>
+        )}
 
         {/* Upcoming Events */}
         <div className="mb-8">
@@ -709,53 +832,80 @@ END:VCALENDAR`
           <div className="p-3 border-b border-slate-700">
             <h2 className="text-lg font-semibold text-white">All Future Events</h2>
           </div>
-          <div className="p-2 space-y-2 max-h-96 overflow-y-auto">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                onClick={() => {
-                  setSelectedEvent(event)
-                  window.history.pushState({}, '', `/?event=${event.id}`)
-                }}
-                className="bg-slate-700/30 rounded-lg p-2 cursor-pointer hover:bg-slate-700/50 transition-colors border border-slate-600/30"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-sm flex-shrink-0">{event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-white text-xs truncate">{event.title.replace(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, '')}</h3>
-                      <div className="text-xs text-gray-400 truncate">
-                        {formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}
-                        {event.location && ` • ${event.location}`}
-                      </div>
+          <div className="p-2 max-h-96 overflow-y-auto">
+            {(() => {
+              // Group events by month
+              const eventsByMonth = events.reduce((acc, event) => {
+                const eventDate = new Date(event.start_date)
+                const monthKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}`
+                const monthName = eventDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                
+                if (!acc[monthKey]) {
+                  acc[monthKey] = {
+                    monthName,
+                    events: []
+                  }
+                }
+                acc[monthKey].events.push(event)
+                return acc
+              }, {} as Record<string, { monthName: string; events: typeof events }>)
+
+              return Object.entries(eventsByMonth)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([monthKey, { monthName, events: monthEvents }]) => (
+                  <div key={monthKey} className="mb-4">
+                    <h3 className="text-sm font-semibold text-purple-300 mb-2 px-2">{monthName}</h3>
+                    <div className="space-y-2">
+                      {monthEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            setSelectedEvent(event)
+                            window.history.pushState({}, '', `/?event=${event.id}`)
+                          }}
+                          className="bg-slate-700/30 rounded-lg p-2 cursor-pointer hover:bg-slate-700/50 transition-colors border border-slate-600/30"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-sm flex-shrink-0">{event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-white text-xs truncate">{event.title.replace(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, '')}</h3>
+                                <div className="text-xs text-gray-400 truncate">
+                                  {formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}
+                                  {event.location && ` • ${event.location}`}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const eventUrl = `${window.location.origin}/?event=${event.id}`
+                                const shareText = `Event: ${event.title} - When: ${formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}${event.location ? ` - Where: ${event.location}` : ''} - View details: ${eventUrl}`
+                                
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: event.title,
+                                    text: shareText,
+                                    url: eventUrl
+                                  })
+                                } else {
+                                  navigator.clipboard.writeText(shareText)
+                                  toast.success('Event details copied!')
+                                }
+                              }}
+                              className="bg-purple-600 hover:bg-purple-500 text-white p-1 rounded text-xs transition-colors flex-shrink-0"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const eventUrl = `${window.location.origin}/?event=${event.id}`
-                      const shareText = `Event: ${event.title} - When: ${formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}${event.location ? ` - Where: ${event.location}` : ''} - View details: ${eventUrl}`
-                      
-                      if (navigator.share) {
-                        navigator.share({
-                          title: event.title,
-                          text: shareText,
-                          url: eventUrl
-                        })
-                      } else {
-                        navigator.clipboard.writeText(shareText)
-                        toast.success('Event details copied!')
-                      }
-                    }}
-                    className="bg-purple-600 hover:bg-purple-500 text-white p-1 rounded text-xs transition-colors flex-shrink-0"
-                  >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+                ))
+            })()}
             {events.length === 0 && (
               <div className="text-center py-8 text-gray-400">
                 <p>No upcoming events</p>
@@ -1048,27 +1198,6 @@ END:VCALENDAR`
         {/* Footer */}
         <div className="text-center py-6 text-gray-500 text-sm flex items-center justify-center gap-4">
           <span>Made by a TK Parent</span>
-          <span>—</span>
-          <button
-            onClick={() => setShowHowModal(true)}
-            onContextMenu={(e) => {
-              e.preventDefault()
-              const url = `${window.location.origin}/?action=how`
-              if (navigator.share) {
-                navigator.share({
-                  title: 'TK Events - How/Why',
-                  url: url
-                })
-              } else {
-                navigator.clipboard.writeText(url)
-                toast.success('Link copied to clipboard!')
-              }
-            }}
-            className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
-            title="Right-click to open directly, left-click to share"
-          >
-            How/Why
-          </button>
           <span>—</span>
           <button
             onClick={() => setShowFeedbackModal(true)}

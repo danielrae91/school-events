@@ -90,7 +90,7 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
       <div ref={modalRef} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">Contact Us</h2>
+            <h2 className="text-xl font-bold text-white">Send a message</h2>
             <button
               onClick={handleClose}
               className="text-white hover:text-gray-300 p-2 hover:bg-white/10 rounded-lg transition-colors"
