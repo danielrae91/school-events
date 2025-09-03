@@ -104,7 +104,7 @@ ${emailContent.plain || ''}
 ${emailContent.html ? `\nHTML CONTENT:\n${emailContent.html}` : ''}
       `.trim()
       
-      const events = await parseNewsletterWithGPT(contentToProcess, logId)
+      const events = await parseNewsletterWithGPT(contentToProcess)
       
       console.log(`[${new Date().toISOString()}] [info] Retry GPT returned ${events.length} events for log ${logId}`)
 
