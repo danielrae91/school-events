@@ -361,10 +361,7 @@ export default function HomePage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start space-x-3 sm:space-x-4 mb-3">
-                        <div className="text-2xl sm:text-3xl mt-1 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
-                          {getEventEmoji(event.title)}
-                        </div>
+                      <div className="mb-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
                             <h3 className="text-base sm:text-lg font-semibold text-white truncate group-hover:text-purple-300 transition-colors">
@@ -528,13 +525,13 @@ export default function HomePage() {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl p-6 hover:from-blue-600/30 hover:to-blue-700/30 transition-all duration-300">
+            <div className="p-6">
               <button
                 onClick={() => {
                   trackCalendarSubscription()
                   handleGoogleCalendar()
                 }}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full text-blue-400 hover:text-blue-300 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
