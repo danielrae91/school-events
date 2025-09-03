@@ -29,6 +29,7 @@ export default function AdminPage() {
       fetchEventsWithToken(token)
       fetchLogsWithToken(token)
       fetchSuggestionsWithToken(token)
+      fetchFeedbackWithToken(token)
       fetchSettingsWithToken(token)
     } else {
       setLoading(false)
@@ -76,6 +77,20 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
+    }
+  }
+
+  const fetchFeedbackWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/feedback', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setFeedback(data.feedback || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch feedback:', err)
     }
   }
 
@@ -854,8 +869,47 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Logs section removed */}
-          {false && (
+          {activeTab === 'feedback' && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">User Feedback</h2>
+                <button
+                  onClick={() => fetchFeedbackWithToken(adminToken)}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {feedback.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No feedback submitted yet.
+                </div>
+              ) : (
+                <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                  <ul className="divide-y divide-gray-200">
+                    {feedback.map((item, index) => (
+                      <li key={index} className="px-6 py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {item.message}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {item.email && `From: ${item.email} • `}
+                              {new Date(item.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'logs' && (
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>

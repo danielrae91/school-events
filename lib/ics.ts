@@ -60,13 +60,17 @@ export function generateICalFeed(events: StoredEvent[]): string {
 function parseEventDateTime(date: string, time?: string | null): Date {
   if (!time) {
     // All-day event - use date at midnight in NZ timezone
-    return new Date(`${date}T00:00:00+12:00`)
+    const dt = new Date(`${date}T00:00:00`)
+    // Manually adjust for NZ timezone (UTC+12)
+    dt.setHours(dt.getHours() + 12)
+    return dt
   }
 
-  // Parse time and combine with date in NZ timezone
+  // Parse time and combine with date
   const [hours, minutes] = time.split(':').map(Number)
-  // Create date in NZ timezone (UTC+12 for NZST, UTC+13 for NZDT)
-  const dateTime = new Date(`${date}T${time}:00+12:00`)
+  const dateTime = new Date(`${date}T${time}:00`)
+  // Manually adjust for NZ timezone (UTC+12)
+  dateTime.setHours(dateTime.getHours() + 12)
   
   return dateTime
 }
