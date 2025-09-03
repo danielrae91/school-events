@@ -67,9 +67,9 @@ curl -X POST https://your-domain.vercel.app/api/sync \
   -H "Authorization: Bearer YOUR_SYNC_SECRET"
 ```
 
-### Automatic Sync
+### Event-Driven Sync
 
-The system is configured to automatically sync every 6 hours via Vercel cron jobs.
+The system automatically syncs with Google Calendar when events are created, updated, or deleted through the admin panel.
 
 ## Troubleshooting
 
