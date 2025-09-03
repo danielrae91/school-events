@@ -297,7 +297,7 @@ export default function HomePage() {
   }
 
   const handleGoogleCalendar = () => {
-    const googleUrl = `https://calendar.google.com/calendar/embed?src=2grcr5b86lkfslkd51lohdkh1lmudsnv%40import.calendar.google.com&ctz=Pacific%2FAuckland`
+    const googleUrl = `https://calendar.google.com/calendar/u/0?cid=ODIwMTQ2NjNlZGZjN2ZlNzNlZTkzMGU4MDg5OWQ1ZWZhZjIwNTQ2ZTM4ZWE0Yzc4MmMwMjBjYjkwMzM5Y2VjNkBncm91cC5jYWxlbmRhci5nb29nbGUuY29t`
     window.open(googleUrl, '_blank')
   }
 

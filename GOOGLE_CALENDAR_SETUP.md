@@ -10,7 +10,7 @@ Add these environment variables to your Vercel project settings:
 
 1. **GOOGLE_CLIENT_ID** - OAuth2 client ID from Google Cloud Console
 2. **GOOGLE_CLIENT_SECRET** - OAuth2 client secret from Google Cloud Console  
-3. **GOOGLE_REDIRECT_URI** - OAuth2 redirect URI (e.g., `http://localhost:3000/auth/callback`)
+3. **GOOGLE_REDIRECT_URI** - OAuth2 redirect URI (e.g., `https://tkevents.nz/auth/callback`)
 4. **GOOGLE_REFRESH_TOKEN** - OAuth2 refresh token for your Google account
 5. **GOOGLE_CALENDAR_ID** - The ID of the target Google Calendar to sync events to
 
@@ -31,7 +31,7 @@ Add these environment variables to your Vercel project settings:
 1. Go to "Credentials" in the Google Cloud Console
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Set application type to "Web application"
-4. Add authorized redirect URIs (for local testing: `http://localhost:3000/auth/callback`)
+4. Add authorized redirect URIs: `https://tkevents.nz/auth/callback`
 5. Save the Client ID and Client Secret
 
 ### 3. Get Refresh Token
