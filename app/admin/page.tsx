@@ -270,12 +270,14 @@ export default function AdminPage() {
     if (!confirm(`Delete ${selectedFeedback.length} selected feedback items?`)) return
     
     try {
-      await Promise.all(selectedFeedback.map(id => 
-        fetch(`/api/admin/feedback/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${adminToken}` }
-        })
-      ))
+      const response = await fetch('/api/admin/feedback', {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ feedbackIds: selectedFeedback })
+      })
       setSelectedFeedback([])
       fetchFeedbackWithToken(adminToken)
     } catch (err) {

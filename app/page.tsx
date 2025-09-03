@@ -223,6 +223,7 @@ export default function HomePage() {
     const isToday = eventDateOnly.getTime() === todayDateOnly.getTime()
     
     if (diffMinutes < 0 && !timeStr && isToday) return 'All Day Today'
+    if (diffMinutes < 0 && isToday) return 'Happening Today'
     if (diffMinutes < 0) return 'Past'
     if (diffMinutes < 60) return `In ${diffMinutes} minutes`
     if (diffHours < 24) return `In ${diffHours} hours`
@@ -243,7 +244,7 @@ export default function HomePage() {
   const handleGoogleCalendar = () => {
     const calendarUrl = `${window.location.origin}/calendar.ics`
     const googleUrl = `https://calendar.google.com/calendar/u/0/r/addbyurl?cid=${encodeURIComponent(calendarUrl)}`
-    window.location.href = googleUrl
+    window.open(googleUrl, '_blank')
   }
 
   const handleAppleCalendar = () => {
