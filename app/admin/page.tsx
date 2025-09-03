@@ -932,6 +932,7 @@ export default function AdminPage() {
                           <div className="flex space-x-2">
                             {(log.status === 'error' || log.status === 'processing' || log.status === 'processing_gpt' || log.status === 'processing_events') && (
                               <button
+                                onClick={() => retryEmailProcessing(log.id)}
                                 className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
                               >
                                 Retry
