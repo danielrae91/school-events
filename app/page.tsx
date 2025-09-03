@@ -242,20 +242,19 @@ export default function HomePage() {
   }
 
   const handleGoogleCalendar = () => {
-    const calendarUrl = getCalendarUrl()
-    const webcalUrl = calendarUrl.replace(/^https?:\/\//, 'webcal://')
-    const googleUrl = `https://calendar.google.com/calendar/u/0/r/addbyurl?cid=${encodeURIComponent(webcalUrl)}`
+    const calendarUrl = `${window.location.origin}/calendar.ics`
+    const googleUrl = `https://calendar.google.com/calendar/u/0/r/addbyurl?cid=${encodeURIComponent(calendarUrl)}`
     window.open(googleUrl, '_blank')
   }
 
   const handleAppleCalendar = () => {
-    const calendarUrl = getCalendarUrl()
+    const calendarUrl = `${window.location.origin}/calendar.ics`
     const webcalUrl = calendarUrl.replace(/^https?:\/\//, 'webcal://')
     window.open(webcalUrl, '_blank')
   }
 
   const handleOutlookCalendar = () => {
-    const calendarUrl = getCalendarUrl()
+    const calendarUrl = `${window.location.origin}/calendar.ics`
     const outlookUrl = `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent(calendarUrl)}`
     window.open(outlookUrl, '_blank')
   }
