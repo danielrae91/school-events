@@ -11,20 +11,49 @@ import { Toast, useToast } from '@/components/Toast'
 export default function HomePage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<StoredEvent | null>(null)
   const [showAddEventModal, setShowAddEventModal] = useState(false)
   const [showSuggestEventModal, setShowSuggestEventModal] = useState(false)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
   const [stats, setStats] = useState<any>(null)
-  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
   const { toasts, removeToast, showSuccess, showError } = useToast()
 
   useEffect(() => {
     fetchEvents()
     trackPageView()
     fetchStats()
+    
+    // PWA install prompt detection
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      
+      // Check if user has dismissed the prompt before
+      const dismissed = localStorage.getItem('pwa-install-dismissed')
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      const isAndroid = /Android/.test(navigator.userAgent)
+      
+      if (!dismissed && !isStandalone && (isIOS || isAndroid)) {
+        setShowInstallPrompt(true)
+      }
+    }
+    
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallPrompt(false)
+    }
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
   }, [])
 
   // Close dropdown when clicking outside
@@ -77,18 +106,27 @@ export default function HomePage() {
   }
 
   const trackCalendarSubscription = async () => {
-    try {
-      await fetch('/api/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'subscribe_click',
-          visitorId: localStorage.getItem('visitor_id') || 'anonymous'
-        })
-      })
-    } catch (error) {
-      console.error('Failed to track calendar subscription:', error)
+    await fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'calendar_subscription', visitorId: localStorage.getItem('visitor_id') })
+    })
+  }
+
+  const handleInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'accepted') {
+        setShowInstallPrompt(false)
+      }
+      setDeferredPrompt(null)
     }
+  }
+
+  const dismissInstallPrompt = () => {
+    localStorage.setItem('pwa-install-dismissed', 'true')
+    setShowInstallPrompt(false)
   }
 
   const fetchEvents = async () => {
@@ -317,6 +355,40 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-900">
       <Toast toasts={toasts} removeToast={removeToast} />
+      
+      {/* PWA Install Notification */}
+      {showInstallPrompt && (
+        <div className="fixed top-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm mx-auto">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm mb-1">Install School Events</h3>
+              <p className="text-xs opacity-90">Add to your home screen for quick access to school events!</p>
+            </div>
+            <button
+              onClick={dismissInstallPrompt}
+              className="ml-2 text-white/80 hover:text-white"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={handleInstallPWA}
+              className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+            >
+              Install
+            </button>
+            <button
+              onClick={dismissInstallPrompt}
+              className="text-white/80 hover:text-white px-3 py-1 rounded text-xs transition-colors"
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl sm:text-3xl font-bold text-white mb-2">Te Kura o Take Karara</h1>
@@ -397,15 +469,47 @@ export default function HomePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
+                          const formatEventDate = (startDate: string, endDate: string | null, startTime: string | null, endTime: string | null) => {
+                            const start = new Date(startDate + (startTime ? `T${startTime}` : 'T00:00'))
+                            const end = endDate ? new Date(endDate + (endTime ? `T${endTime}` : startTime ? `T${startTime}` : 'T23:59')) : null
+                            
+                            const dateOptions: Intl.DateTimeFormatOptions = { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            }
+                            const timeOptions: Intl.DateTimeFormatOptions = { 
+                              hour: 'numeric', 
+                              minute: '2-digit', 
+                              hour12: true 
+                            }
+                            
+                            let dateStr = start.toLocaleDateString('en-NZ', dateOptions)
+                            if (startTime) {
+                              dateStr += ` at ${start.toLocaleTimeString('en-NZ', timeOptions)}`
+                              if (endTime && endTime !== startTime) {
+                                dateStr += ` - ${end?.toLocaleTimeString('en-NZ', timeOptions)}`
+                              }
+                            }
+                            if (end && endDate !== startDate) {
+                              dateStr += ` to ${end.toLocaleDateString('en-NZ', dateOptions)}`
+                            }
+                            return dateStr
+                          }
+                          
+                          const formattedDate = formatEventDate(event.start_date, event.end_date || null, event.start_time || null, event.end_time || null)
+                          const shareText = `${event.title}\n\n📅 ${formattedDate}${event.location ? `\n📍 ${event.location}` : ''}${event.description ? `\n\n${event.description}` : ''}\n\nView all school events: ${window.location.href}`
+                          
                           const shareData = {
                             title: event.title,
-                            text: `${event.title}${event.description ? ` - ${event.description}` : ''}`,
+                            text: shareText,
                             url: window.location.href
                           }
                           if (navigator.share) {
                             navigator.share(shareData)
                           } else {
-                            navigator.clipboard.writeText(`${event.title}\n${event.description || ''}\n${window.location.href}`)
+                            navigator.clipboard.writeText(shareText)
                             // Toast will be shown by the system
                           }
                         }}
@@ -413,7 +517,8 @@ export default function HomePage() {
                         title="Share Event"
                       >
                         <span className="hidden sm:inline">Share</span>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span className="sm:hidden">📤</span>
+                        <svg className="w-3 h-3 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                         </svg>
                       </button>
