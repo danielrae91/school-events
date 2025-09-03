@@ -17,7 +17,7 @@ interface ToastProps {
 
 export function Toast({ toasts, removeToast }: ToastProps) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 space-y-2">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
       ))}
@@ -77,22 +77,22 @@ function ToastItem({ toast, onRemove }: { toast: ToastMessage; onRemove: (id: st
   }
 
   return (
-    <div className={`max-w-sm w-full border rounded-lg shadow-lg backdrop-blur-sm ${getToastStyles()} animate-in slide-in-from-right duration-300`}>
-      <div className="p-4">
+    <div className={`max-w-sm w-full mx-auto sm:mx-0 border rounded-lg shadow-lg backdrop-blur-sm ${getToastStyles()} animate-in slide-in-from-right duration-300`}>
+      <div className="p-3 sm:p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
             {getIcon()}
           </div>
-          <div className="ml-3 w-0 flex-1">
-            <p className="text-sm font-medium">{toast.title}</p>
-            <p className="mt-1 text-sm opacity-90">{toast.message}</p>
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="text-sm font-medium break-words">{toast.title}</p>
+            <p className="mt-1 text-xs sm:text-sm opacity-90 break-words">{toast.message}</p>
           </div>
-          <div className="ml-4 flex-shrink-0 flex">
+          <div className="ml-2 sm:ml-4 flex-shrink-0 flex">
             <button
-              className="inline-flex text-gray-400 hover:text-gray-200 focus:outline-none"
+              className="inline-flex text-gray-400 hover:text-gray-200 focus:outline-none p-1"
               onClick={() => onRemove(toast.id)}
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>

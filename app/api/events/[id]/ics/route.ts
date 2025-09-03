@@ -24,10 +24,10 @@ export async function GET(
       return date
     }
 
-    const startDate = parseEventDateTime(eventData.start_date, eventData.start_time)
+    const startDate = parseEventDateTime(eventData.start_date as string, eventData.start_time as string)
     const endDate = eventData.end_date 
-      ? parseEventDateTime(eventData.end_date, eventData.end_time || eventData.start_time)
-      : parseEventDateTime(eventData.start_date, eventData.end_time || eventData.start_time)
+      ? parseEventDateTime(eventData.end_date as string, (eventData.end_time || eventData.start_time) as string)
+      : parseEventDateTime(eventData.start_date as string, (eventData.end_time || eventData.start_time) as string)
 
     // Format dates for ICS (UTC format)
     const formatICSDate = (date: Date) => {

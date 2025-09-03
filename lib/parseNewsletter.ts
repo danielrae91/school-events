@@ -46,7 +46,7 @@ Return ONLY valid JSON in this format:
   ]
 }`
 
-export async function parseNewsletterWithGPT(content: string, logId?: string): Promise<Event[]> {
+export async function parseNewsletterWithGPT(content: string): Promise<Event[]> {
   try {
     // Check if OpenAI is available
     if (!openai) {
@@ -67,14 +67,7 @@ export async function parseNewsletterWithGPT(content: string, logId?: string): P
       console.warn('Failed to fetch custom prompt, using default:', err)
     }
 
-    // Log GPT parsing start
-    if (logId) {
-      await redis.hset(`email_log:${logId}`, {
-        stage: 'gpt_parsing',
-        gptStarted: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-    }
+    // Log GPT parsing start - removed logId dependency
 
     console.log('Calling OpenAI with content length:', content.length)
 

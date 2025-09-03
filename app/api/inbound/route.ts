@@ -29,7 +29,7 @@ ${plain || ''}
 ${html ? `\nHTML CONTENT:\n${html}` : ''}
     `.trim()
     
-    const events = await parseNewsletterWithGPT(contentToProcess, logId)
+    const events = await parseNewsletterWithGPT(contentToProcess)
     console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
 
     // Update status to show GPT completed
