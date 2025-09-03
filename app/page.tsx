@@ -635,10 +635,10 @@ END:VCALENDAR`
 
         {/* Subscribe to Calendar Button */}
         <div className="mb-6">
-          <div className="relative w-full max-w-md mx-auto">
+          <div className="relative w-full">
             <button
               onClick={() => setDropdownOpen(dropdownOpen === 'subscribe' ? null : 'subscribe')}
-              className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
+              className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-medium transition-colors border border-purple-500"
               title="Subscribe to Calendar"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -650,7 +650,7 @@ END:VCALENDAR`
               </svg>
             </button>
             {dropdownOpen === 'subscribe' && (
-              <div className="absolute left-1/2 transform -translate-x-1/2 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-[60]">
+              <div className="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-[60]">
                 <div className="py-1">
                   <button
                     onClick={() => {

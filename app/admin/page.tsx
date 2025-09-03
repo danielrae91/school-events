@@ -79,7 +79,21 @@ export default function AdminPage() {
         if (text.trim()) {
           try {
             const data = JSON.parse(text)
-            setEmailLogs(data.logs || [])
+            // Filter out logs with incomplete emailContent that might cause parsing issues
+            const validLogs = (data.logs || []).filter((log: any) => {
+              let emailContent
+              try {
+                emailContent = typeof log.emailContent === 'string' ? JSON.parse(log.emailContent) : log.emailContent
+                // Ensure we have valid content
+                if (!emailContent || (!emailContent.plain && !emailContent.html)) {
+                  emailContent = { subject: log.subject || 'No subject', plain: 'Email content not available' }
+                }
+              } catch (e) {
+                emailContent = { subject: log.subject || 'Parse error', plain: 'Could not parse email content' }
+              }
+              return true
+            })
+            setEmailLogs(validLogs)
           } catch (parseError) {
             console.error('JSON parse error:', parseError, 'Raw text:', text)
             setEmailLogs([])
@@ -1227,16 +1241,23 @@ export default function AdminPage() {
                               )}
                               {log.eventsProcessed && <p>Events processed: {log.eventsProcessed}</p>}
                               {log.eventsExtracted && <p>Events extracted by GPT: {log.eventsExtracted}</p>}
-                              {log.createdEventTitles && JSON.parse(log.createdEventTitles).length > 0 && (
-                                <div className="mt-2">
-                                  <p className="font-medium">Created Events:</p>
-                                  <ul className="list-disc list-inside text-xs">
-                                    {JSON.parse(log.createdEventTitles).map((title: string, idx: number) => (
-                                      <li key={idx}>{title}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
+                              {log.createdEventTitles && (() => {
+                                try {
+                                  const titles = JSON.parse(log.createdEventTitles)
+                                  return titles.length > 0 && (
+                                    <div className="mt-2">
+                                      <p className="font-medium">Created Events:</p>
+                                      <ul className="list-disc list-inside text-xs">
+                                        {titles.map((title: string, idx: number) => (
+                                          <li key={idx}>{title}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )
+                                } catch (e) {
+                                  return null
+                                }
+                              })()}
                               {log.processingStarted && <p>Processing started: {new Date(log.processingStarted).toLocaleString()}</p>}
                               {log.gptCompleted && <p>GPT completed: {new Date(log.gptCompleted).toLocaleString()}</p>}
                             </div>
