@@ -130,8 +130,8 @@ export default function HomePage() {
   }
 
   const formatEventDate = (startDate: string, endDate?: string, startTime?: string, endTime?: string) => {
-    const start = new Date(startDate)
-    const end = endDate ? new Date(endDate) : start
+    const start = new Date(startDate + 'T00:00:00+12:00')
+    const end = endDate ? new Date(endDate + 'T00:00:00+12:00') : start
     
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-US', { 
@@ -171,7 +171,7 @@ export default function HomePage() {
   }
 
   const getDaysUntilEvent = (dateStr: string, timeStr?: string) => {
-    const eventDate = new Date(dateStr + (timeStr ? `T${timeStr}` : 'T00:00'))
+    const eventDate = new Date(dateStr + (timeStr ? `T${timeStr}:00+12:00` : 'T00:00:00+12:00'))
     const now = new Date()
     
     const diffTime = eventDate.getTime() - now.getTime()
@@ -181,7 +181,7 @@ export default function HomePage() {
     
     // Check if it's a full day event happening today
     const today = new Date()
-    const eventDateOnly = new Date(dateStr + 'T00:00')
+    const eventDateOnly = new Date(dateStr + 'T00:00:00+12:00')
     const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const isToday = eventDateOnly.getTime() === todayDateOnly.getTime()
     
@@ -407,7 +407,7 @@ export default function HomePage() {
                         </svg>
                       </button>
                       {dropdownOpen === event.id && (
-                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[60]">
+                        <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
                           <div className="py-1">
                             <button
                               onClick={async (e) => {
@@ -520,11 +520,12 @@ END:VCALENDAR`
               <div className="relative dropdown-container mr-2">
                 <button
                   onClick={() => setDropdownOpen(dropdownOpen === 'subscribe' ? null : 'subscribe')}
-                  className="flex items-center justify-center px-3 py-1.5 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white text-sm"
+                  className="flex items-center justify-center px-2 sm:px-3 py-1.5 hover:bg-slate-700 rounded-lg transition-colors text-gray-400 hover:text-white text-xs sm:text-sm"
                   title="Subscribe to Calendar"
                 >
-                  Subscribe
-                  <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="hidden sm:inline">Subscribe</span>
+                  <span className="sm:hidden">+</span>
+                  <svg className="w-3 h-3 ml-1 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>

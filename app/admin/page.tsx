@@ -1210,6 +1210,16 @@ export default function AdminPage() {
                               )}
                               {log.eventsProcessed && <p>Events processed: {log.eventsProcessed}</p>}
                               {log.eventsExtracted && <p>Events extracted by GPT: {log.eventsExtracted}</p>}
+                              {log.createdEventTitles && JSON.parse(log.createdEventTitles).length > 0 && (
+                                <div className="mt-2">
+                                  <p className="font-medium">Created Events:</p>
+                                  <ul className="list-disc list-inside text-xs">
+                                    {JSON.parse(log.createdEventTitles).map((title: string, idx: number) => (
+                                      <li key={idx}>{title}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                               {log.processingStarted && <p>Processing started: {new Date(log.processingStarted).toLocaleString()}</p>}
                               {log.gptCompleted && <p>GPT completed: {new Date(log.gptCompleted).toLocaleString()}</p>}
                             </div>
