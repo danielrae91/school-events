@@ -5,8 +5,9 @@ import { storeEvent, eventExists, redis } from '@/lib/db'
 import { createHash, createHmac } from 'crypto'
 
 // Async function to process email without blocking webhook response
-async function processEmailAsync(logId: string, subject: string, plain: string, html?: string) {
-  console.log(`[${new Date().toISOString()}] [info] Starting async processing for log ${logId}`)
+async function processEmailAsync(logId: string, subject: string, plain: string, html?: string, retryCount: number = 0) {
+  const maxRetries = 3
+  console.log(`[${new Date().toISOString()}] [info] Starting async processing for log ${logId} (attempt ${retryCount + 1}/${maxRetries + 1})`)
   
   try {
     // Update status to show processing started
@@ -86,21 +87,51 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error(`[${new Date().toISOString()}] [error] Async email processing error for ${logId}:`, error)
+    console.error(`[${new Date().toISOString()}] [error] Async email processing error for ${logId} (attempt ${retryCount + 1}):`, error)
     console.error(`[${new Date().toISOString()}] [error] Error stack:`, error instanceof Error ? error.stack : 'No stack')
     console.error(`[${new Date().toISOString()}] [error] Error type:`, typeof error)
     console.error(`[${new Date().toISOString()}] [error] Error constructor:`, error?.constructor?.name)
     
-    // Update log with detailed error
-    await redis.hset(`email_log:${logId}`, {
-      status: 'failed',
-      stage: 'error',
-      error: errorMessage,
-      errorDetails: error instanceof Error ? error.stack : 'No stack trace',
-      errorType: error?.constructor?.name || 'Unknown',
-      failedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    })
+    // Check if we should retry
+    if (retryCount < maxRetries) {
+      const nextRetryCount = retryCount + 1
+      const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 30000) // Exponential backoff, max 30s
+      
+      console.log(`[${new Date().toISOString()}] [info] Scheduling retry ${nextRetryCount}/${maxRetries} for log ${logId} in ${retryDelay}ms`)
+      
+      // Update log with retry info
+      await redis.hset(`email_log:${logId}`, {
+        status: 'retrying',
+        stage: 'retry_scheduled',
+        error: errorMessage,
+        retryCount: nextRetryCount,
+        nextRetryAt: new Date(Date.now() + retryDelay).toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      
+      // Schedule retry
+      setTimeout(() => {
+        processEmailAsync(logId, subject, plain, html, nextRetryCount).catch((retryError: Error) => {
+          console.error(`[${new Date().toISOString()}] [error] Retry failed for log ${logId}:`, retryError)
+        })
+      }, retryDelay)
+      
+    } else {
+      // Max retries exceeded, mark as failed
+      console.log(`[${new Date().toISOString()}] [error] Max retries exceeded for log ${logId}, marking as failed`)
+      
+      await redis.hset(`email_log:${logId}`, {
+        status: 'failed',
+        stage: 'error',
+        error: errorMessage,
+        errorDetails: error instanceof Error ? error.stack : 'No stack trace',
+        errorType: error?.constructor?.name || 'Unknown',
+        retryCount: retryCount,
+        maxRetriesExceeded: true,
+        failedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+    }
   }
 }
 

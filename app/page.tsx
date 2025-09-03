@@ -21,11 +21,22 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
   const [stats, setStats] = useState<any>(null)
+  const [showHowModal, setShowHowModal] = useState(false)
+  const [isPWA, setIsPWA] = useState(false)
 
   useEffect(() => {
     fetchEvents()
     trackPageView()
     fetchStats()
+    
+    // Check if running in PWA mode
+    const checkPWAMode = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                          (window.navigator as any).standalone === true
+      setIsPWA(isStandalone)
+    }
+    
+    checkPWAMode()
     
     // PWA install prompt detection
     const handleBeforeInstallPrompt = (e: any) => {
@@ -363,27 +374,22 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-900">
         <Toaster />
       
-      {/* PWA Install Notification */}
-      {showInstallPrompt && (
-        <div className="fixed top-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm mx-auto">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="font-semibold text-sm mb-1">Install School Events</h3>
-              <p className="text-xs opacity-90">Add to your home screen for quick access to school events!</p>
+      {/* PWA Install Prompt */}
+      {showInstallPrompt && deferredPrompt && (
+        <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-lg shadow-lg z-50 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <div>
+              <p className="font-medium">Install TK Dates</p>
+              <p className="text-sm text-purple-100">Add to your home screen for quick access</p>
             </div>
-            <button
-              onClick={dismissInstallPrompt}
-              className="ml-2 text-white/80 hover:text-white"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
-          <div className="flex gap-2 mt-3">
+          <div className="flex space-x-2">
             <button
               onClick={handleInstallPWA}
-              className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+              className="bg-white text-purple-600 px-4 py-2 rounded font-medium text-sm hover:bg-purple-50 transition-colors"
             >
               Install
             </button>
@@ -398,8 +404,8 @@ export default function HomePage() {
       )}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-3xl font-bold text-white mb-2">Te Kura o Take Karara</h1>
-          <p className="text-gray-400">School Events Calendar</p>
+          <h1 className="text-4xl sm:text-3xl font-bold text-white mb-2">TK Dates</h1>
+          <p className="text-gray-400">Te Kura o Take Karara Events</p>
           {lastUpdate && (
             <p className="text-gray-500 text-sm mt-2">
               Last updated: {lastUpdate}
@@ -451,7 +457,7 @@ export default function HomePage() {
                               <svg className="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
-                              <span className="font-medium">{formatEventDuration(event)}</span>
+                              <p className="font-medium">Install TK Dates</p>
                             </div>
                             <div className="flex items-center space-x-2">
                               <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -641,7 +647,8 @@ END:VCALENDAR`
         </div>
 
 
-        {/* Subscribe to Calendar Button */}
+        {/* Subscribe to Calendar Button - Hidden in PWA mode */}
+        {!isPWA && (
         <div className="mb-6">
           <div className="relative w-full">
             <button
@@ -714,6 +721,7 @@ END:VCALENDAR`
             )}
           </div>
         </div>
+        )}
 
         {/* Calendar */}
         <div className="bg-slate-800 border border-slate-700 rounded-xl mb-8">
@@ -863,10 +871,17 @@ END:VCALENDAR`
           <span>Made by a TK Parent</span>
           <span>—</span>
           <button
+            onClick={() => setShowHowModal(true)}
+            className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
+          >
+            How/Why
+          </button>
+          <span>—</span>
+          <button
             onClick={() => setShowFeedbackModal(true)}
             className="text-purple-400 hover:text-purple-300 underline text-sm transition-colors"
           >
-            Send feedback
+            Contact
           </button>
         </div>
 
@@ -1108,6 +1123,169 @@ END:VCALENDAR`
               // Could show a success message here
             }}
           />
+        )}
+
+        {/* How/Why Modal */}
+        {showHowModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white">How TK Dates Works</h2>
+                  <button
+                    onClick={() => setShowHowModal(false)}
+                    className="text-white hover:text-gray-300 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="mb-6">
+                  <p className="text-gray-300 text-lg leading-relaxed">
+                    TK Dates automatically converts school newsletter emails into a clean, accessible event calendar using AI technology.
+                  </p>
+                </div>
+
+                {/* Process Steps */}
+                <div className="space-y-6">
+                  {/* Step 1 */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      1
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-white mb-2">Newsletter Email Received</h3>
+                      <p className="text-gray-300 mb-3">
+                        School newsletters are automatically forwarded to our system via email. These contain event information scattered throughout the text.
+                      </p>
+                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-blue-500">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-blue-300 font-medium">Raw Newsletter Content</span>
+                        </div>
+                        <p className="text-gray-400 text-sm">Unstructured text with dates, times, and event details mixed in with other school information.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      2
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-white mb-2">AI Processing & Extraction</h3>
+                      <p className="text-gray-300 mb-3">
+                        OpenAI GPT-4 analyzes the newsletter content and intelligently extracts event information, dates, times, and locations.
+                      </p>
+                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-green-500">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                          <span className="text-green-300 font-medium">Smart Event Recognition</span>
+                        </div>
+                        <p className="text-gray-400 text-sm">AI identifies patterns, extracts dates/times, and structures event data automatically.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      3
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-white mb-2">Event Storage & Organization</h3>
+                      <p className="text-gray-300 mb-3">
+                        Extracted events are stored in our database with proper formatting, duplicate detection, and timezone handling for New Zealand.
+                      </p>
+                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-orange-500">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                          </svg>
+                          <span className="text-orange-300 font-medium">Structured Data Storage</span>
+                        </div>
+                        <p className="text-gray-400 text-sm">Events are organized, deduplicated, and stored with proper NZ timezone information.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      4
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-white mb-2">Beautiful Calendar Display</h3>
+                      <p className="text-gray-300 mb-3">
+                        Events appear instantly on this website and can be subscribed to in Google Calendar, Apple Calendar, or Outlook.
+                      </p>
+                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-purple-500">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-purple-300 font-medium">Accessible Calendar</span>
+                        </div>
+                        <p className="text-gray-400 text-sm">Clean, mobile-friendly calendar that syncs with your favorite calendar app.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-700">
+                  <h3 className="text-lg font-semibold text-white mb-3">Why This Approach?</h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-slate-700/30 rounded-lg p-4">
+                      <h4 className="font-medium text-white mb-2">⚡ Automatic Updates</h4>
+                      <p className="text-gray-300 text-sm">No manual entry needed - events appear as soon as newsletters are sent.</p>
+                    </div>
+                    <div className="bg-slate-700/30 rounded-lg p-4">
+                      <h4 className="font-medium text-white mb-2">📱 Mobile Friendly</h4>
+                      <p className="text-gray-300 text-sm">Works perfectly on phones, tablets, and can be installed as a PWA.</p>
+                    </div>
+                    <div className="bg-slate-700/30 rounded-lg p-4">
+                      <h4 className="font-medium text-white mb-2">🔄 Calendar Sync</h4>
+                      <p className="text-gray-300 text-sm">Subscribe once and events automatically appear in your calendar app.</p>
+                    </div>
+                    <div className="bg-slate-700/30 rounded-lg p-4">
+                      <h4 className="font-medium text-white mb-2">🎯 Accurate Parsing</h4>
+                      <p className="text-gray-300 text-sm">AI understands context and extracts the right information from complex text.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Feedback Modal */}

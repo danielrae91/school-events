@@ -250,13 +250,17 @@ function AdminPageContent() {
     }
   }
 
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return
+  const deleteEvent = async (eventId: string) => {
+    if (!adminToken) return
     
     try {
-      const response = await fetch(`/api/admin/events/${eventId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+      const response = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'delete', eventId })
       })
       
       if (response.ok) {
@@ -267,16 +271,18 @@ function AdminPageContent() {
     }
   }
 
-  const bulkDeleteEvents = async () => {
-    if (!confirm(`Delete ${selectedEvents.length} selected events?`)) return
+  const deleteSelectedEvents = async () => {
+    if (!adminToken || selectedEvents.length === 0) return
     
     try {
-      await Promise.all(selectedEvents.map(id => 
-        fetch(`/api/admin/events/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${adminToken}` }
-        })
-      ))
+      const response = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'bulk_delete', eventIds: selectedEvents })
+      })
       setSelectedEvents([])
       fetchEventsWithToken(adminToken)
     } catch (err) {
@@ -334,20 +340,6 @@ function AdminPageContent() {
     }
   }
 
-  const dedupeEvents = async () => {
-    try {
-      const response = await fetch('/api/admin/dedupe', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      })
-      if (response.ok) {
-        alert('Event deduplication completed')
-        fetchEventsWithToken(adminToken)
-      }
-    } catch (err) {
-      console.error('Failed to dedupe events:', err)
-    }
-  }
 
   // Selection handlers
   const toggleEventSelection = (eventId: string) => {
@@ -553,8 +545,8 @@ function AdminPageContent() {
               onRefresh={() => fetchEventsWithToken(adminToken)}
               onAddEvent={() => setShowAddForm(true)}
               onEditEvent={setEditingEvent}
-              onDeleteEvent={handleDeleteEvent}
-              onBulkDelete={bulkDeleteEvents}
+              onDeleteEvent={deleteEvent}
+              onBulkDelete={deleteSelectedEvents}
               onToggleSelection={toggleEventSelection}
               onSelectAll={selectAllEvents}
               onClearSelection={clearSelection}
@@ -598,7 +590,6 @@ function AdminPageContent() {
               onSelectAll={selectAllLogs}
               onClearSelection={clearSelection}
               onCleanupRedis={cleanupRedis}
-              onDedupeEvents={dedupeEvents}
             />
           )}
 

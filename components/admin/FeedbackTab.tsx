@@ -31,7 +31,7 @@ export default function FeedbackTab({
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-white">Feedback Management</h2>
+        <h2 className="text-xl font-semibold text-white">Contact Messages</h2>
         <button
           onClick={onRefresh}
           className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg transition-colors"
@@ -40,12 +40,14 @@ export default function FeedbackTab({
         </button>
       </div>
 
-      {feedback.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-8 text-slate-400">Loading messages...</div>
+      ) : feedback.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V8m10 0H7" />
           </svg>
-          <p>No feedback found</p>
+          <p>No messages found</p>
         </div>
       ) : (
         <div>

@@ -46,6 +46,11 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
           message,
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          screenResolution: `${screen.width}x${screen.height}`,
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           ipAddress: 'client-side' // Will be replaced server-side
         }),
       })
@@ -54,14 +59,14 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
         setName('')
         setEmail('')
         setMessage('')
-        toast.success('Thank you for your feedback!')
+        toast.success('Thank you for your message!')
         onClose()
       } else {
-        toast.error('Failed to send feedback. Please try again.')
+        toast.error('Failed to send message. Please try again.')
       }
     } catch (error) {
-      console.error('Error sending feedback:', error)
-      toast.error('Failed to send feedback. Please try again.')
+      console.error('Error sending message:', error)
+      toast.error('Failed to send message. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -85,7 +90,7 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
       <div ref={modalRef} className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">Send Feedback</h2>
+            <h2 className="text-xl font-bold text-white">Contact Us</h2>
             <button
               onClick={handleClose}
               className="text-white/80 hover:text-white transition-colors"
@@ -139,7 +144,7 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
               required
               rows={4}
               className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-              placeholder="Your feedback or suggestion..."
+              placeholder="Your message or question..."
             />
           </div>
 
@@ -156,7 +161,7 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Sending...' : 'Send Feedback'}
+              {isSubmitting ? 'Sending...' : 'Send Message'}
             </button>
           </div>
         </form>

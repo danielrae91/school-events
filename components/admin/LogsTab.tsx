@@ -23,7 +23,6 @@ interface LogsTabProps {
   onSelectAll: () => void
   onClearSelection: () => void
   onCleanupRedis: () => void
-  onDedupeEvents: () => void
 }
 
 export default function LogsTab({
@@ -36,8 +35,7 @@ export default function LogsTab({
   onToggleSelection,
   onSelectAll,
   onClearSelection,
-  onCleanupRedis,
-  onDedupeEvents
+  onCleanupRedis
 }: LogsTabProps) {
   const handleRetryEmail = async (logId: string) => {
     try {
@@ -83,12 +81,6 @@ export default function LogsTab({
             className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
             Cleanup Redis
-          </button>
-          <button
-            onClick={onDedupeEvents}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Dedupe Events
           </button>
           <button
             onClick={onRefresh}
@@ -170,8 +162,8 @@ export default function LogsTab({
                         <h3 className="font-medium text-white">{log.subject}</h3>
                         <div className="flex items-center gap-2">
                           {log.status === 'processing' && (
-                            <div className="flex items-center gap-1 text-xs text-blue-400">
-                              <div className="animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent"></div>
+                            <div className="flex items-center gap-1 text-xs text-yellow-400">
+                              <div className="animate-spin rounded-full h-3 w-3 border border-yellow-400 border-t-transparent"></div>
                               <span>Processing...</span>
                             </div>
                           )}

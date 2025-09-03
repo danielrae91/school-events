@@ -1,6 +1,6 @@
 {
-  "name": "TK Events - Te Kura o Take Karara",
-  "short_name": "TK Events",
+  "name": "TK Dates",
+  "short_name": "TK Dates",
   "description": "School events calendar for Te Kura o Take Karara",
   "start_url": "/",
   "display": "standalone",
