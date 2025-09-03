@@ -70,6 +70,8 @@ export async function parseNewsletterWithGPT(content: string): Promise<Event[]> 
     // Log GPT parsing start - removed logId dependency
 
     console.log('Calling OpenAI with content length:', content.length)
+    console.log('OpenAI API key present:', !!process.env.OPENAI_API_KEY)
+    console.log('OpenAI client initialized:', !!openai)
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',

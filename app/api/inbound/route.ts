@@ -29,6 +29,9 @@ ${plain || ''}
 ${html ? `\nHTML CONTENT:\n${html}` : ''}
     `.trim()
     
+    console.log(`[${new Date().toISOString()}] [info] Content length for GPT: ${contentToProcess.length}`)
+    console.log(`[${new Date().toISOString()}] [info] OpenAI API key configured: ${!!process.env.OPENAI_API_KEY}`)
+    
     const events = await parseNewsletterWithGPT(contentToProcess)
     console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
 
@@ -84,6 +87,9 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error(`[${new Date().toISOString()}] [error] Async email processing error for ${logId}:`, error)
+    console.error(`[${new Date().toISOString()}] [error] Error stack:`, error instanceof Error ? error.stack : 'No stack')
+    console.error(`[${new Date().toISOString()}] [error] Error type:`, typeof error)
+    console.error(`[${new Date().toISOString()}] [error] Error constructor:`, error?.constructor?.name)
     
     // Update log with detailed error
     await redis.hset(`email_log:${logId}`, {
@@ -91,6 +97,7 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
       stage: 'error',
       error: errorMessage,
       errorDetails: error instanceof Error ? error.stack : 'No stack trace',
+      errorType: error?.constructor?.name || 'Unknown',
       failedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
