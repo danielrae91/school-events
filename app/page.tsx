@@ -653,7 +653,9 @@ END:VCALENDAR`
               <div className="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-[60]">
                 <div className="py-1">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
                       setDropdownOpen(null)
                       trackCalendarSubscription()
                       handleGoogleCalendar()
@@ -669,7 +671,9 @@ END:VCALENDAR`
                     Google Calendar
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
                       setDropdownOpen(null)
                       trackCalendarSubscription()
                       handleAppleCalendar()
@@ -683,9 +687,12 @@ END:VCALENDAR`
                   </button>
                   <a
                     href="/calendar.ics"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
                       setDropdownOpen(null)
                       trackCalendarSubscription()
+                      window.open('/calendar.ics', '_blank')
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                   >
