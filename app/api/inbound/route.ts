@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
   try {
     // Get the raw body for signature verification
     const rawBody = await request.text()
-    console.log('Raw body length:', rawBody.length)
+    console.log(`[${new Date().toISOString()}] [webhook] Received webhook - body length:`, rawBody.length)
+    console.log(`[${new Date().toISOString()}] [webhook] Headers:`, Object.fromEntries(request.headers.entries()))
     
     // Validate CloudMailin webhook signature if secret is provided
     if (process.env.CLOUDMAILIN_SECRET) {
@@ -174,9 +175,13 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Processing inbound email:', {
-      from: email.envelope.from,
-      subject: email.headers.subject,
-      messageId: email.headers.message_id
+      from: email.envelope?.from || 'unknown',
+      subject: email.headers?.subject || 'no subject',
+      messageId: email.headers?.message_id || 'no message id',
+      hasPlain: !!email.plain,
+      hasHtml: !!email.html,
+      plainLength: email.plain?.length || 0,
+      htmlLength: email.html?.length || 0
     })
 
     // Create log entry
@@ -208,6 +213,8 @@ export async function POST(request: NextRequest) {
       console.error('Async email processing failed:', error)
     })
 
+    console.log(`[${new Date().toISOString()}] [webhook] Email queued for processing with log ID: ${logId}`)
+    
     // Return immediately to avoid CloudMailin timeout
     return NextResponse.json({
       success: true,
