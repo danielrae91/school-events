@@ -513,7 +513,7 @@ export default function HomePage() {
                           
                           const formattedDate = formatEventDate(event.start_date, event.end_date || null, event.start_time || null, event.end_time || null)
                           const eventIcsUrl = `${window.location.origin}/api/events/${event.id}/ics`
-                          const shareText = `${event.title}\n\n${formattedDate}${event.location ? `\n${event.location}` : ''}${event.description ? `\n\n${event.description}` : ''}\n\nAdd to calendar: ${eventIcsUrl}`
+                          const shareText = `Event: ${event.title} - When: ${formattedDate}${event.location ? ` - Where: ${event.location}` : ''} - ${eventIcsUrl}`
                           
                           const shareData = {
                             title: event.title,
@@ -1066,8 +1066,9 @@ END:VCALENDAR`
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => {
-                          const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''}`
-                          navigator.clipboard.writeText(text)
+                          const eventIcsUrl = `${window.location.origin}/api/events/${selectedEvent.id}/ics`
+                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - ${eventIcsUrl}`
+                          navigator.clipboard.writeText(shareText)
                           toast.success('Event details copied to clipboard!')
                         }}
                         className="bg-slate-700 hover:bg-slate-600 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
@@ -1080,15 +1081,17 @@ END:VCALENDAR`
                       
                       <button
                         onClick={() => {
+                          const eventIcsUrl = `${window.location.origin}/api/events/${selectedEvent.id}/ics`
+                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - ${eventIcsUrl}`
+                          
                           if (navigator.share) {
                             navigator.share({
                               title: selectedEvent.title,
-                              text: `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''}`,
+                              text: shareText,
                               url: window.location.origin
                             })
                           } else {
-                            const text = `${selectedEvent.title} - ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` at ${selectedEvent.location}` : ''} ${window.location.origin}`
-                            navigator.clipboard.writeText(text)
+                            navigator.clipboard.writeText(shareText)
                             toast.success('Event details copied to clipboard!')
                           }
                         }}

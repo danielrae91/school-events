@@ -9,7 +9,7 @@ export async function GET(
     const eventId = params.id
     
     // Get the event from Redis
-    const eventData = await redis.hgetall(`event:${eventId}`)
+    const eventData = await redis.hgetall(`tk:event:${eventId}`)
     
     if (!eventData || Object.keys(eventData).length === 0) {
       return new NextResponse('Event not found', { status: 404 })
