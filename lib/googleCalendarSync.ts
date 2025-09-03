@@ -82,7 +82,7 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
         }
 
         // Convert ICS event to Google Calendar format
-        const googleEvent: GoogleCalendarEvent = {
+        const googleEvent: any = {
           summary: event.summary || 'Untitled Event',
           description: event.description || '',
           location: event.location || '',
@@ -99,7 +99,7 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
         }
 
         // Check if it's an all-day event (no time component)
-        const isAllDay = typeof startDate === 'string' && !startDate.includes('T')
+        const isAllDay = typeof startDate === 'string' && !(startDate as string).includes('T')
         
         if (isAllDay) {
           // All-day event
