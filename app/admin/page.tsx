@@ -71,19 +71,6 @@ export default function AdminPage() {
     }
   }
 
-  const fetchLogsWithToken = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        // setLogs(data.logs || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch logs:', err)
-    }
-  }
 
   const fetchSettings = async () => {
     const token = localStorage.getItem('admin_token')
@@ -112,6 +99,48 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err)
+    }
+  }
+
+  const fetchFeedbackWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/feedback', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setFeedback(data.feedback || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch feedback:', err)
+    }
+  }
+
+  const fetchStatsWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch stats:', err)
+    }
+  }
+
+  const fetchLogsWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/email-logs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setEmailLogs(data.logs || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch email logs:', err)
     }
   }
 
@@ -445,6 +474,36 @@ export default function AdminPage() {
                 }`}
               >
                 Suggestions ({suggestions.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('feedback')}
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'feedback' 
+                    ? 'bg-purple-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Feedback ({feedback.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'stats' 
+                    ? 'bg-indigo-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Stats
+              </button>
+              <button
+                onClick={() => setActiveTab('logs')}
+                className={`px-4 py-2 text-sm font-medium rounded-md ${
+                  activeTab === 'logs' 
+                    ? 'bg-red-600 text-white' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Email Logs ({emailLogs.length})
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
