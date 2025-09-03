@@ -204,9 +204,11 @@ export async function POST(request: NextRequest) {
     await redis.hset(`email_log:${logId}`, logData)
 
     // Process email asynchronously to avoid timeout
-    processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
-      console.error('Async email processing failed:', error)
-    })
+    setTimeout(() => {
+      processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
+        console.error('Async email processing failed:', error)
+      })
+    }, 0)
 
     // Return immediately to avoid CloudMailin timeout
     return NextResponse.json({

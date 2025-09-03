@@ -572,7 +572,10 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Event Suggestions</h2>
                 <button
-                  onClick={() => fetchSuggestionsWithToken(adminToken)}
+                  onClick={() => {
+                    const token = localStorage.getItem('admin_token')
+                    if (token) fetchSuggestionsWithToken(token)
+                  }}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Refresh
@@ -932,7 +935,10 @@ export default function AdminPage() {
                 <h2 className="text-lg font-semibold">User Feedback</h2>
                 <div className="space-x-2">
                   <button
-                    onClick={() => fetchFeedbackWithToken(adminToken)}
+                    onClick={() => {
+                      const token = localStorage.getItem('admin_token')
+                      if (token) fetchFeedbackWithToken(token)
+                    }}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm"
                   >
                     Refresh
@@ -1036,28 +1042,31 @@ export default function AdminPage() {
                 <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>
                 <div className="space-x-2">
                   <button
-                    onClick={fetchLogs}
-                    className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                    onClick={() => {
+                      const token = localStorage.getItem('admin_token')
+                      if (token) fetchLogsWithToken(token)
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm"
                   >
                     Refresh
                   </button>
                   <button
                     onClick={debugRedisData}
-                    className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
                   >
                     Debug Redis
                   </button>
                   <button
                     onClick={cleanupRedis}
-                    className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm"
                   >
                     Cleanup Redis
                   </button>
                   <button
                     onClick={dedupeEvents}
-                    className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm"
                   >
-                    Remove Duplicates
+                    Dedupe Events
                   </button>
                 </div>
               </div>
