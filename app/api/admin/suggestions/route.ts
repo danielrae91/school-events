@@ -80,9 +80,9 @@ export async function POST(request: NextRequest) {
         needs_enrichment: false
       }
 
-      // Store as regular event
-      await redis.hset(`event:${eventId}`, event)
-      await redis.zadd('tk:events', { score: Date.now(), member: eventId })
+      // Store as regular event using correct key pattern
+      await redis.hset(`tk:event:${eventId}`, event)
+      await redis.zadd('tk:events:by_date', { score: new Date(event.start_date).getTime(), member: eventId })
 
       // Remove from suggestions
       await redis.zrem('tk:suggestions:pending', suggestionId)

@@ -1,26 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { StoredEvent, Event } from '@/lib/types'
 import { Toast, useToast } from '@/components/Toast'
 
 export default function AdminPage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
-  const [feedback, setFeedback] = useState<any[]>([])
-  const [stats, setStats] = useState<any>(null)
-  const [emailLogs, setEmailLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'stats' | 'logs' | 'settings'>('events')
+  const [feedback, setFeedback] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
+  const { toasts, removeToast, showSuccess, showError, showInfo } = useToast()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [adminToken, setAdminToken] = useState('')
-  const [gptPrompt, setGptPrompt] = useState('')
-  const { toasts, removeToast, showSuccess, showError, showInfo } = useToast()
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [gptPrompt, setGptPrompt] = useState('')
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
 
   // Check authentication
@@ -31,6 +30,9 @@ export default function AdminPage() {
       setIsAuthenticated(true)
       // Pass token directly to avoid state timing issues
       fetchEventsWithToken(token)
+      fetchSuggestionsWithToken(token)
+      fetchFeedbackWithToken(token)
+      fetchStatsWithToken(token)
       fetchLogsWithToken(token)
       fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
@@ -867,12 +869,12 @@ export default function AdminPage() {
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
-                  {emailLogs.length === 0 ? (
+                  {logs.length === 0 ? (
                     <li className="px-6 py-8 text-center text-gray-500">
                       No email processing logs found.
                     </li>
                   ) : (
-                    emailLogs.map((log, index) => (
+                    logs.map((log, index) => (
                       <li key={index} className="px-6 py-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
