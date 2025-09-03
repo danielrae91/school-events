@@ -42,7 +42,11 @@ export async function GET(request: NextRequest) {
       return bTime - aTime
     })
 
-    return NextResponse.json({ logs })
+    return NextResponse.json({ logs }, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
   } catch (error) {
     console.error('Error fetching email logs:', error)
     return NextResponse.json(

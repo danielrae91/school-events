@@ -75,12 +75,22 @@ export default function AdminPage() {
       })
       if (response.ok) {
         const text = await response.text()
+        console.log('Raw response:', text)
         if (text.trim()) {
-          const data = JSON.parse(text)
-          setEmailLogs(data.logs || [])
+          try {
+            const data = JSON.parse(text)
+            setEmailLogs(data.logs || [])
+          } catch (parseError) {
+            console.error('JSON parse error:', parseError, 'Raw text:', text)
+            setEmailLogs([])
+          }
         } else {
+          console.log('Empty response')
           setEmailLogs([])
         }
+      } else {
+        console.error('Response not ok:', response.status, response.statusText)
+        setEmailLogs([])
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)

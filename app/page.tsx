@@ -498,7 +498,8 @@ export default function HomePage() {
                           }
                           
                           const formattedDate = formatEventDate(event.start_date, event.end_date || null, event.start_time || null, event.end_time || null)
-                          const shareText = `${event.title}\n\n📅 ${formattedDate}${event.location ? `\n📍 ${event.location}` : ''}${event.description ? `\n\n${event.description}` : ''}\n\nView all school events: ${window.location.href}`
+                          const eventIcsUrl = `${window.location.origin}/api/events/${event.id}/ics`
+                          const shareText = `${event.title}\n\n${formattedDate}${event.location ? `\n${event.location}` : ''}${event.description ? `\n\n${event.description}` : ''}\n\nAdd to calendar: ${eventIcsUrl}`
                           
                           const shareData = {
                             title: event.title,
@@ -516,7 +517,7 @@ export default function HomePage() {
                         title="Share Event"
                       >
                         <span className="hidden sm:inline">Share</span>
-                        <span className="sm:hidden">📤</span>
+                        <span className="sm:hidden">Share</span>
                         <svg className="w-3 h-3 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                         </svg>
