@@ -763,6 +763,60 @@ END:VCALENDAR`
               </div>
             )}
           </div>
+          
+          {/* Mobile Calendar Subscription */}
+          <div className="border-t border-slate-700 p-3">
+            <div className="text-center">
+              <p className="text-gray-400 text-xs mb-2">Subscribe to your personal calendar</p>
+              <div className="flex items-center justify-center gap-2 text-xs">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    trackCalendarSubscription()
+                    handleGoogleCalendar()
+                  }}
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
+                  Google
+                </button>
+                <span className="text-gray-600">|</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    trackCalendarSubscription()
+                    handleAppleCalendar()
+                  }}
+                  className="text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                  Apple
+                </button>
+                <span className="text-gray-600">|</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    trackCalendarSubscription()
+                    handleOutlookCalendar()
+                  }}
+                  className="text-gray-400 hover:text-orange-400 transition-colors"
+                >
+                  Outlook
+                </button>
+                <span className="text-gray-600">|</span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    trackCalendarSubscription()
+                    const icsUrl = `${window.location.origin}/calendar.ics`
+                    navigator.clipboard.writeText(icsUrl)
+                    toast.success('Calendar URL copied to clipboard!')
+                  }}
+                  className="text-gray-400 hover:text-purple-400 transition-colors"
+                >
+                  Copy URL
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Desktop Calendar */}

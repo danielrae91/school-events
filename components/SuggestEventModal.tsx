@@ -112,7 +112,7 @@ export default function SuggestEventModal({ onClose, onEventSuggested }: Suggest
 
           <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-3 mb-4">
             <p className="text-blue-300 text-sm">
-              💡 Your suggestion will be reviewed by school admin before being added to the calendar.
+              💡 Your suggestion will be reviewed before being added to the calendar.
             </p>
           </div>
 
