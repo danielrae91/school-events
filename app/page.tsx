@@ -504,7 +504,7 @@ export default function HomePage() {
                           const shareData = {
                             title: event.title,
                             text: shareText,
-                            url: window.location.href
+                            url: `${window.location.origin}/`
                           }
                           if (navigator.share) {
                             navigator.share(shareData)
@@ -597,7 +597,7 @@ export default function HomePage() {
 VERSION:2.0
 PRODID:-//School Events//EN
 BEGIN:VEVENT
-UID:${event.id}@school-events.vercel.app
+UID:${event.id}@${window.location.hostname}
 DTSTART:${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}Z
 DTEND:${endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}Z
 SUMMARY:${event.title}
@@ -1002,7 +1002,7 @@ END:VCALENDAR`
 VERSION:2.0
 PRODID:-//School Events//EN
 BEGIN:VEVENT
-UID:${selectedEvent.id}@school-events.vercel.app
+UID:${selectedEvent.id}@${window.location.hostname}
 DTSTART:${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}Z
 DTEND:${endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}Z
 SUMMARY:${selectedEvent.title}
