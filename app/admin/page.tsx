@@ -50,7 +50,8 @@ function AdminPageContent() {
   
   // UI state
   const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true)
   const [feedbackLoading, setFeedbackLoading] = useState(true)
   const [logsLoading, setLogsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -69,8 +70,8 @@ function AdminPageContent() {
   
   // Modal state
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
-  const [showAddForm, setShowAddForm] = useState(false)
   const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
   const [showEditSuggestionModal, setShowEditSuggestionModal] = useState(false)
   
   // Animation refs
@@ -164,6 +165,7 @@ function AdminPageContent() {
   }
 
   const fetchSuggestionsWithToken = async (token: string) => {
+    setSuggestionsLoading(true)
     try {
       const response = await fetch('/api/admin/suggestions', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -174,6 +176,8 @@ function AdminPageContent() {
       }
     } catch (err) {
       console.error('Failed to fetch suggestions:', err)
+    } finally {
+      setSuggestionsLoading(false)
     }
   }
 
@@ -384,6 +388,50 @@ function AdminPageContent() {
     setSelectedLogs([])
   }
 
+  const approveSuggestion = async (suggestionId: string) => {
+    try {
+      const response = await fetch('/api/admin/suggestions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'approve', suggestionId })
+      })
+      if (response.ok) {
+        setSuggestions(prev => prev.filter(s => s.id !== suggestionId))
+      }
+    } catch (err) {
+      console.error('Failed to approve suggestion:', err)
+    }
+  }
+
+  const rejectSuggestion = async (suggestionId: string) => {
+    try {
+      const response = await fetch('/api/admin/suggestions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'reject', suggestionId })
+      })
+      if (response.ok) {
+        setSuggestions(prev => prev.filter(s => s.id !== suggestionId))
+      }
+    } catch (err) {
+      console.error('Failed to reject suggestion:', err)
+    }
+  }
+
+  const editSuggestion = (suggestionId: string) => {
+    const suggestion = suggestions.find(s => s.id === suggestionId)
+    if (suggestion) {
+      setEditingSuggestion(suggestion)
+      setShowEditSuggestionModal(true)
+    }
+  }
+
   // Tab change handler
   const handleTabChange = (tab: typeof activeTab) => {
     setActiveTab(tab)
@@ -512,11 +560,12 @@ function AdminPageContent() {
               {tab === 'suggestions' && (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               )}
               {tab === 'feedback' && (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V8m10 0H7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               )}
               {tab === 'logs' && (
@@ -530,7 +579,7 @@ function AdminPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               )}
-              <span className="capitalize">{tab}</span>
+              <span className="capitalize">{tab === 'feedback' ? 'messages' : tab}</span>
             </button>
           ))}
         </div>
@@ -556,12 +605,12 @@ function AdminPageContent() {
           {activeTab === 'suggestions' && (
             <SuggestionsTab
               suggestions={suggestions}
-              loading={loading}
+              loading={suggestionsLoading}
               adminToken={adminToken}
               onRefresh={() => fetchSuggestionsWithToken(adminToken)}
-              onEditSuggestion={handleEditSuggestion}
-              onApproveSuggestion={handleApproveSuggestion}
-              onRejectSuggestion={handleRejectSuggestion}
+              onEditSuggestion={editSuggestion}
+              onApproveSuggestion={approveSuggestion}
+              onRejectSuggestion={rejectSuggestion}
             />
           )}
 
