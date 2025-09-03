@@ -412,7 +412,7 @@ export default function HomePage() {
             <div className="bg-red-900/50 border border-red-600 rounded-lg p-4 text-center">
               <p className="text-red-300">{error}</p>
             </div>
-          ) : fallbackEvents.length === 0 ? (
+          ) : !fallbackEvents.length ? (
             <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-4 text-center">
               <p className="text-blue-300">No upcoming events found</p>
             </div>

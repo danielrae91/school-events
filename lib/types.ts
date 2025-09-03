@@ -85,3 +85,58 @@ export const OpenAIResponseSchema = z.object({
 })
 
 export type OpenAIResponse = z.infer<typeof OpenAIResponseSchema>
+
+// Email log types
+export interface EmailLog {
+  id: string
+  from: string
+  subject: string
+  messageId: string
+  timestamp: string
+  status: 'received' | 'processing' | 'completed' | 'failed' | 'success' | 'error' | 'processing_gpt' | 'processing_events'
+  stage: string
+  retryCount: number
+  createdEvents: string
+  createdEventTitles: string
+  updatedAt: string
+  emailContent: string
+  error?: string
+  errorDetails?: string
+  errorType?: string
+  eventsProcessed?: number
+  eventsExtracted?: number
+  processingStarted?: string
+  gptCompleted?: string
+  completedAt?: string
+  failedAt?: string
+}
+
+// Feedback types
+export interface Feedback {
+  id: string
+  type: 'feedback' | 'bug' | 'feature'
+  message: string
+  email?: string
+  userAgent?: string
+  ipAddress?: string
+  timestamp: string
+}
+
+// Stats types
+export interface Stats {
+  totalEvents: number
+  eventsThisWeek: number
+  lastUpdate: string
+}
+
+// Form data types for admin
+export interface EventFormData {
+  title: string
+  description?: string
+  start_date: string
+  end_date?: string
+  start_time?: string
+  end_time?: string
+  location?: string
+  needs_enrichment?: boolean
+}

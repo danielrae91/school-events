@@ -1,4 +1,4 @@
-import ical, { ICalCalendar, ICalEvent } from 'ical-generator'
+import ical from 'ical-generator'
 import { StoredEvent } from './types'
 
 export function generateICalFeed(events: StoredEvent[]): string {
@@ -16,7 +16,7 @@ export function generateICalFeed(events: StoredEvent[]): string {
       const endDate = parseEventDateTime(event.end_date || event.start_date, event.end_time || event.start_time)
       
       const calEvent: any = {
-        uid: `${event.id}@school-events`,
+        uid: `${event.id}@${process.env.VERCEL_URL || 'tkdates.nz'}`,
         start: startDate,
         end: endDate,
         summary: event.title,

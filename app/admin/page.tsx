@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { StoredEvent, Event } from '@/lib/types'
+import { StoredEvent, EmailLog, Feedback, EventFormData } from '@/lib/types'
 
 export default function AdminPage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
@@ -16,8 +16,8 @@ export default function AdminPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [gptPrompt, setGptPrompt] = useState('')
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
-  const [emailLogs, setEmailLogs] = useState<any[]>([])
-  const [feedback, setFeedback] = useState<any[]>([])
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
+  const [feedback, setFeedback] = useState<Feedback[]>([])
   const [selectedFeedback, setSelectedFeedback] = useState<Set<number>>(new Set())
   const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set())
 
@@ -500,7 +500,7 @@ export default function AdminPage() {
     }
   }
 
-  const handleSaveEvent = async (eventData: Partial<Event>, isNew: boolean = false) => {
+  const handleSaveEvent = async (eventData: EventFormData, isNew: boolean = false) => {
     try {
       const url = isNew ? '/api/events' : `/api/events/${editingEvent?.id}`
       const method = isNew ? 'POST' : 'PUT'
@@ -666,7 +666,7 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              {suggestions.length === 0 ? (
+              {!suggestions.length ? (
                 <div className="text-center py-8 text-gray-500">
                   No pending suggestions
                 </div>
@@ -991,7 +991,7 @@ export default function AdminPage() {
               ) : (
                 <div className="bg-white shadow overflow-hidden sm:rounded-md">
                   <ul className="divide-y divide-gray-200">
-                    {events.length === 0 ? (
+                    {!events.length ? (
                       <li className="px-6 py-8 text-center text-gray-500">
                         No events found. Add some events to get started.
                       </li>
@@ -1038,7 +1038,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {feedback.length === 0 ? (
+              {!feedback.length ? (
                 <div className="text-center py-8 text-gray-500">
                   No feedback submitted yet.
                 </div>
@@ -1194,7 +1194,7 @@ export default function AdminPage() {
               )}
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
-                  {emailLogs.length === 0 ? (
+                  {!emailLogs.length ? (
                     <li className="px-6 py-8 text-center text-gray-500">
                       No email processing logs found.
                     </li>
@@ -1423,11 +1423,11 @@ function EventForm({
   isNew 
 }: { 
   event: StoredEvent | null
-  onSave: (data: Partial<Event>, isNew: boolean) => void
+  onSave: (data: EventFormData, isNew: boolean) => void
   onCancel: () => void
   isNew: boolean
 }) {
-  const [formData, setFormData] = useState<Partial<Event>>({
+  const [formData, setFormData] = useState<EventFormData>({
     title: event?.title || '',
     description: event?.description || '',
     start_date: event?.start_date || '',
@@ -1455,7 +1455,7 @@ function EventForm({
             <label className="block text-sm font-medium text-gray-700">Title</label>
             <input
               type="text"
-              value={formData.title}
+              value={formData.title || ''}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               required
@@ -1465,7 +1465,7 @@ function EventForm({
           <div>
             <label className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
-              value={formData.description}
+              value={formData.description || ''}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               rows={3}
@@ -1477,7 +1477,7 @@ function EventForm({
               <label className="block text-sm font-medium text-gray-700">Start Date</label>
               <input
                 type="date"
-                value={formData.start_date}
+                value={formData.start_date || ''}
                 onChange={(e) => setFormData({...formData, start_date: e.target.value})}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                 required
@@ -1528,7 +1528,7 @@ function EventForm({
           <div className="flex items-center">
             <input
               type="checkbox"
-              checked={formData.needs_enrichment}
+              checked={formData.needs_enrichment || false}
               onChange={(e) => setFormData({...formData, needs_enrichment: e.target.checked})}
               className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
             />
