@@ -122,22 +122,30 @@ function AdminPageContent() {
     setError('')
     
     try {
+      console.log('Attempting login with token:', loginToken ? 'token provided' : 'no token')
+      
       const response = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: loginToken })
       })
       
+      console.log('Auth response status:', response.status)
+      
       if (response.ok) {
+        console.log('Login successful')
         localStorage.setItem('admin_token', loginToken)
         setAdminToken(loginToken)
         setIsAuthenticated(true)
         fetchEventsWithToken(loginToken)
       } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.log('Login failed:', errorData)
         setError('Invalid token')
       }
     } catch (err) {
-      setError('Login failed')
+      console.error('Login error:', err)
+      setError('Login failed - check console for details')
     } finally {
       setLoading(false)
     }
