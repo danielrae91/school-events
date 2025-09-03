@@ -48,6 +48,30 @@ export default function HomePage() {
     }
   }
 
+  const trackAddToCalendar = async () => {
+    try {
+      await fetch('/api/admin/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'addToCalendar' })
+      })
+    } catch (error) {
+      console.error('Failed to track add to calendar:', error)
+    }
+  }
+
+  const trackCalendarSubscription = async () => {
+    try {
+      await fetch('/api/admin/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'calendarSubscription' })
+      })
+    } catch (error) {
+      console.error('Failed to track calendar subscription:', error)
+    }
+  }
+
   const fetchEvents = async () => {
     try {
       setLoading(true)
@@ -489,7 +513,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gradient-to-br from-blue-600/20 to-blue-700/20 border border-blue-500/30 rounded-xl p-6 hover:from-blue-600/30 hover:to-blue-700/30 transition-all duration-300">
               <button
-                onClick={handleGoogleCalendar}
+                onClick={() => {
+                  trackCalendarSubscription()
+                  handleGoogleCalendar()
+                }}
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -504,7 +531,10 @@ export default function HomePage() {
             
             <div className="bg-gradient-to-br from-gray-600/20 to-gray-700/20 border border-gray-500/30 rounded-xl p-6 hover:from-gray-600/30 hover:to-gray-700/30 transition-all duration-300">
               <button
-                onClick={handleAppleCalendar}
+                onClick={() => {
+                  trackCalendarSubscription()
+                  handleAppleCalendar()
+                }}
                 className="w-full bg-gray-600 hover:bg-gray-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -515,18 +545,16 @@ export default function HomePage() {
             </div>
             
             <div className="bg-gradient-to-br from-slate-600/20 to-slate-700/20 border border-slate-500/30 rounded-xl p-6 hover:from-slate-600/30 hover:to-slate-700/30 transition-all duration-300">
-              <button
-                onClick={() => {
-                  const calendarUrl = `${window.location.origin}/calendar.ics`
-                  window.open(calendarUrl, '_blank')
-                }}
+              <a
+                href="/calendar.ics"
+                onClick={trackCalendarSubscription}
                 className="w-full bg-slate-600 hover:bg-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 Download ICS File
-              </button>
+              </a>
             </div>
           </div>
         </div>
