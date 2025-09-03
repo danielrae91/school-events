@@ -6,7 +6,8 @@ export function generateICalFeed(events: StoredEvent[]): string {
     name: 'School Events Calendar',
     description: 'Automated school newsletter events feed',
     url: 'https://school-events.vercel.app/calendar.ics',
-    prodId: '-//TK Newsletter//School Events//EN'
+    prodId: '-//TK Newsletter//School Events//EN',
+    timezone: 'Pacific/Auckland'
   })
 
   for (const event of events) {
@@ -58,14 +59,14 @@ export function generateICalFeed(events: StoredEvent[]): string {
 
 function parseEventDateTime(date: string, time?: string | null): Date {
   if (!time) {
-    // All-day event - use date at midnight
-    return new Date(`${date}T00:00:00`)
+    // All-day event - use date at midnight in NZ timezone
+    return new Date(`${date}T00:00:00+12:00`)
   }
 
-  // Parse time and combine with date
+  // Parse time and combine with date in NZ timezone
   const [hours, minutes] = time.split(':').map(Number)
-  const dateTime = new Date(`${date}T00:00:00`)
-  dateTime.setHours(hours, minutes, 0, 0)
+  // Create date in NZ timezone (UTC+12 for NZST, UTC+13 for NZDT)
+  const dateTime = new Date(`${date}T${time}:00+12:00`)
   
   return dateTime
 }

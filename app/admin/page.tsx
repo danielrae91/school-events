@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { StoredEvent, Event } from '@/lib/types'
-import { Toast, useToast } from '@/components/Toast'
 
 export default function AdminPage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
@@ -11,15 +10,14 @@ export default function AdminPage() {
   const [error, setError] = useState('')
   const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
-  const [feedback, setFeedback] = useState<any[]>([])
-  const [emailLogs, setEmailLogs] = useState<any[]>([])
-  const { toasts, removeToast, showSuccess, showError, showInfo } = useToast()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [adminToken, setAdminToken] = useState('')
   const [editingEvent, setEditingEvent] = useState<StoredEvent | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [gptPrompt, setGptPrompt] = useState('')
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
+  const [emailLogs, setEmailLogs] = useState<any[]>([])
+  const [feedback, setFeedback] = useState<any[]>([])
 
   // Check authentication
   useEffect(() => {
@@ -27,11 +25,10 @@ export default function AdminPage() {
     if (token) {
       setAdminToken(token)
       setIsAuthenticated(true)
-      fetchEvents()
-      // Load initial data for all tabs
-      fetchSuggestionsWithToken(token)
-      fetchFeedbackWithToken(token)
+      // Pass token directly to avoid state timing issues
+      fetchEventsWithToken(token)
       fetchLogsWithToken(token)
+      fetchSuggestionsWithToken(token)
       fetchSettingsWithToken(token)
     } else {
       setLoading(false)
@@ -68,6 +65,19 @@ export default function AdminPage() {
     }
   }
 
+  const fetchLogsWithToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/logs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        // setLogs(data.logs || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch logs:', err)
+    }
+  }
 
   const fetchSettings = async () => {
     const token = localStorage.getItem('admin_token')
@@ -99,35 +109,6 @@ export default function AdminPage() {
     }
   }
 
-  const fetchFeedbackWithToken = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/feedback', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setFeedback(data.feedback || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch feedback:', err)
-    }
-  }
-
-
-  const fetchLogsWithToken = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/email-logs', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setEmailLogs(data.logs || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch email logs:', err)
-    }
-  }
-
   const saveSettings = async () => {
     try {
       const response = await fetch('/api/admin/settings', {
@@ -146,23 +127,26 @@ export default function AdminPage() {
     }
   }
 
-  const retryFailedEmail = async (logId: string) => {
+  const retryEmailProcessing = async (logId: string) => {
     try {
+      const token = localStorage.getItem('admin_token')
       const response = await fetch('/api/admin/retry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ logId })
       })
       if (response.ok) {
-        fetchLogs()
+        if (token) fetchLogsWithToken(token)
         fetchEvents()
         alert('Email processing retried successfully!')
+      } else {
+        alert('Failed to retry email processing')
       }
     } catch (err) {
-      setError('Failed to retry email processing')
+      alert('Failed to retry email processing')
     }
   }
 
@@ -463,11 +447,11 @@ export default function AdminPage() {
                 onClick={() => setActiveTab('feedback')}
                 className={`px-4 py-2 text-sm font-medium rounded-md ${
                   activeTab === 'feedback' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-yellow-600 text-white' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Feedback ({feedback.length})
+                Feedback
               </button>
               <button
                 onClick={() => setActiveTab('logs')}
@@ -477,7 +461,7 @@ export default function AdminPage() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Email Logs ({emailLogs.length})
+                Logs
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
@@ -504,10 +488,7 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Event Suggestions</h2>
                 <button
-                  onClick={() => {
-                    const token = localStorage.getItem('admin_token')
-                    if (token) fetchSuggestionsWithToken(token)
-                  }}
+                  onClick={() => fetchSuggestionsWithToken(adminToken)}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
                 >
                   Refresh
@@ -870,167 +851,37 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Feedback Tab */}
-          {activeTab === 'feedback' && (
+          {/* Logs section removed */}
+          {false && (
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">User Feedback</h2>
-                <button
-                  onClick={() => {
-                    const token = localStorage.getItem('admin_token')
-                    if (token) fetchFeedbackWithToken(token)
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Refresh
-                </button>
-              </div>
-
-              {feedback.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No feedback submitted yet.
+                <h2 className="text-lg font-medium text-gray-900">Email Processing Logs</h2>
+                <div className="space-x-2">
+                  <button
+                    onClick={fetchLogs}
+                    className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700"
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    onClick={debugRedisData}
+                    className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                  >
+                    Debug Redis
+                  </button>
+                  <button
+                    onClick={cleanupRedis}
+                    className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                  >
+                    Cleanup Redis
+                  </button>
+                  <button
+                    onClick={dedupeEvents}
+                    className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                  >
+                    Remove Duplicates
+                  </button>
                 </div>
-              ) : (
-                <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                  <ul className="divide-y divide-gray-200">
-                    {feedback.map((item, index) => (
-                      <li key={index} className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {item.message}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {item.email && `From: ${item.email} • `}
-                              {new Date(item.timestamp).toLocaleString()}
-                            </p>
-                            {item.error && (
-                              <p className="text-sm text-red-600 mt-1">
-                                Error: {item.error}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Stats Tab */}
-          {activeTab === 'stats' && (
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Site Statistics</h2>
-                <button
-                  onClick={() => {
-                    const token = localStorage.getItem('admin_token')
-                    if (token) fetchStatsWithToken(token)
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Refresh
-                </button>
-              </div>
-
-              {stats ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                            <span className="text-white text-sm font-medium">👁️</span>
-                          </div>
-                        </div>
-                        <div className="ml-5 w-0 flex-1">
-                          <dl>
-                            <dt className="text-sm font-medium text-gray-500 truncate">Page Views</dt>
-                            <dd className="text-lg font-medium text-gray-900">{stats.pageViews || 0}</dd>
-                          </dl>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                            <span className="text-white text-sm font-medium">👤</span>
-                          </div>
-                        </div>
-                        <div className="ml-5 w-0 flex-1">
-                          <dl>
-                            <dt className="text-sm font-medium text-gray-500 truncate">Unique Visitors</dt>
-                            <dd className="text-lg font-medium text-gray-900">{stats.uniqueVisitors || 0}</dd>
-                          </dl>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                            <span className="text-white text-sm font-medium">📅</span>
-                          </div>
-                        </div>
-                        <div className="ml-5 w-0 flex-1">
-                          <dl>
-                            <dt className="text-sm font-medium text-gray-500 truncate">Calendar Subscriptions</dt>
-                            <dd className="text-lg font-medium text-gray-900">{stats.calendarSubscriptions || 0}</dd>
-                          </dl>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="p-5">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                            <span className="text-white text-sm font-medium">➕</span>
-                          </div>
-                        </div>
-                        <div className="ml-5 w-0 flex-1">
-                          <dl>
-                            <dt className="text-sm font-medium text-gray-500 truncate">Add to Calendar Clicks</dt>
-                            <dd className="text-lg font-medium text-gray-900">{stats.addToCalendarClicks || 0}</dd>
-                          </dl>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No statistics available.
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Email Logs Tab */}
-          {activeTab === 'logs' && (
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Email Processing Logs</h2>
-                <button
-                  onClick={() => {
-                    const token = localStorage.getItem('admin_token')
-                    if (token) fetchLogsWithToken(token)
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Refresh
-                </button>
               </div>
               
               <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -1052,22 +903,46 @@ export default function AdminPage() {
                                 log.status === 'processing_events' ? 'bg-purple-100 text-purple-800' :
                                 'bg-yellow-100 text-yellow-800'
                               }`}>
-                                {log.status}
+                                {log.status === 'processing_gpt' ? 'GPT Processing' :
+                                 log.status === 'processing_events' ? 'Storing Events' :
+                                 log.status}
                               </span>
-                              <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {log.subject || 'No subject'}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {new Date(log.timestamp).toLocaleString()}
-                                </p>
-                                {log.error && (
-                                  <p className="text-sm text-red-600 mt-1">
-                                    Error: {log.error}
-                                  </p>
-                                )}
-                              </div>
+                              <h3 className="ml-3 text-sm font-medium text-gray-900">{log.subject}</h3>
                             </div>
+                            <div className="mt-1 text-sm text-gray-600">
+                              <p>From: {log.from}</p>
+                              <p>Received: {new Date(log.timestamp).toLocaleString()}</p>
+                              {log.error && (
+                                <div className="mt-2 p-2 bg-red-50 rounded border">
+                                  <p className="text-red-600 font-medium">Error: {log.error}</p>
+                                  {log.errorDetails && (
+                                    <details>
+                                      <summary className="text-red-500 cursor-pointer text-xs">Stack trace</summary>
+                                      <pre className="text-xs text-red-400 mt-1 whitespace-pre-wrap">{log.errorDetails}</pre>
+                                    </details>
+                                  )}
+                                </div>
+                              )}
+                              {log.eventsProcessed && <p>Events processed: {log.eventsProcessed}</p>}
+                              {log.eventsExtracted && <p>Events extracted by GPT: {log.eventsExtracted}</p>}
+                              {log.processingStarted && <p>Processing started: {new Date(log.processingStarted).toLocaleString()}</p>}
+                              {log.gptCompleted && <p>GPT completed: {new Date(log.gptCompleted).toLocaleString()}</p>}
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            {(log.status === 'error' || log.status === 'processing' || log.status === 'processing_gpt' || log.status === 'processing_events') && (
+                              <button
+                                className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                              >
+                                Retry
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteLog(log.id)}
+                              className="text-red-600 hover:text-red-900 text-sm font-medium"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
                       </li>
