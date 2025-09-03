@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
+import { toast } from 'sonner'
 
 interface FeedbackModalProps {
   onClose: () => void
-  showSuccess: (title: string, message: string) => void
-  showError: (title: string, message: string) => void
 }
 
-export default function FeedbackModal({ onClose, showSuccess, showError }: FeedbackModalProps) {
+export default function FeedbackModal({ onClose }: FeedbackModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -52,14 +51,17 @@ export default function FeedbackModal({ onClose, showSuccess, showError }: Feedb
       })
 
       if (response.ok) {
-        showSuccess('Feedback Sent', 'Thank you for your feedback!')
+        setName('')
+        setEmail('')
+        setMessage('')
+        toast.success('Thank you for your feedback!')
         onClose()
       } else {
-        showError('Failed to Send', 'Failed to send feedback. Please try again.')
+        toast.error('Failed to send feedback. Please try again.')
       }
     } catch (error) {
       console.error('Error sending feedback:', error)
-      showError('Error', 'Failed to send feedback. Please try again.')
+      toast.error('Failed to send feedback. Please try again.')
     } finally {
       setIsSubmitting(false)
     }

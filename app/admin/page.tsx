@@ -79,9 +79,11 @@ export default function AdminPage() {
       setIsAuthenticated(true)
       fetchEventsWithToken(token)
     }
-    
-    // Initial admin panel animations
-    if (isAuthenticated) {
+  }, [])
+
+  useEffect(() => {
+    // Initial admin panel animations - only run when authenticated and refs are available
+    if (isAuthenticated && headerRef.current && tabsRef.current && contentRef.current) {
       const tl = gsap.timeline()
       tl.fromTo(headerRef.current, 
         { opacity: 0, y: -30 }, 
@@ -452,14 +454,25 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div ref={headerRef} className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Logout
-          </button>
+          <div className="flex gap-3">
+            <a
+              href="/"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to TK Events
+            </a>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
