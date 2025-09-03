@@ -117,12 +117,25 @@ function AdminPageContent() {
   }, [isAuthenticated])
 
   const handleLogin = async (e: React.FormEvent) => {
+    console.log('handleLogin called - form submitted')
     e.preventDefault()
+    
+    console.log('Setting loading to true')
     setLoading(true)
     setError('')
     
+    console.log('Current loginToken:', loginToken)
+    
+    // Simple validation first
+    if (!loginToken.trim()) {
+      console.log('No token provided')
+      setError('Please enter admin token')
+      setLoading(false)
+      return
+    }
+    
     try {
-      console.log('Attempting login with token:', loginToken ? 'token provided' : 'no token')
+      console.log('Making fetch request to /api/admin/auth')
       
       const response = await fetch('/api/admin/auth', {
         method: 'POST',
@@ -130,23 +143,24 @@ function AdminPageContent() {
         body: JSON.stringify({ token: loginToken })
       })
       
-      console.log('Auth response status:', response.status)
+      console.log('Response received, status:', response.status)
       
       if (response.ok) {
-        console.log('Login successful')
+        console.log('Login successful, setting authenticated state')
         localStorage.setItem('admin_token', loginToken)
         setAdminToken(loginToken)
         setIsAuthenticated(true)
         fetchEventsWithToken(loginToken)
       } else {
         const errorData = await response.json().catch(() => ({}))
-        console.log('Login failed:', errorData)
+        console.log('Login failed with error:', errorData)
         setError('Invalid token')
       }
     } catch (err) {
-      console.error('Login error:', err)
-      setError('Login failed - check console for details')
+      console.error('Network or other error during login:', err)
+      setError('Login failed - network error')
     } finally {
+      console.log('Setting loading to false')
       setLoading(false)
     }
   }
@@ -520,6 +534,14 @@ function AdminPageContent() {
             <button
               type="submit"
               disabled={loading}
+              onClick={(e) => {
+                console.log('Login button clicked')
+                if (!loginToken.trim()) {
+                  e.preventDefault()
+                  setError('Please enter admin token')
+                  return
+                }
+              }}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white font-medium py-3 rounded-xl transition-colors"
             >
               {loading ? 'Authenticating...' : 'Login'}
