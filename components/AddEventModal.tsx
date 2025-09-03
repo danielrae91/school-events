@@ -59,7 +59,12 @@ export default function AddEventModal({ onClose, onEventAdded }: AddEventModalPr
       <div className="bg-slate-800 border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="bg-blue-600 px-6 py-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">Add New Event</h2>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z" />
+              </svg>
+              Add New Event
+            </h2>
             <button
               onClick={onClose}
               className="text-white hover:text-gray-300 p-1"

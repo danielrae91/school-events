@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic'
 
 const headers = {
   "content-type": "text/calendar; charset=utf-8",
-  "cache-control": "public, max-age=60, s-maxage=300",
+  "cache-control": "no-cache, no-store, must-revalidate",
+  "pragma": "no-cache",
+  "expires": "0"
 }
 
 export async function GET(request: NextRequest) {

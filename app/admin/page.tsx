@@ -39,12 +39,12 @@ export default function AdminPage() {
     const token = localStorage.getItem('admin_token')
     if (!token) return
     try {
-      const response = await fetch('/api/admin/logs', {
+      const response = await fetch('/api/admin/email-logs', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
         const data = await response.json()
-        // setLogs(data.logs || [])
+        setEmailLogs(data.logs || [])
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
@@ -67,12 +67,12 @@ export default function AdminPage() {
 
   const fetchLogsWithToken = async (token: string) => {
     try {
-      const response = await fetch('/api/admin/logs', {
+      const response = await fetch('/api/admin/email-logs', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
         const data = await response.json()
-        // setLogs(data.logs || [])
+        setEmailLogs(data.logs || [])
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
@@ -119,11 +119,14 @@ export default function AdminPage() {
         },
         body: JSON.stringify({ gptPrompt })
       })
+
       if (response.ok) {
         alert('Settings saved successfully!')
+      } else {
+        alert('Failed to save settings')
       }
     } catch (err) {
-      setError('Failed to save settings')
+      alert('Failed to save settings')
     }
   }
 
