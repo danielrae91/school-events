@@ -87,14 +87,14 @@ export default function SuggestEventModal({ onClose, onEventSuggested }: Suggest
   }
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div ref={modalRef} className="bg-slate-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="bg-green-600 px-6 py-4 rounded-t-3xl">
+    <div ref={overlayRef} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div ref={modalRef} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-5 rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">Suggest an Event</h2>
+            <h2 className="text-xl font-bold text-white">Suggest an Event</h2>
             <button
               onClick={handleClose}
-              className="text-white hover:text-gray-300 p-1"
+              className="text-white hover:text-gray-300 p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

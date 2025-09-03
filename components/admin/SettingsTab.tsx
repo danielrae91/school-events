@@ -20,7 +20,19 @@ export default function SettingsTab({
   adminToken,
   onRefresh
 }: SettingsTabProps) {
-  const [prompt, setPrompt] = useState(settings.prompt || '')
+  const [prompt, setPrompt] = useState(settings.prompt || `You are an AI assistant that extracts event information from school newsletters. Extract all events with the following details:
+
+- title: Event name (keep it concise)
+- description: Brief description if available
+- location: Where the event takes place
+- start_date: Date in YYYY-MM-DD format
+- start_time: Time in HH:MM format (24-hour) if specified
+- end_date: End date if different from start date
+- end_time: End time if specified
+
+Only extract actual events (meetings, sports, performances, etc.). Ignore general announcements, reminders about policies, or non-event content.
+
+Return as JSON array of events.`)
   const [saving, setSaving] = useState(false)
 
   const handleSaveSettings = async () => {

@@ -31,7 +31,7 @@ export default function FeedbackTab({
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-white">Contact Messages</h2>
+        <h2 className="text-xl font-semibold text-white">Messages</h2>
         <button
           onClick={onRefresh}
           className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg transition-colors"
