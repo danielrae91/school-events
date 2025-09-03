@@ -707,25 +707,28 @@ END:VCALENDAR`
 
         {/* Mobile Compact Events List */}
         <div className="md:hidden bg-slate-800 border border-slate-700 rounded-xl mb-8">
-          <div className="p-4 border-b border-slate-700">
-            <h2 className="text-xl font-semibold text-white">Upcoming Events</h2>
+          <div className="p-3 border-b border-slate-700">
+            <h2 className="text-lg font-semibold text-white">All Future Events</h2>
           </div>
-          <div className="p-4 space-y-3">
-            {upcomingEvents.slice(0, 10).map((event) => (
+          <div className="p-2 space-y-2 max-h-96 overflow-y-auto">
+            {events.map((event) => (
               <div
                 key={event.id}
-                onClick={() => setSelectedEvent(event)}
-                className="bg-slate-700/50 rounded-lg p-3 cursor-pointer hover:bg-slate-700 transition-colors"
+                onClick={() => {
+                  setSelectedEvent(event)
+                  window.history.pushState({}, '', `/?event=${event.id}`)
+                }}
+                className="bg-slate-700/30 rounded-lg p-2 cursor-pointer hover:bg-slate-700/50 transition-colors border border-slate-600/30"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-lg">{event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
-                      <h3 className="font-medium text-white text-sm truncate">{event.title.replace(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, '')}</h3>
-                    </div>
-                    <div className="text-xs text-gray-400 space-y-1">
-                      <div>{formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}</div>
-                      {event.location && <div className="truncate">{event.location}</div>}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-sm flex-shrink-0">{event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-white text-xs truncate">{event.title.replace(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, '')}</h3>
+                      <div className="text-xs text-gray-400 truncate">
+                        {formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}
+                        {event.location && ` • ${event.location}`}
+                      </div>
                     </div>
                   </div>
                   <button
@@ -745,7 +748,7 @@ END:VCALENDAR`
                         toast.success('Event details copied!')
                       }
                     }}
-                    className="bg-purple-600 hover:bg-purple-500 text-white p-1.5 rounded text-xs transition-colors flex-shrink-0"
+                    className="bg-purple-600 hover:bg-purple-500 text-white p-1 rounded text-xs transition-colors flex-shrink-0"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -754,7 +757,7 @@ END:VCALENDAR`
                 </div>
               </div>
             ))}
-            {upcomingEvents.length === 0 && (
+            {events.length === 0 && (
               <div className="text-center py-8 text-gray-400">
                 <p>No upcoming events</p>
               </div>
