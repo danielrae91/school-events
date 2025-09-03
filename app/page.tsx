@@ -32,13 +32,13 @@ export default function HomePage() {
       e.preventDefault()
       setDeferredPrompt(e)
       
-      // Check if user has dismissed the prompt before
-      const dismissed = localStorage.getItem('pwa-install-dismissed')
+      // Check if user has dismissed the prompt recently
+      const dismissed = localStorage.getItem('pwa-dismissed')
+      const dismissedTime = dismissed ? parseInt(dismissed) : 0
+      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24)
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-      const isAndroid = /Android/.test(navigator.userAgent)
       
-      if (!dismissed && !isStandalone && (isIOS || isAndroid)) {
+      if (!isStandalone && (!dismissed || daysSinceDismissed > 7)) {
         setShowInstallPrompt(true)
       }
     }
@@ -114,18 +114,26 @@ export default function HomePage() {
 
   const handleInstallPWA = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-      if (outcome === 'accepted') {
+      try {
+        deferredPrompt.prompt()
+        const { outcome } = await deferredPrompt.userChoice
+        console.log('PWA install outcome:', outcome)
+        if (outcome === 'accepted') {
+          console.log('PWA installed successfully')
+        }
+        setDeferredPrompt(null)
         setShowInstallPrompt(false)
+      } catch (error) {
+        console.error('Error installing PWA:', error)
       }
-      setDeferredPrompt(null)
     }
   }
 
   const dismissInstallPrompt = () => {
-    localStorage.setItem('pwa-install-dismissed', 'true')
     setShowInstallPrompt(false)
+    setDeferredPrompt(null)
+    // Store dismissal to avoid showing again for a while
+    localStorage.setItem('pwa-dismissed', Date.now().toString())
   }
 
   const fetchEvents = async () => {
@@ -242,19 +250,19 @@ export default function HomePage() {
   }
 
   const handleGoogleCalendar = () => {
-    const calendarUrl = `${window.location.origin}/calendar.ics`
+    const calendarUrl = `https://tkdates.nz/calendar.ics`
     const googleUrl = `https://calendar.google.com/calendar/u/0/r/addbyurl?cid=${encodeURIComponent(calendarUrl)}`
     window.open(googleUrl, '_blank')
   }
 
   const handleAppleCalendar = () => {
-    const calendarUrl = `${window.location.origin}/calendar.ics`
+    const calendarUrl = `https://tkdates.nz/calendar.ics`
     const webcalUrl = calendarUrl.replace(/^https?:\/\//, 'webcal://')
     window.location.href = webcalUrl
   }
 
   const handleOutlookCalendar = () => {
-    const calendarUrl = `${window.location.origin}/calendar.ics`
+    const calendarUrl = `https://tkdates.nz/calendar.ics`
     const outlookUrl = `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent(calendarUrl)}`
     window.location.href = outlookUrl
   }
@@ -686,13 +694,13 @@ END:VCALENDAR`
                     Apple Calendar
                   </button>
                   <a
-                    href="/calendar.ics"
+                    href="https://tkdates.nz/calendar.ics"
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
                       setDropdownOpen(null)
                       trackCalendarSubscription()
-                      window.open('/calendar.ics', '_blank')
+                      window.open('https://tkdates.nz/calendar.ics', '_blank')
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                   >

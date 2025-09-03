@@ -1,0 +1,27 @@
+{
+  "name": "TK Events - Te Kura o Take Karara",
+  "short_name": "TK Events",
+  "description": "School events calendar for Te Kura o Take Karara",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"],
+  "lang": "en-NZ",
+  "scope": "/",
+  "prefer_related_applications": false
+}
