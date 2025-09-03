@@ -302,13 +302,13 @@ export default function HomePage() {
   }
 
   const handleAppleCalendar = () => {
-    const calendarUrl = `https://tkdates.nz/calendar.ics`
+    const calendarUrl = `https://tkevents.nz/calendar.ics`
     const webcalUrl = calendarUrl.replace(/^https?:\/\//, 'webcal://')
     window.location.href = webcalUrl
   }
 
   const handleOutlookCalendar = () => {
-    const calendarUrl = `https://tkdates.nz/calendar.ics`
+    const calendarUrl = `https://tkevents.nz/calendar.ics`
     const outlookUrl = `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent(calendarUrl)}`
     window.location.href = outlookUrl
   }

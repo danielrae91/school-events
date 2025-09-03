@@ -58,7 +58,7 @@ RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=1SU
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-UID:${eventId}@${process.env.VERCEL_URL || 'tkdates.nz'}
+UID:${eventId}@${process.env.VERCEL_URL || 'tkevents.nz'}
 DTSTART;TZID=Pacific/Auckland:${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '').slice(0, -1)}
 DTEND;TZID=Pacific/Auckland:${endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '').slice(0, -1)}
 SUMMARY:${eventData.title || 'School Event'}

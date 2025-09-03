@@ -50,7 +50,7 @@ function AdminPageContent() {
   
   // UI state
   const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [suggestionsLoading, setSuggestionsLoading] = useState(true)
   const [feedbackLoading, setFeedbackLoading] = useState(true)
   const [logsLoading, setLogsLoading] = useState(true)

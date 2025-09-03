@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/ical": "^0.8.3",
     "@upstash/redis": "^1.35.3",
     "crypto": "^1.0.1",
+    "googleapis": "^159.0.0",
     "gsap": "^3.13.0",
+    "ical": "^0.8.0",
     "ical-generator": "^7.1.0",
     "mailparser": "^3.7.1",
     "next": "^14.2.32",

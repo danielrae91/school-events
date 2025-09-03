@@ -5,7 +5,7 @@ export function generateICalFeed(events: StoredEvent[]): string {
   const calendar = ical({
     name: 'School Events Calendar',
     description: 'Automated school newsletter events feed',
-    url: `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://tkdates.nz'}/calendar.ics`,
+    url: `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://tkevents.nz'}/calendar.ics`,
     prodId: '-//TK Newsletter//School Events//EN',
     timezone: 'Pacific/Auckland'
   })
@@ -16,7 +16,7 @@ export function generateICalFeed(events: StoredEvent[]): string {
       const endDate = parseEventDateTime(event.end_date || event.start_date, event.end_time || event.start_time)
       
       const calEvent: any = {
-        uid: `${event.id}@${process.env.VERCEL_URL || 'tkdates.nz'}`,
+        uid: `${event.id}@${process.env.VERCEL_URL || 'tkevents.nz'}`,
         start: startDate,
         end: endDate,
         summary: event.title,
