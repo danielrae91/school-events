@@ -297,8 +297,7 @@ export default function HomePage() {
   }
 
   const handleGoogleCalendar = () => {
-    const calendarUrl = `https://tkdates.nz/calendar.ics`
-    const googleUrl = `https://calendar.google.com/calendar/u/0/r/addbyurl?cid=${encodeURIComponent(calendarUrl)}`
+    const googleUrl = `https://calendar.google.com/calendar/embed?src=2grcr5b86lkfslkd51lohdkh1lmudsnv%40import.calendar.google.com&ctz=Pacific%2FAuckland`
     window.open(googleUrl, '_blank')
   }
 
