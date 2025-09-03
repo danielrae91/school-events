@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { StoredEvent } from '@/lib/types'
 import EventForm from '@/components/admin/EventForm'
@@ -39,7 +39,7 @@ interface EmailLog {
   processed_at?: string
 }
 
-export default function AdminPage() {
+function AdminPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -772,5 +772,15 @@ export default function AdminPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="text-white">Loading admin panel...</div>
+    </div>}>
+      <AdminPageContent />
+    </Suspense>
   )
 }

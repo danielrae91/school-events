@@ -9,13 +9,14 @@ export const metadata: Metadata = {
   description: 'School events calendar for Te Kura o Take Karara - subscribe to stay updated with all school events',
   keywords: 'school events, calendar, newsletter, ical, feed, Te Kura o Take Karara',
   manifest: '/manifest.json',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#7c3aed',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'TK Events'
-  }
 }
 
 export default function RootLayout({
@@ -29,10 +30,10 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon-calendar.svg" type="image/svg+xml" />
         <link rel="shortcut icon" href="/favicon-calendar.svg" />
-        <meta name="theme-color" content="#7c3aed" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="TK Events" />
+        <meta name="theme-color" content="#7c3aed" />
         <link rel="apple-touch-icon" href="/favicon-calendar.svg" />
       </head>
       <body className={inter.className}>{children}</body>
