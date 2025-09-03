@@ -98,37 +98,77 @@ export default function EventsTab({
               {events.map((event) => (
                 <div
                   key={event.id}
-                  className={`bg-slate-700 rounded-lg p-4 border transition-colors ${
+                  className={`bg-slate-700 rounded-lg p-4 border transition-colors cursor-pointer ${
                     selectedEvents.includes(event.id)
                       ? 'border-purple-500 bg-purple-900/20'
                       : 'border-slate-600 hover:border-slate-500'
                   }`}
+                  onClick={() => onToggleSelection(event.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         checked={selectedEvents.includes(event.id)}
-                        onChange={() => onToggleSelection(event.id)}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          onToggleSelection(event.id)
+                        }}
                         className="rounded border-slate-500 bg-slate-600 text-purple-600 focus:ring-purple-500"
                       />
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium text-white">{event.title}</h3>
-                        <p className="text-sm text-slate-400">
-                          {event.start_date} {event.start_time && `at ${event.start_time}`}
-                          {event.location && ` • ${event.location}`}
-                        </p>
+                        <div className="text-sm text-slate-400 space-y-1">
+                          <div>
+                            <span className="font-medium">Start:</span> {event.start_date} {event.start_time && `at ${event.start_time}`}
+                          </div>
+                          {event.end_date && (
+                            <div>
+                              <span className="font-medium">End:</span> {event.end_date} {event.end_time && `at ${event.end_time}`}
+                            </div>
+                          )}
+                          {event.location && (
+                            <div>
+                              <span className="font-medium">Location:</span> {event.location}
+                            </div>
+                          )}
+                          {event.description && (
+                            <div className="mt-2">
+                              <span className="font-medium">Description:</span> {event.description}
+                            </div>
+                          )}
+                          {event.requires_more_info && (
+                            <div className="mt-2">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-900/50 text-yellow-300 border border-yellow-700">
+                                ⚠️ Requires more information
+                              </span>
+                            </div>
+                          )}
+                          {event.information_found_in_hero && (
+                            <div className="mt-1">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700">
+                                ℹ️ Information found in hero
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => onEditEvent(event)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditEvent(event)
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => onDeleteEvent(event.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteEvent(event.id)
+                        }}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
                       >
                         Delete

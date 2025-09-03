@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { StoredEvent } from '@/lib/types'
 import EventForm from '@/components/admin/EventForm'
 import EventsTab from '@/components/admin/EventsTab'
@@ -39,6 +40,9 @@ interface EmailLog {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [adminToken, setAdminToken] = useState('')
@@ -47,8 +51,8 @@ export default function AdminPage() {
   // UI state
   const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
   const [loading, setLoading] = useState(false)
-  const [feedbackLoading, setFeedbackLoading] = useState(false)
-  const [logsLoading, setLogsLoading] = useState(false)
+  const [feedbackLoading, setFeedbackLoading] = useState(true)
+  const [logsLoading, setLogsLoading] = useState(true)
   const [error, setError] = useState('')
   
   // Data state
@@ -75,13 +79,19 @@ export default function AdminPage() {
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Check URL params for tab
+    const tab = searchParams.get('tab')
+    if (tab && ['events', 'suggestions', 'feedback', 'logs', 'settings'].includes(tab)) {
+      setActiveTab(tab as any)
+    }
+    
     const token = localStorage.getItem('admin_token')
     if (token) {
       setAdminToken(token)
       setIsAuthenticated(true)
       fetchEventsWithToken(token)
     }
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     // Initial admin panel animations - only run when authenticated and refs are available
@@ -386,6 +396,11 @@ export default function AdminPage() {
   const handleTabChange = (tab: typeof activeTab) => {
     setActiveTab(tab)
     clearSelection()
+    
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.push(`/admin?${params.toString()}`, { scroll: false })
     
     if (tab === 'suggestions' && suggestions.length === 0) {
       fetchSuggestionsWithToken(adminToken)

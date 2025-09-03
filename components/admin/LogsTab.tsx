@@ -7,6 +7,9 @@ interface EmailLog {
   error?: string
   created_at: string
   processed_at?: string
+  eventsProcessed?: number
+  eventsSkipped?: number
+  eventsExtracted?: number
 }
 
 interface LogsTabProps {
@@ -145,25 +148,37 @@ export default function LogsTab({
               {emailLogs.map((log) => (
                 <div
                   key={log.id}
-                  className={`bg-slate-700 rounded-lg p-4 border transition-colors ${
+                  className={`bg-slate-700 rounded-lg p-4 border transition-colors cursor-pointer ${
                     selectedLogs.includes(log.id)
                       ? 'border-purple-500 bg-purple-900/20'
                       : 'border-slate-600 hover:border-slate-500'
                   }`}
+                  onClick={() => onToggleSelection(log.id)}
                 >
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={selectedLogs.includes(log.id)}
-                      onChange={() => onToggleSelection(log.id)}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        onToggleSelection(log.id)
+                      }}
                       className="rounded border-slate-500 bg-slate-600 text-purple-600 focus:ring-purple-500 mt-1"
                     />
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-medium text-white">{log.subject}</h3>
-                        <span className={`text-sm font-medium ${getStatusColor(log.status)}`}>
-                          {log.status.toUpperCase()}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {log.status === 'processing' && (
+                            <div className="flex items-center gap-1 text-xs text-blue-400">
+                              <div className="animate-spin rounded-full h-3 w-3 border border-blue-400 border-t-transparent"></div>
+                              <span>Processing...</span>
+                            </div>
+                          )}
+                          <span className={`text-sm font-medium ${getStatusColor(log.status)}`}>
+                            {log.status.toUpperCase()}
+                          </span>
+                        </div>
                       </div>
                       
                       {log.error && (
@@ -172,17 +187,33 @@ export default function LogsTab({
                         </div>
                       )}
                       
-                      <div className="text-sm text-slate-400">
+                      <div className="text-sm text-slate-400 space-y-1">
                         <p>Created: {new Date(log.created_at).toLocaleString()}</p>
                         {log.processed_at && (
                           <p>Processed: {new Date(log.processed_at).toLocaleString()}</p>
+                        )}
+                        {(log.eventsProcessed !== undefined || log.eventsSkipped !== undefined || log.eventsExtracted !== undefined) && (
+                          <div className="mt-2 flex gap-4 text-xs">
+                            {log.eventsExtracted !== undefined && (
+                              <span className="text-blue-400">📧 {log.eventsExtracted} extracted</span>
+                            )}
+                            {log.eventsProcessed !== undefined && (
+                              <span className="text-green-400">✅ {log.eventsProcessed} created</span>
+                            )}
+                            {log.eventsSkipped !== undefined && (
+                              <span className="text-yellow-400">⏭️ {log.eventsSkipped} skipped</span>
+                            )}
+                          </div>
                         )}
                       </div>
                       
                       {(log.status === 'failed' || log.status === 'error' || log.status === 'processing') && (
                         <div className="mt-2">
                           <button
-                            onClick={() => handleRetryEmail(log.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRetryEmail(log.id)
+                            }}
                             className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
                           >
                             {log.status === 'processing' ? 'Force Retry (Stuck)' : 'Retry Processing'}

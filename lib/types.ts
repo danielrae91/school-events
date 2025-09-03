@@ -36,6 +36,8 @@ export interface StoredEvent {
   updated_at: string
   needs_enrichment?: boolean
   source?: string
+  requires_more_info?: boolean
+  information_found_in_hero?: boolean
 }
 
 // CloudMailin inbound webhook payload (JSON Normalized format)
