@@ -10,9 +10,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [editingSuggestion, setEditingSuggestion] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'stats' | 'logs' | 'settings'>('events')
+  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
   const [feedback, setFeedback] = useState<any[]>([])
-  const [stats, setStats] = useState<any>(null)
   const [emailLogs, setEmailLogs] = useState<any[]>([])
   const { toasts, removeToast, showSuccess, showError, showInfo } = useToast()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -32,7 +31,6 @@ export default function AdminPage() {
       // Load initial data for all tabs
       fetchSuggestionsWithToken(token)
       fetchFeedbackWithToken(token)
-      fetchStatsWithToken(token)
       fetchLogsWithToken(token)
       fetchSettingsWithToken(token)
     } else {
@@ -115,19 +113,6 @@ export default function AdminPage() {
     }
   }
 
-  const fetchStatsWithToken = async (token: string) => {
-    try {
-      const response = await fetch('/api/admin/stats', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch stats:', err)
-    }
-  }
 
   const fetchLogsWithToken = async (token: string) => {
     try {
@@ -483,16 +468,6 @@ export default function AdminPage() {
                 }`}
               >
                 Feedback ({feedback.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('stats')}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeTab === 'stats' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Stats
               </button>
               <button
                 onClick={() => setActiveTab('logs')}
@@ -929,6 +904,11 @@ export default function AdminPage() {
                               {item.email && `From: ${item.email} • `}
                               {new Date(item.timestamp).toLocaleString()}
                             </p>
+                            {item.error && (
+                              <p className="text-sm text-red-600 mt-1">
+                                Error: {item.error}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </li>
