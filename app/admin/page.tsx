@@ -47,6 +47,8 @@ export default function AdminPage() {
   // UI state
   const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
   const [loading, setLoading] = useState(false)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [logsLoading, setLogsLoading] = useState(false)
   const [error, setError] = useState('')
   
   // Data state
@@ -166,6 +168,7 @@ export default function AdminPage() {
   }
 
   const fetchFeedbackWithToken = async (token: string) => {
+    setFeedbackLoading(true)
     try {
       const response = await fetch('/api/admin/feedback', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -176,12 +179,15 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to fetch feedback:', err)
+    } finally {
+      setFeedbackLoading(false)
     }
   }
 
   const fetchLogsWithToken = async (token: string) => {
+    setLogsLoading(true)
     try {
-      const response = await fetch('/api/admin/logs', {
+      const response = await fetch('/api/admin/email-logs', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (response.ok) {
@@ -190,6 +196,8 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error('Failed to fetch logs:', err)
+    } finally {
+      setLogsLoading(false)
     }
   }
 
@@ -554,7 +562,7 @@ export default function AdminPage() {
             <FeedbackTab
               feedback={feedback}
               selectedFeedback={selectedFeedback}
-              loading={loading}
+              loading={feedbackLoading}
               onRefresh={() => fetchFeedbackWithToken(adminToken)}
               onBulkDelete={bulkDeleteFeedback}
               onToggleSelection={toggleFeedbackSelection}
@@ -567,7 +575,7 @@ export default function AdminPage() {
             <LogsTab
               emailLogs={emailLogs}
               selectedLogs={selectedLogs}
-              loading={loading}
+              loading={logsLoading}
               adminToken={adminToken}
               onRefresh={() => fetchLogsWithToken(adminToken)}
               onBulkDelete={bulkDeleteLogs}

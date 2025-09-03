@@ -179,13 +179,13 @@ export default function LogsTab({
                         )}
                       </div>
                       
-                      {(log.status === 'failed' || log.status === 'error') && (
+                      {(log.status === 'failed' || log.status === 'error' || log.status === 'processing') && (
                         <div className="mt-2">
                           <button
                             onClick={() => handleRetryEmail(log.id)}
                             className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
                           >
-                            Retry Processing
+                            {log.status === 'processing' ? 'Force Retry (Stuck)' : 'Retry Processing'}
                           </button>
                         </div>
                       )}

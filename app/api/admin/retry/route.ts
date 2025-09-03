@@ -60,10 +60,11 @@ ${emailContent.html ? `\nHTML CONTENT:\n${emailContent.html}` : ''}
 
     // Update log status
     await redis.hset(`email_log:${logId}`, {
-      status: 'success',
+      status: 'completed',
       eventsProcessed: storedEvents.length,
       eventsSkipped: skippedEvents.length,
-      retryTimestamp: new Date().toISOString()
+      retryTimestamp: new Date().toISOString(),
+      processed_at: new Date().toISOString()
     })
 
     return NextResponse.json({
