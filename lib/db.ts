@@ -222,11 +222,31 @@ export async function eventExists(title: string, startDate: string): Promise<boo
         const titleSimilarity = calculateSimilarity(title, existingEvent.title)
         
         // Consider it a duplicate if:
-        // 1. Title similarity > 80%
+        // 1. Title similarity > 70% (lowered threshold)
         // 2. Same date
-        if (titleSimilarity > 0.8) {
+        // 3. Additional fuzzy matching for common variations
+        const normalizedTitle = title.toLowerCase().replace(/[^\w\s]/g, '').trim()
+        const normalizedExisting = existingEvent.title.toLowerCase().replace(/[^\w\s]/g, '').trim()
+        
+        // Check for exact match after normalization
+        if (normalizedTitle === normalizedExisting) {
+          console.log(`Exact normalized match found: "${title}" vs "${existingEvent.title}"`)
+          return true
+        }
+        
+        // Check for high similarity or common event patterns
+        if (titleSimilarity > 0.7) {
           console.log(`Similar event found: "${title}" vs "${existingEvent.title}" (similarity: ${(titleSimilarity * 100).toFixed(1)}%)`)
           return true
+        }
+        
+        // Check for common event type patterns (e.g., "Assembly", "Sports Day", etc.)
+        const commonEventTypes = ['assembly', 'sports day', 'athletics', 'swimming', 'cross country', 'prize giving', 'graduation', 'open day', 'parent teacher', 'school photos']
+        for (const eventType of commonEventTypes) {
+          if (normalizedTitle.includes(eventType) && normalizedExisting.includes(eventType)) {
+            console.log(`Common event type match found: "${title}" vs "${existingEvent.title}" (type: ${eventType})`)
+            return true
+          }
         }
       }
     }

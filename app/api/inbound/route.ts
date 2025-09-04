@@ -12,6 +12,9 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
   try {
     console.log(`[${new Date().toISOString()}] [info] Step 1: Updating Redis status for log ${logId}`)
     
+    // Add a small delay to ensure the webhook response has been sent
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
     // Update status to show processing started
     console.log(`[${new Date().toISOString()}] [info] Step 2: About to update Redis status for log ${logId}`)
     await redis.hset(`email_log:${logId}`, {
@@ -335,10 +338,26 @@ export async function POST(request: NextRequest) {
     logsList.unshift(`log:${logId}`)
     await redis.set('logs:list', logsList)
 
-    // Process email asynchronously to avoid timeout
+    // Queue async processing (don't await - return immediately)
     console.log(`[${new Date().toISOString()}] [webhook] Starting processEmailAsync for log ${logId}`)
-    processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
-      console.error(`[${new Date().toISOString()}] [error] Async email processing failed for ${logId}:`, error)
+    
+    // Use setImmediate to ensure the async function runs in the next tick
+    setImmediate(() => {
+      processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
+        console.error(`[${new Date().toISOString()}] [error] Async processing failed for log ${logId}:`, error)
+        
+        // Update Redis with the error for debugging
+        redis.hset(`email_log:${logId}`, {
+          status: 'failed',
+          stage: 'async_error',
+          error: error.message,
+          errorStack: error.stack,
+          failedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }).catch(redisError => {
+          console.error(`[${new Date().toISOString()}] [error] Failed to update Redis with error:`, redisError)
+        })
+      })
     })
 
     console.log(`[${new Date().toISOString()}] [webhook] Email queued for processing with log ID: ${logId}`)
