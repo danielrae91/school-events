@@ -1393,7 +1393,7 @@ END:VCALENDAR`
               </svg>
               Usage Statistics
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
                 <div className="flex justify-center mb-1">
                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

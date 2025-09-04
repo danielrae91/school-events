@@ -128,6 +128,32 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
       } catch (pushError) {
         console.error(`[${new Date().toISOString()}] [error] Failed to send push notifications:`, pushError)
       }
+
+      // Sync new events to Google Calendar
+      try {
+        const { syncFromIcsToGoogle } = await import('@/lib/googleCalendarSync')
+        console.log(`[${new Date().toISOString()}] [info] Starting Google Calendar sync after importing ${storedEvents.length} new events`)
+        
+        const syncResult = await syncFromIcsToGoogle()
+        console.log(`[${new Date().toISOString()}] [info] Google Calendar sync completed:`, syncResult)
+        
+        // Update log with sync info
+        await redis.hset(`email_log:${logId}`, {
+          googleCalendarSynced: 'true',
+          googleCalendarSyncResult: JSON.stringify(syncResult),
+          googleCalendarSyncedAt: new Date().toISOString()
+        })
+        
+      } catch (syncError) {
+        console.error(`[${new Date().toISOString()}] [error] Failed to sync to Google Calendar:`, syncError)
+        
+        // Update log with sync error
+        await redis.hset(`email_log:${logId}`, {
+          googleCalendarSynced: 'false',
+          googleCalendarSyncError: syncError instanceof Error ? syncError.message : 'Unknown sync error',
+          googleCalendarSyncErrorAt: new Date().toISOString()
+        })
+      }
     }
 
     // Update log with success

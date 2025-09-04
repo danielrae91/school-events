@@ -155,12 +155,29 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
         }
 
         // Create new event (since we deleted all existing ones)
-        await calendar.events.insert({
-          calendarId,
-          requestBody: googleEvent
-        })
-
-        syncedCount++
+        // Handle potential 409 conflicts by retrying without iCalUID if needed
+        try {
+          await calendar.events.insert({
+            calendarId,
+            requestBody: googleEvent
+          })
+          syncedCount++
+        } catch (insertError: any) {
+          if (insertError.code === 409 && insertError.message?.includes('iCalUID')) {
+            // Retry without iCalUID to avoid conflicts
+            console.log(`Retrying event ${event.summary} without iCalUID due to conflict`)
+            const eventWithoutUID = { ...googleEvent }
+            delete eventWithoutUID.iCalUID
+            
+            await calendar.events.insert({
+              calendarId,
+              requestBody: eventWithoutUID
+            })
+            syncedCount++
+          } else {
+            throw insertError
+          }
+        }
       } catch (eventError) {
         const errorMsg = `Failed to sync event ${event.summary}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`
         errors.push(errorMsg)
@@ -262,12 +279,29 @@ export async function syncEventsToGoogleCalendar(events: any[]): Promise<{ succe
         }
 
         // Create new event (since we deleted all existing ones)
-        await calendar.events.insert({
-          calendarId,
-          requestBody: googleEvent
-        })
-
-        syncedCount++
+        // Handle potential 409 conflicts by retrying without iCalUID if needed
+        try {
+          await calendar.events.insert({
+            calendarId,
+            requestBody: googleEvent
+          })
+          syncedCount++
+        } catch (insertError: any) {
+          if (insertError.code === 409 && insertError.message?.includes('iCalUID')) {
+            // Retry without iCalUID to avoid conflicts
+            console.log(`Retrying event ${event.title} without iCalUID due to conflict`)
+            const eventWithoutUID = { ...googleEvent }
+            delete eventWithoutUID.iCalUID
+            
+            await calendar.events.insert({
+              calendarId,
+              requestBody: eventWithoutUID
+            })
+            syncedCount++
+          } else {
+            throw insertError
+          }
+        }
       } catch (eventError) {
         const errorMsg = `Failed to sync event ${event.title}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`
         errors.push(errorMsg)
@@ -384,10 +418,27 @@ export async function syncSingleEventToGoogle(event: any, action: 'create' | 'up
     }
 
     // Create new event (for both 'create' action and 'update' when event doesn't exist)
-    await calendar.events.insert({
-      calendarId,
-      requestBody: googleEvent
-    })
+    // Handle potential 409 conflicts by retrying without iCalUID if needed
+    try {
+      await calendar.events.insert({
+        calendarId,
+        requestBody: googleEvent
+      })
+    } catch (insertError: any) {
+      if (insertError.code === 409 && insertError.message?.includes('iCalUID')) {
+        // Retry without iCalUID to avoid conflicts
+        console.log(`Retrying event ${event.title} without iCalUID due to conflict`)
+        const eventWithoutUID = { ...googleEvent }
+        delete eventWithoutUID.iCalUID
+        
+        await calendar.events.insert({
+          calendarId,
+          requestBody: eventWithoutUID
+        })
+      } else {
+        throw insertError
+      }
+    }
 
     return { success: true, message: 'Event created in Google Calendar' }
 
