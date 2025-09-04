@@ -1489,7 +1489,7 @@ END:VCALENDAR`
                   </svg>
                 </div>
                 <p className="text-lg font-medium text-gray-300">{stats.pwaInstalls?.toLocaleString() || '0'}</p>
-                <p className="text-slate-500 text-xs">PWA Installs</p>
+                <p className="text-slate-500 text-xs">App Installs</p>
               </div>
             </div>
           </div>

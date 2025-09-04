@@ -6,7 +6,7 @@ import { StoredEvent } from '@/lib/types'
 import EventForm from '@/components/admin/EventForm'
 import EventsTab from '@/components/admin/EventsTab'
 import SuggestionsTab from '@/components/admin/SuggestionsTab'
-import FeedbackTab from '@/components/admin/FeedbackTab'
+import MessagesTab from '@/components/admin/FeedbackTab'
 import LogsTab from '@/components/admin/LogsTab'
 import SettingsTab from '@/components/admin/SettingsTab'
 import NotificationsTab from '@/components/admin/NotificationsTab'
@@ -24,10 +24,22 @@ interface Suggestion {
   created_at: string
 }
 
-interface FeedbackItem {
+interface MessageItem {
   id: string
+  name: string
+  email: string
   message: string
-  email?: string
+  timestamp: string
+  userAgent: string
+  platform: string
+  language: string
+  screenResolution: string
+  viewport: string
+  timezone: string
+  ipAddress: string
+  country: string
+  city: string
+  isRead: boolean
   created_at: string
 }
 
@@ -61,7 +73,7 @@ function AdminPageContent() {
   // Data state
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [feedback, setFeedback] = useState<FeedbackItem[]>([])
+  const [feedback, setFeedback] = useState<MessageItem[]>([])
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
   const [settings, setSettings] = useState<any>({})
   
@@ -211,15 +223,17 @@ function AdminPageContent() {
   const fetchFeedbackWithToken = async (token: string) => {
     setFeedbackLoading(true)
     try {
-      const response = await fetch('/api/admin/feedback', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetch('/api/admin/messages', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
       if (response.ok) {
         const data = await response.json()
-        setFeedback(data.feedback || [])
+        setFeedback(data.messages || [])
       }
     } catch (err) {
-      console.error('Failed to fetch feedback:', err)
+      console.error('Failed to fetch messages:', err)
     } finally {
       setFeedbackLoading(false)
     }
@@ -328,18 +342,18 @@ function AdminPageContent() {
     if (!confirm(`Delete ${selectedFeedback.length} selected feedback items?`)) return
     
     try {
-      const response = await fetch('/api/admin/feedback', {
+      await fetch('/api/admin/messages', {
         method: 'DELETE',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ feedbackIds: selectedFeedback })
+        body: JSON.stringify({ messageIds: selectedFeedback })
       })
       setSelectedFeedback([])
       fetchFeedbackWithToken(adminToken)
     } catch (err) {
-      console.error('Failed to bulk delete feedback:', err)
+      console.error('Failed to bulk delete messages:', err)
     }
   }
 
@@ -705,15 +719,31 @@ function AdminPageContent() {
           )}
 
           {activeTab === 'feedback' && (
-            <FeedbackTab
-              feedback={feedback}
-              selectedFeedback={selectedFeedback}
+            <MessagesTab
+              messages={feedback}
+              selectedMessages={selectedFeedback}
               loading={feedbackLoading}
               onRefresh={() => fetchFeedbackWithToken(adminToken)}
               onBulkDelete={bulkDeleteFeedback}
               onToggleSelection={toggleFeedbackSelection}
               onSelectAll={selectAllFeedback}
               onClearSelection={clearSelection}
+              onMarkAsRead={(messageId: string) => {
+                // Mark message as read functionality
+                fetch(`/api/admin/messages/${messageId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ isRead: true })
+                }).then(() => {
+                  // Update local state
+                  setFeedback(prev => prev.map(msg => 
+                    msg.id === messageId ? { ...msg, isRead: true } : msg
+                  ))
+                }).catch(console.error)
+              }}
             />
           )}
 
