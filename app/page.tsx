@@ -12,6 +12,7 @@ export default function HomePage() {
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null)
+  const [modalDropdownOpen, setModalDropdownOpen] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<StoredEvent | null>(null)
   const [showAddEventModal, setShowAddEventModal] = useState(false)
   const [showSuggestEventModal, setShowSuggestEventModal] = useState(false)
@@ -169,11 +170,14 @@ export default function HomePage() {
       if (dropdownOpen && !(event.target as Element).closest('.dropdown-container')) {
         setDropdownOpen(null)
       }
+      if (modalDropdownOpen && !(event.target as Element).closest('.modal-dropdown-container')) {
+        setModalDropdownOpen(null)
+      }
     }
     
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [dropdownOpen])
+  }, [dropdownOpen, modalDropdownOpen])
 
   const trackPageView = async () => {
     try {
@@ -1660,77 +1664,76 @@ END:VCALENDAR`
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="space-y-3">
-                  <div className="relative dropdown-container">
-                    <button
-                      onClick={() => setDropdownOpen(dropdownOpen === 'modal' ? null : 'modal')}
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                      </svg>
-                      Add to Calendar
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {dropdownOpen === 'modal' && (
-                      <div className="absolute left-0 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                        <div className="py-1">
-                          <button
-                            onClick={async () => {
-                              setDropdownOpen(null)
-                              await fetch('/api/track', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
-                              })
-                              const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
-                              const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
-                              const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEvent.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
-                              window.open(googleUrl, '_blank')
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Add to Google
-                          </button>
-                          <button
-                            onClick={async () => {
-                              setDropdownOpen(null)
-                              await fetch('/api/track', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
-                              })
-                              const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
-                              const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
-                              const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(selectedEvent.title)}&startdt=${startDate.toISOString()}&enddt=${endDate.toISOString()}&body=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
-                              window.open(outlookUrl, '_blank')
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 22h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2zM9 4h6v2H9V4zm0 4h6v2H9V8zm0 4h6v2H9v-2z"/>
-                            </svg>
-                            Add to Outlook
-                          </button>
-                          <button
-                            onClick={async () => {
-                              setDropdownOpen(null)
-                              await fetch('/api/track', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
-                              })
-                              const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
-                              const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
-                              const icsContent = `BEGIN:VCALENDAR
+                <div className="border-t border-slate-700 pt-4">
+                  <div className="flex gap-2">
+                    <div className="relative modal-dropdown-container flex-1">
+                      <button
+                        onClick={() => setModalDropdownOpen(modalDropdownOpen === 'calendar' ? null : 'calendar')}
+                        className="w-full bg-slate-600 hover:bg-slate-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-slate-500 flex items-center justify-center gap-1"
+                        title="Add to Calendar"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="hidden sm:inline">Calendar</span>
+                      </button>
+                      {modalDropdownOpen === 'calendar' && (
+                        <div className="absolute left-0 bottom-full mb-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
+                          <div className="py-1">
+                            <button
+                              onClick={async () => {
+                                setModalDropdownOpen(null)
+                                await fetch('/api/track', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
+                                })
+                                const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
+                                const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
+                                const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEvent.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
+                                window.open(googleUrl, '_blank')
+                              }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                Google
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setModalDropdownOpen(null)
+                                await fetch('/api/track', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
+                                })
+                                const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
+                                const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
+                                const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(selectedEvent.title)}&startdt=${startDate.toISOString()}&enddt=${endDate.toISOString()}&body=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
+                                window.open(outlookUrl, '_blank')
+                              }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Outlook
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setModalDropdownOpen(null)
+                                await fetch('/api/track', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
+                                })
+                                const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
+                                const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
+                                const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//TK Events//EN
 BEGIN:VEVENT
@@ -1742,71 +1745,68 @@ DESCRIPTION:${selectedEvent.description || ''}
 LOCATION:${selectedEvent.location || ''}
 END:VEVENT
 END:VCALENDAR`
-                              const blob = new Blob([icsContent], { type: 'text/calendar' })
-                              const url = URL.createObjectURL(blob)
-                              const a = document.createElement('a')
-                              a.href = url
-                              a.download = `${selectedEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`
-                              document.body.appendChild(a)
-                              a.click()
-                              document.body.removeChild(a)
-                              URL.revokeObjectURL(url)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Download .ics
-                          </button>
+                                const blob = new Blob([icsContent], { type: 'text/calendar' })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `${selectedEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`
+                                document.body.appendChild(a)
+                                a.click()
+                                document.body.removeChild(a)
+                                URL.revokeObjectURL(url)
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Download .ics
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Share Buttons */}
-                  <div className="border-t border-slate-700 pt-4">
-                    <p className="text-gray-400 text-sm mb-3">Share this event</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => {
-                          const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
-                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - View details: ${eventUrl}`
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
+                        const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - View details: ${eventUrl}`
+                        navigator.clipboard.writeText(shareText)
+                        toast.success('Event details copied to clipboard!')
+                      }}
+                      className="bg-slate-600 hover:bg-slate-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-slate-500 flex items-center justify-center gap-1"
+                      title="Copy Details"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span className="hidden sm:inline">Copy</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
+                        const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - View details: ${eventUrl}`
+                        
+                        if (navigator.share) {
+                          navigator.share({
+                            title: selectedEvent.title,
+                            text: shareText,
+                            url: eventUrl
+                          })
+                        } else {
                           navigator.clipboard.writeText(shareText)
                           toast.success('Event details copied to clipboard!')
-                        }}
-                        className="bg-slate-700 hover:bg-slate-600 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Copy Details
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
-                          const shareText = `Event: ${selectedEvent.title} - When: ${formatEventDuration(selectedEvent)}${selectedEvent.location ? ` - Where: ${selectedEvent.location}` : ''} - View details: ${eventUrl}`
-                          
-                          if (navigator.share) {
-                            navigator.share({
-                              title: selectedEvent.title,
-                              text: shareText,
-                              url: eventUrl
-                            })
-                          } else {
-                            navigator.clipboard.writeText(shareText)
-                            toast.success('Event details copied to clipboard!')
-                          }
-                        }}
-                        className="bg-amber-600 hover:bg-amber-500 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                        </svg>
-                        Share Event
-                      </button>
-                    </div>
+                        }
+                      }}
+                      className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors border border-amber-500 flex items-center justify-center gap-1"
+                      title="Share Event"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                      </svg>
+                      <span className="hidden sm:inline">Share</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1843,176 +1843,143 @@ END:VCALENDAR`
           </div>
         )}
 
-        {/* How/Why Modal */}
-        {showHowModal && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-modal-in">
-              <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white">How TK Events Works</h2>
-                  <button
-                    onClick={() => setShowHowModal(false)}
-                    className="text-white hover:text-gray-300 p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+        {/* Stats Section */}
+        {stats && (
+          <div className="mb-8 mt-16">
+            <h2 className="text-xl font-medium mb-4 text-center text-gray-400 flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Usage Statistics
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
                 </div>
+                <p className="text-lg font-medium text-gray-300">{stats.pageViews?.toLocaleString() || '0'}</p>
+                <p className="text-slate-500 text-xs">Page Views</p>
               </div>
               
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-                <div className="mb-6">
-                  <p className="text-gray-300 text-lg leading-relaxed">
-                    TK Events automatically converts school newsletter emails into a clean, accessible event calendar using AI technology.
-                  </p>
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
                 </div>
-
-                {/* Process Steps */}
-                <div className="space-y-6">
-                  {/* Step 1 */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      1
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-white mb-2">Newsletter Email Received</h3>
-                      <p className="text-gray-300 mb-3">
-                        School newsletters are automatically forwarded to our system via email. These contain event information scattered throughout the text.
-                      </p>
-                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-blue-500">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-blue-300 font-medium">Raw Newsletter Content</span>
-                        </div>
-                        <p className="text-gray-400 text-sm">Unstructured text with dates, times, and event details mixed in with other school information.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="flex justify-center">
-                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      2
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-white mb-2">AI Processing & Extraction</h3>
-                      <p className="text-gray-300 mb-3">
-                        OpenAI GPT-4 analyzes the newsletter content and intelligently extracts event information, dates, times, and locations.
-                      </p>
-                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-green-500">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                          <span className="text-green-300 font-medium">Smart Event Recognition</span>
-                        </div>
-                        <p className="text-gray-400 text-sm">AI identifies patterns, extracts dates/times, and structures event data automatically.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="flex justify-center">
-                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      3
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-white mb-2">Event Storage & Organization</h3>
-                      <p className="text-gray-300 mb-3">
-                        Extracted events are stored in our database with proper formatting, duplicate detection, and timezone handling for New Zealand.
-                      </p>
-                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-orange-500">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                          </svg>
-                          <span className="text-orange-300 font-medium">Structured Data Storage</span>
-                        </div>
-                        <p className="text-gray-400 text-sm">Events are organized, deduplicated, and stored with proper NZ timezone information.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="flex justify-center">
-                    <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </div>
-
-                  {/* Step 4 */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      4
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-white mb-2">Beautiful Calendar Display</h3>
-                      <p className="text-gray-300 mb-3">
-                        Events appear instantly on this website and can be subscribed to in Google Calendar, Apple Calendar, or Outlook.
-                      </p>
-                      <div className="bg-slate-700/50 rounded-lg p-4 border-l-4 border-purple-500">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-purple-300 font-medium">Accessible Calendar</span>
-                        </div>
-                        <p className="text-gray-400 text-sm">Clean, mobile-friendly calendar that syncs with your favorite calendar app.</p>
-                      </div>
-                    </div>
-                  </div>
+                <p className="text-lg font-medium text-gray-300">{stats.uniqueViews?.toLocaleString() || '0'}</p>
+                <p className="text-slate-500 text-xs">Unique Visitors</p>
+              </div>
+              
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
                 </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-700">
-                  <h3 className="text-lg font-semibold text-white mb-3">Why This Approach?</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="bg-slate-700/30 rounded-lg p-4">
-                      <h4 className="font-medium text-white mb-2">⚡ Automatic Updates</h4>
-                      <p className="text-gray-300 text-sm">No manual entry needed - events appear as soon as newsletters are sent.</p>
-                    </div>
-                    <div className="bg-slate-700/30 rounded-lg p-4">
-                      <h4 className="font-medium text-white mb-2">📱 Mobile Friendly</h4>
-                      <p className="text-gray-300 text-sm">Works perfectly on phones, tablets, and can be installed as a PWA.</p>
-                    </div>
-                    <div className="bg-slate-700/30 rounded-lg p-4">
-                      <h4 className="font-medium text-white mb-2">🔄 Calendar Sync</h4>
-                      <p className="text-gray-300 text-sm">Subscribe once and events automatically appear in your calendar app.</p>
-                    </div>
-                    <div className="bg-slate-700/30 rounded-lg p-4">
-                      <h4 className="font-medium text-white mb-2">🎯 Accurate Parsing</h4>
-                      <p className="text-gray-300 text-sm">AI understands context and extracts the right information from complex text.</p>
-                    </div>
-                  </div>
+                <p className="text-lg font-medium text-gray-300">{stats.subscribeClicks?.toLocaleString() || '0'}</p>
+                <p className="text-slate-500 text-xs">Calendar Subscribers</p>
+              </div>
+              
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
                 </div>
+                <p className="text-lg font-medium text-gray-300">{stats.pwaInstalls?.toLocaleString() || '0'}</p>
+                <p className="text-slate-500 text-xs">App Installs</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Feedback Modal */}
-        {showFeedbackModal && (
+        {/* Footer */}
+        <div className="text-center py-6 text-gray-500 text-sm flex items-center justify-center gap-4">
+          <span>Made by a TK Parent</span>
+          <span>—</span>
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="hover:text-gray-300 transition-colors"
+          >
+            Send feedback
+          </button>
+        </div>
+      </div>
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <AddEventModal 
+          onClose={() => setShowAddEventModal(false)}
+          onEventAdded={fetchEvents}
+        />
+      )}
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="animate-fade-in">
           <FeedbackModal 
             onClose={() => setShowFeedbackModal(false)}
           />
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Suggest Event Modal */}
+      {showSuggestEventModal && (
+        <div className="animate-fade-in">
+          <SuggestEventModal 
+            onClose={() => setShowSuggestEventModal(false)}
+            onEventSuggested={() => {
+              // Could show a success message here
+            }}
+          />
+        </div>
+      )}
+
+      {/* How/Why Modal */}
+      {showHowModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-modal-in">
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">How TK Events Works</h2>
+                <button
+                  onClick={() => setShowHowModal(false)}
+                  className="text-white hover:text-gray-300 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="space-y-6">
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">📧 Email Parsing</h4>
+                  <p className="text-gray-300 text-sm">TK Events automatically reads school newsletters and extracts event information using AI. No manual entry needed!</p>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">📱 Mobile First</h4>
+                  <p className="text-gray-300 text-sm">Works perfectly on phones, tablets, and can be installed as a PWA.</p>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">🔄 Calendar Sync</h4>
+                  <p className="text-gray-300 text-sm">Subscribe once and events automatically appear in your calendar app.</p>
+                </div>
+                <div className="bg-slate-700/30 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-2">🎯 Accurate Parsing</h4>
+                  <p className="text-gray-300 text-sm">AI understands context and extracts the right information from complex text.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
