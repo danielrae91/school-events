@@ -306,6 +306,109 @@ export async function syncEventsToGoogleCalendar(events: any[]): Promise<{ succe
   }
 }
 
+// Sync single event to Google Calendar (for real-time updates)
+export async function syncSingleEventToGoogle(event: any, action: 'create' | 'update' | 'delete'): Promise<{ success: boolean; message: string }> {
+  try {
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    )
+
+    auth.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+    })
+
+    const calendar = google.calendar({ version: 'v3', auth })
+    const calendarId = process.env.GOOGLE_CALENDAR_ID
+
+    if (!calendarId) {
+      throw new Error('GOOGLE_CALENDAR_ID environment variable not set')
+    }
+
+    const icalUID = `${event.id}@tkevents.nz`
+
+    if (action === 'delete') {
+      // Find and delete the event
+      const existingEventsResponse = await calendar.events.list({
+        calendarId,
+        iCalUID: icalUID,
+        maxResults: 1
+      })
+
+      const existingEvents = existingEventsResponse.data.items || []
+      if (existingEvents.length > 0) {
+        await calendar.events.delete({
+          calendarId,
+          eventId: existingEvents[0].id!
+        })
+        return { success: true, message: 'Event deleted from Google Calendar' }
+      }
+      return { success: true, message: 'Event not found in Google Calendar' }
+    }
+
+    // Convert event to Google Calendar format
+    const googleEvent: any = {
+      summary: event.title || 'Untitled Event',
+      description: event.description || '',
+      location: event.location || '',
+      iCalUID: icalUID
+    }
+
+    // Handle dates
+    const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
+    const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
+
+    if (event.start_time) {
+      // Timed event
+      googleEvent.start = {
+        dateTime: startDate.toISOString(),
+        timeZone: 'Pacific/Auckland'
+      }
+      googleEvent.end = {
+        dateTime: endDate.toISOString(),
+        timeZone: 'Pacific/Auckland'
+      }
+    } else {
+      // All-day event
+      googleEvent.start = { date: event.start_date }
+      googleEvent.end = { date: event.end_date || event.start_date }
+    }
+
+    if (action === 'update') {
+      // Find existing event and update it
+      const existingEventsResponse = await calendar.events.list({
+        calendarId,
+        iCalUID: icalUID,
+        maxResults: 1
+      })
+
+      const existingEvents = existingEventsResponse.data.items || []
+      if (existingEvents.length > 0) {
+        await calendar.events.update({
+          calendarId,
+          eventId: existingEvents[0].id!,
+          requestBody: googleEvent
+        })
+        return { success: true, message: 'Event updated in Google Calendar' }
+      }
+    }
+
+    // Create new event (for both 'create' action and 'update' when event doesn't exist)
+    await calendar.events.insert({
+      calendarId,
+      requestBody: googleEvent
+    })
+
+    return { success: true, message: 'Event created in Google Calendar' }
+
+  } catch (error) {
+    const errorMsg = `Google Calendar sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    console.error(errorMsg, error)
+    return { success: false, message: errorMsg }
+  }
+}
+
 function formatDateForGoogle(dateInput: any): string {
   if (typeof dateInput === 'string') {
     // Handle YYYY-MM-DD format

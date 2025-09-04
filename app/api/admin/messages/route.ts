@@ -49,12 +49,28 @@ export async function GET(request: NextRequest) {
       try {
         const messageData = await redis.get(messageId)
         if (messageData) {
-          const parsed = JSON.parse(messageData as string)
+          let parsed
+          if (typeof messageData === 'string') {
+            parsed = JSON.parse(messageData)
+          } else if (typeof messageData === 'object') {
+            // If Redis returns an object directly, use it as-is
+            parsed = messageData
+          } else {
+            console.error('Unexpected message data type:', typeof messageData, messageData)
+            continue
+          }
           messages.push(parsed)
           console.log('Added message:', messageId, parsed.name)
         }
       } catch (error) {
         console.error('Error parsing message data:', messageId, error)
+        // Try to clean up corrupted message
+        try {
+          await redis.del(messageId)
+          console.log('Deleted corrupted message:', messageId)
+        } catch (deleteError) {
+          console.error('Failed to delete corrupted message:', deleteError)
+        }
       }
     }
 

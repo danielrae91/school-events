@@ -61,6 +61,14 @@ export async function storeEvent(event: Event): Promise<StoredEvent> {
   // Update last successful email timestamp when new events are created
   await setLastEmailUpdate()
 
+  // Sync to Google Calendar
+  try {
+    const { syncSingleEventToGoogle } = await import('./googleCalendarSync')
+    await syncSingleEventToGoogle(storedEvent, 'create')
+  } catch (error) {
+    console.error('Failed to sync new event to Google Calendar:', error)
+  }
+
   return storedEvent
 }
 
@@ -121,6 +129,14 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
     await redis.zadd('tk:events:by_date', { score: newTimestamp, member: id })
   }
 
+  // Sync to Google Calendar
+  try {
+    const { syncSingleEventToGoogle } = await import('./googleCalendarSync')
+    await syncSingleEventToGoogle(updated, 'update')
+  } catch (error) {
+    console.error('Failed to sync updated event to Google Calendar:', error)
+  }
+
   return updated
 }
 
@@ -149,8 +165,21 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const exists = await redis.exists(`tk:event:${id}`)
   if (!exists) return false
 
+  // Get event data before deletion for Google Calendar sync
+  const event = await getEvent(id)
+
   await redis.del(`tk:event:${id}`)
   await redis.zrem('tk:events:by_date', id)
+  
+  // Sync deletion to Google Calendar
+  if (event) {
+    try {
+      const { syncSingleEventToGoogle } = await import('./googleCalendarSync')
+      await syncSingleEventToGoogle(event, 'delete')
+    } catch (error) {
+      console.error('Failed to sync deleted event to Google Calendar:', error)
+    }
+  }
   
   return true
 }
