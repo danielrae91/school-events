@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getNotificationHistory } from '@/lib/pushNotifications'
-import { getBatchStatus, forceProcessBatch } from '@/lib/batchedNotifications'
+import { forceProcessBatch } from '@/lib/batchedNotifications'
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
     const authHeader = request.headers.get('authorization')
@@ -15,19 +14,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const notifications = await getNotificationHistory(100)
-    const batchStatus = await getBatchStatus()
+    const result = await forceProcessBatch()
     
     return NextResponse.json({
-      success: true,
-      notifications,
-      batchStatus
+      ...result,
+      success: true
     })
     
   } catch (error) {
-    console.error('Error fetching notification history:', error)
+    console.error('Error forcing batch processing:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch notifications' },
+      { error: 'Failed to process batch' },
       { status: 500 }
     )
   }

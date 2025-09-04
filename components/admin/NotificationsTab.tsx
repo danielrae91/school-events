@@ -17,15 +17,29 @@ interface Notification {
   status: string
 }
 
+interface BatchStatus {
+  pendingCount: number
+  pending: Array<{
+    eventId: string
+    eventTitle: string
+    eventDate: string
+    waitTimeMs: number
+    willProcessAt: string
+  }>
+  batchWindowMs: number
+}
+
 interface NotificationsTabProps {
   adminToken: string
 }
 
 export default function NotificationsTab({ adminToken }: NotificationsTabProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [batchStatus, setBatchStatus] = useState<BatchStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const [processingBatch, setProcessingBatch] = useState(false)
 
   const fetchNotifications = async () => {
     try {
@@ -41,11 +55,12 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch notifications')
+        throw new Error(`Failed to fetch notifications: ${response.statusText}`)
       }
 
       const data = await response.json()
       setNotifications(data.notifications || [])
+      setBatchStatus(data.batchStatus || null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch notifications')
     } finally {
@@ -134,6 +149,35 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
     fetchNotifications()
   }
 
+  const forceProcessBatch = async () => {
+    if (processingBatch) return
+    
+    setProcessingBatch(true)
+    try {
+      const response = await fetch('/api/admin/notifications/force-batch', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert(`Batch processed successfully! ${data.message || ''}`)
+        fetchNotifications()
+      } else {
+        setError(data.error || 'Failed to process batch')
+        alert(data.error || 'Failed to process batch')
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to process batch'
+      setError(errorMsg)
+      alert(errorMsg)
+    } finally {
+      setProcessingBatch(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -143,17 +187,59 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Push Notifications</h2>
-        <button
-          onClick={sendTestNotification}
-          disabled={sending}
-          className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          {sending ? 'Sending...' : 'Send Test'}
-        </button>
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Push Notifications</h3>
+        <div className="flex gap-2">
+          <button
+            onClick={refreshNotifications}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={sendTestNotification}
+            disabled={sending}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {sending ? 'Sending...' : 'Send Test Notification'}
+          </button>
+        </div>
       </div>
+
+      {/* Batch Status Section */}
+      {batchStatus && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="font-medium text-yellow-800">Batched Notifications</h4>
+            <button
+              onClick={forceProcessBatch}
+              disabled={processingBatch || batchStatus.pendingCount === 0}
+              className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 disabled:opacity-50"
+            >
+              {processingBatch ? 'Processing...' : 'Force Process Now'}
+            </button>
+          </div>
+          <p className="text-sm text-yellow-700 mb-2">
+            {batchStatus.pendingCount} events pending notification (10-minute batch window)
+          </p>
+          {batchStatus.pending.length > 0 && (
+            <div className="text-xs text-yellow-600">
+              <p className="mb-1">Next events to notify:</p>
+              <ul className="list-disc list-inside">
+                {batchStatus.pending.slice(0, 3).map((event, index) => (
+                  <li key={index}>
+                    {event.eventTitle} - Will process at {new Date(event.willProcessAt).toLocaleTimeString()}
+                  </li>
+                ))}
+                {batchStatus.pending.length > 3 && (
+                  <li>... and {batchStatus.pending.length - 3} more</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-900/50 border border-red-600 rounded-lg p-4">

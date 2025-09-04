@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllEvents, storeEvent } from '@/lib/db'
 import { EventSchema } from '@/lib/types'
+import { addEventToBatch } from '@/lib/batchedNotifications'
 
 // Get all events
 export async function GET() {
@@ -26,6 +27,19 @@ export async function POST(request: NextRequest) {
     
     // Store event
     const storedEvent = await storeEvent(event)
+    
+    // Add to notification batch for push notifications
+    try {
+      await addEventToBatch(
+        storedEvent.id, 
+        storedEvent.title, 
+        storedEvent.start_date
+      )
+      console.log(`Added event ${storedEvent.id} to notification batch`)
+    } catch (notificationError) {
+      console.error('Failed to add event to notification batch:', notificationError)
+      // Don't fail the event creation if notification fails
+    }
     
     return NextResponse.json({ 
       success: true, 

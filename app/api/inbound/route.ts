@@ -100,33 +100,18 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
       }
     }
 
-    // Send push notifications for new events
+    // Add events to notification batch for push notifications
     if (storedEvents.length > 0) {
       try {
-        const { sendPushNotification } = await import('@/lib/pushNotifications')
+        const { addEventToBatch } = await import('@/lib/batchedNotifications')
         
-        if (storedEvents.length === 1) {
-          const event = storedEvents[0]
-          await sendPushNotification({
-            title: 'New TK Event Added',
-            body: `${event.title} - ${new Date(event.start_date).toLocaleDateString()}`,
-            eventId: event.id,
-            eventTitle: event.title,
-            eventDate: event.start_date
-          })
-        } else {
-          await sendPushNotification({
-            title: 'New TK Events Added',
-            body: `${storedEvents.length} new events added to the calendar`,
-            eventId: 'multiple',
-            eventTitle: `${storedEvents.length} events`,
-            eventDate: new Date().toISOString().split('T')[0]
-          })
+        for (const event of storedEvents) {
+          await addEventToBatch(event.id, event.title, event.start_date)
         }
         
-        console.log(`[${new Date().toISOString()}] [info] Push notifications sent for ${storedEvents.length} new events`)
+        console.log(`[${new Date().toISOString()}] [info] Added ${storedEvents.length} events to notification batch`)
       } catch (pushError) {
-        console.error(`[${new Date().toISOString()}] [error] Failed to send push notifications:`, pushError)
+        console.error(`[${new Date().toISOString()}] [error] Failed to add events to notification batch:`, pushError)
       }
 
       // Sync new events to Google Calendar
