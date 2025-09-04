@@ -176,6 +176,125 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
   }
 }
 
+export async function syncEventsToGoogleCalendar(events: any[]): Promise<{ success: boolean; message: string; synced: number; errors: string[] }> {
+  const errors: string[] = []
+  let syncedCount = 0
+
+  try {
+    // Initialize Google Calendar API
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    )
+
+    auth.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+    })
+
+    const calendar = google.calendar({ version: 'v3', auth })
+    const calendarId = process.env.GOOGLE_CALENDAR_ID
+
+    if (!calendarId) {
+      throw new Error('GOOGLE_CALENDAR_ID environment variable not set')
+    }
+
+    // Get existing events from Google Calendar to check for duplicates
+    const existingEventsResponse = await calendar.events.list({
+      calendarId,
+      maxResults: 2500,
+      singleEvents: true,
+      orderBy: 'startTime'
+    })
+
+    const existingEvents = existingEventsResponse.data.items || []
+    const existingEventsByUID = new Map<string, any>()
+    
+    existingEvents.forEach(event => {
+      if (event.iCalUID) {
+        existingEventsByUID.set(event.iCalUID, event)
+      }
+    })
+
+    // Process each event
+    for (const event of events) {
+      try {
+        const icalUID = `${event.id}@tkevents.nz`
+
+        // Convert event to Google Calendar format
+        const googleEvent: any = {
+          summary: event.title || 'Untitled Event',
+          description: event.description || '',
+          location: event.location || '',
+          iCalUID: icalUID
+        }
+
+        // Handle dates
+        const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
+        const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
+
+        if (event.start_time) {
+          // Timed event
+          googleEvent.start = {
+            dateTime: startDate.toISOString(),
+            timeZone: 'Pacific/Auckland'
+          }
+          googleEvent.end = {
+            dateTime: endDate.toISOString(),
+            timeZone: 'Pacific/Auckland'
+          }
+        } else {
+          // All-day event
+          googleEvent.start = { date: event.start_date }
+          googleEvent.end = { date: event.end_date || event.start_date }
+        }
+
+        // Check if event already exists
+        const existingEvent = existingEventsByUID.get(icalUID)
+        
+        if (existingEvent) {
+          // Update existing event
+          await calendar.events.update({
+            calendarId,
+            eventId: existingEvent.id!,
+            requestBody: googleEvent
+          })
+        } else {
+          // Create new event
+          await calendar.events.insert({
+            calendarId,
+            requestBody: googleEvent
+          })
+        }
+
+        syncedCount++
+      } catch (eventError) {
+        const errorMsg = `Failed to sync event ${event.title}: ${eventError instanceof Error ? eventError.message : 'Unknown error'}`
+        errors.push(errorMsg)
+        console.error(errorMsg, eventError)
+      }
+    }
+
+    return {
+      success: true,
+      message: `Successfully synced ${syncedCount} events`,
+      synced: syncedCount,
+      errors
+    }
+
+  } catch (error) {
+    const errorMsg = `Google Calendar sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    console.error(errorMsg, error)
+    
+    return {
+      success: false,
+      message: errorMsg,
+      synced: syncedCount,
+      errors: [...errors, errorMsg]
+    }
+  }
+}
+
 function formatDateForGoogle(dateInput: any): string {
   if (typeof dateInput === 'string') {
     // Handle YYYY-MM-DD format
