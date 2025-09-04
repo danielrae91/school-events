@@ -16,7 +16,17 @@ export async function GET(request: NextRequest) {
 
     // Get messages list
     const messagesListData = await redis.get('messages:list')
-    const messagesList = messagesListData ? JSON.parse(messagesListData as string) : []
+    let messagesList = []
+    
+    if (messagesListData) {
+      try {
+        messagesList = JSON.parse(messagesListData as string)
+      } catch (parseError) {
+        console.error('Error parsing messages list:', parseError)
+        // If it's not JSON, treat it as an array directly (fallback for old format)
+        messagesList = Array.isArray(messagesListData) ? messagesListData : []
+      }
+    }
     
     // Get message data
     const messages = []
@@ -61,11 +71,28 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid message IDs' }, { status: 400 })
     }
 
+    // Get current messages list
+    const messagesListData = await redis.get('messages:list')
+    let messagesList = []
+    
+    if (messagesListData) {
+      try {
+        messagesList = JSON.parse(messagesListData as string)
+      } catch (parseError) {
+        console.error('Error parsing messages list for deletion:', parseError)
+        messagesList = Array.isArray(messagesListData) ? messagesListData : []
+      }
+    }
+
     // Delete messages
     for (const messageId of messageIds) {
       await redis.del(messageId)
-      await redis.lrem('messages:list', 0, messageId)
+      // Remove from array and update the list
+      messagesList = messagesList.filter((id: string) => id !== messageId)
     }
+    
+    // Update the messages list
+    await redis.set('messages:list', JSON.stringify(messagesList))
 
     return NextResponse.json({ success: true })
     
