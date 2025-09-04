@@ -19,11 +19,11 @@ export async function DELETE(
 
     const notificationId = params.id
 
-    // Delete from notifications list
-    await redis.lrem('notifications', 0, notificationId)
+    // Delete from notification history sorted set
+    await redis.zrem('notification_history', notificationId)
     
     // Delete the notification data
-    await redis.del(`notification:${notificationId}`)
+    await redis.del(notificationId)
 
     return NextResponse.json({ success: true })
     

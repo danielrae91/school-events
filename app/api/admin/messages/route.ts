@@ -14,19 +14,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    // Get messages list
+    console.log('Fetching messages list...')
+    
+    // Get messages list - handle both formats
     const messagesListData = await redis.get('messages:list')
+    console.log('Raw messages list data:', messagesListData, typeof messagesListData)
+    
     let messagesList = []
     
     if (messagesListData) {
-      try {
-        messagesList = JSON.parse(messagesListData as string)
-      } catch (parseError) {
-        console.error('Error parsing messages list:', parseError)
-        // If it's not JSON, treat it as an array directly (fallback for old format)
-        messagesList = Array.isArray(messagesListData) ? messagesListData : []
+      if (typeof messagesListData === 'string') {
+        try {
+          messagesList = JSON.parse(messagesListData)
+          console.log('Parsed messages list from JSON:', messagesList)
+        } catch (parseError) {
+          console.error('Error parsing messages list JSON:', parseError)
+          // Reset to empty array if corrupted
+          messagesList = []
+          await redis.set('messages:list', JSON.stringify([]))
+        }
+      } else if (Array.isArray(messagesListData)) {
+        console.log('Messages list is already an array:', messagesListData)
+        messagesList = messagesListData
+        // Convert to JSON format for consistency
+        await redis.set('messages:list', JSON.stringify(messagesListData))
       }
     }
+    
+    console.log('Final messages list:', messagesList)
     
     // Get message data
     const messages = []
@@ -34,19 +49,22 @@ export async function GET(request: NextRequest) {
       try {
         const messageData = await redis.get(messageId)
         if (messageData) {
-          messages.push(JSON.parse(messageData as string))
+          const parsed = JSON.parse(messageData as string)
+          messages.push(parsed)
+          console.log('Added message:', messageId, parsed.name)
         }
       } catch (error) {
         console.error('Error parsing message data:', messageId, error)
       }
     }
 
+    console.log(`Returning ${messages.length} messages`)
     return NextResponse.json({ messages })
     
   } catch (error) {
     console.error('Error fetching messages:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch messages' },
+      { error: 'Failed to fetch messages', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
