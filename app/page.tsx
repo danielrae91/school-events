@@ -556,39 +556,20 @@ export default function HomePage() {
   }
 
 
-  const getEventEmoji = (title: string) => {
-    const titleLower = title.toLowerCase()
-    if (titleLower.includes('sport') || titleLower.includes('game') || titleLower.includes('match')) return '⚽'
-    if (titleLower.includes('assembly') || titleLower.includes('meeting')) return '🏛️'
-    if (titleLower.includes('concert') || titleLower.includes('music') || titleLower.includes('band')) return '🎵'
-    if (titleLower.includes('art') || titleLower.includes('exhibition') || titleLower.includes('display')) return '🎨'
-    if (titleLower.includes('trip') || titleLower.includes('excursion') || titleLower.includes('visit')) return '🚌'
-    if (titleLower.includes('fundrais') || titleLower.includes('charity') || titleLower.includes('donation')) return '💝'
-    if (titleLower.includes('graduation') || titleLower.includes('ceremony')) return '🎓'
-    if (titleLower.includes('holiday') || titleLower.includes('break') || titleLower.includes('closure')) return '🏖️'
-    if (titleLower.includes('parent') || titleLower.includes('family')) return '👨‍👩‍👧‍👦'
-    if (titleLower.includes('book') || titleLower.includes('reading') || titleLower.includes('library')) return '📚'
-    if (titleLower.includes('science') || titleLower.includes('experiment')) return '🔬'
-    if (titleLower.includes('drama') || titleLower.includes('play') || titleLower.includes('theatre')) return '🎭'
-    if (titleLower.includes('dance') || titleLower.includes('dancing')) return '💃'
-    if (titleLower.includes('swimming') || titleLower.includes('pool')) return '🏊'
-    if (titleLower.includes('mufti') || titleLower.includes('casual') || titleLower.includes('dress up')) return '👕'
-    if (titleLower.includes('lunch') || titleLower.includes('food') || titleLower.includes('sausage')) return '🍽️'
-    return '📅'
-  }
 
-  // Show loading screen while events are loading
-  if (loading && events.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-400 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-white mb-2">Loading TK Events</h2>
-          <p className="text-gray-400">Getting the latest school events...</p>
+  // Skeleton component for loading states
+  const SkeletonCard = () => (
+    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 animate-pulse">
+      <div className="flex items-start space-x-3">
+        <div className="w-8 h-8 bg-slate-700 rounded-lg"></div>
+        <div className="flex-1">
+          <div className="h-5 bg-slate-700 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-slate-700 rounded w-1/2 mb-2"></div>
+          <div className="h-3 bg-slate-700 rounded w-1/4"></div>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -640,13 +621,15 @@ export default function HomePage() {
         </div>
 
         {/* Today's Events */}
-        {todaysEvents.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Today's Events
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
-              {todaysEvents.map((event) => (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Today's Events
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
+            {loading && events.length === 0 ? (
+              <SkeletonCard />
+            ) : todaysEvents.length > 0 ? (
+              todaysEvents.map((event) => (
                 <div
                   key={event.id}
                   className="group bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4 sm:p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
@@ -845,35 +828,30 @@ END:VCALENDAR`
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {todaysEvents.length === 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Today's Events
-            </h2>
-            <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-2 text-center">
-              <div className="text-blue-400 mb-1">
-                <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+              ))
+            ) : (
+              <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-2 text-center">
+                <div className="text-blue-400 mb-1">
+                  <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-sm">No events today</p>
               </div>
-              <p className="text-gray-400 text-sm">No events today</p>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Upcoming Events */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-white mb-4">
             Upcoming Events
           </h2>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+          {loading && events.length === 0 ? (
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
+              {[...Array(5)].map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
           ) : error ? (
             <div className="bg-red-900/50 border border-red-600 rounded-lg p-4 text-center">
@@ -1099,7 +1077,7 @@ END:VCALENDAR`
           <div className="p-3 border-b border-slate-700">
             <h2 className="text-lg font-semibold text-white">All Future Events</h2>
           </div>
-          <div className="p-2 max-h-96 overflow-y-auto">
+          <div className="p-2">
             {(() => {
               // Filter out past events for mobile view
               const today = new Date()
@@ -1142,9 +1120,11 @@ END:VCALENDAR`
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="text-sm flex-shrink-0">{event.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
+                              <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-white text-xs truncate">{event.title.replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/g, '')}</h3>
+                                <h3 className="font-medium text-white text-xs truncate">{event.title}</h3>
                                 <div className="text-xs text-gray-400 truncate">
                                   {formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}
                                   {event.location && ` • ${event.location}`}
@@ -1605,10 +1585,14 @@ END:VCALENDAR`
               <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="text-3xl p-2">{selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(selectedEvent.title)}</div>
+                    <div className="bg-white/10 rounded-lg p-3">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">{selectedEvent.title.replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/g, '').trim()}</h2>
-                      <p className="text-purple-100 text-sm">{getDaysUntilEvent(selectedEvent.start_date)}</p>
+                      <h2 className="text-xl font-bold text-white">{selectedEvent.title}</h2>
+                      <p className="text-purple-100 text-sm">{getDaysUntilEvent(selectedEvent.start_date, selectedEvent.start_time)}</p>
                     </div>
                   </div>
                   <button
