@@ -3,10 +3,10 @@ import { StoredEvent } from './types'
 
 export function generateICalFeed(events: StoredEvent[]): string {
   const calendar = ical({
-    name: 'School Events Calendar',
-    description: 'Automated school newsletter events feed',
+    name: 'TK Events',
+    description: 'TK Events is the official calendar of school activities. All events are collected automatically from weekly newsletters and updated as new information is published.',
     url: `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://tkevents.nz'}/calendar.ics`,
-    prodId: '-//TK Newsletter//School Events//EN',
+    prodId: '-//Google Inc//Google Calendar 70.9054//EN',
     timezone: 'Pacific/Auckland'
   })
 
@@ -43,8 +43,20 @@ export function generateICalFeed(events: StoredEvent[]): string {
     }
   }
 
-  // Get the ICS string and ensure UTC timestamps
+  // Get the ICS string and add additional metadata to match Google Calendar format
   let icsString = calendar.toString()
+  
+  // Add METHOD:PUBLISH and CALSCALE:GREGORIAN after VERSION
+  icsString = icsString.replace(
+    /VERSION:2\.0\r?\n/,
+    'VERSION:2.0\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\n'
+  )
+  
+  // Add X-WR-CALNAME and X-WR-TIMEZONE after the initial headers
+  icsString = icsString.replace(
+    /(PRODID:[^\r\n]*\r?\n)/,
+    '$1X-WR-CALNAME:TK Events\r\nX-WR-TIMEZONE:Pacific/Auckland\r\nX-WR-CALDESC:TK Events is the official calendar of school activities. All events are collected automatically from weekly newsletters and updated as new information is published.\r\n'
+  )
   
   // Force UTC timestamps by adding Z to DTSTAMP, DTSTART, DTEND if they don't have timezone info
   icsString = icsString.replace(/DTSTAMP:(\d{8}T\d{6})(?![Z\+\-])/g, 'DTSTAMP:$1Z')
