@@ -799,10 +799,32 @@ END:VCALENDAR`
                                   await fetch('/api/track', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ action: 'calendar_download', eventId: event.id })
+                                    body: JSON.stringify({ action: 'google_calendar_add', eventId: event.id })
                                   })
                                   
-                                  // Generate ICS content
+                                  const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
+                                  const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
+                                  const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${encodeURIComponent(startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}/${encodeURIComponent(endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`
+                                  window.open(googleUrl, '_blank')
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                </svg>
+                                Google Calendar
+                              </button>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  setDropdownOpen(null)
+                                  await fetch('/api/track', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'apple_calendar_add', eventId: event.id })
+                                  })
+                                  
+                                  // Generate ICS content for Apple Calendar
                                   const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
                                   const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
                                   
@@ -831,30 +853,11 @@ END:VCALENDAR`
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                                 </svg>
-                                Download .ics file
+                                Apple Calendar
                               </button>
-                              <a
-                                href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${encodeURIComponent(new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00')).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}/${encodeURIComponent(new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59')).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={async (e) => {
-                                  setDropdownOpen(null)
-                                  await fetch('/api/track', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ action: 'google_calendar_add', eventId: event.id })
-                                  })
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                Add to Google Calendar
-                              </a>
                               <button
                                 onClick={async (e) => {
                                   e.stopPropagation()
@@ -862,20 +865,20 @@ END:VCALENDAR`
                                   await fetch('/api/track', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ action: 'outlook_calendar_add', eventId: event.id })
+                                    body: JSON.stringify({ action: 'yahoo_calendar_add', eventId: event.id })
                                   })
                                   
                                   const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
                                   const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
-                                  const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(event.title)}&startdt=${startDate.toISOString()}&enddt=${endDate.toISOString()}&body=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`
-                                  window.open(outlookUrl, '_blank')
+                                  const yahooUrl = `https://calendar.yahoo.com/?v=60&view=d&type=20&title=${encodeURIComponent(event.title)}&st=${encodeURIComponent(startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}Z&et=${encodeURIComponent(endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}Z&desc=${encodeURIComponent(event.description || '')}&in_loc=${encodeURIComponent(event.location || '')}`
+                                  window.open(yahooUrl, '_blank')
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                <svg className="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                                 </svg>
-                                Add to Outlook
+                                Yahoo Calendar
                               </button>
                               <button
                                 onClick={(e) => {
@@ -883,7 +886,7 @@ END:VCALENDAR`
                                   setDropdownOpen(null)
                                   const eventUrl = `${window.location.origin}/?event=${event.id}`
                                   navigator.clipboard.writeText(eventUrl)
-                                  // Show toast notification
+                                  toast.success('Event URL copied to clipboard!')
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               >
@@ -1443,11 +1446,11 @@ END:VCALENDAR`
                               await fetch('/api/track', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
+                                body: JSON.stringify({ action: 'google_calendar_add', visitorId: localStorage.getItem('visitor_id') })
                               })
                               const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
                               const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
-                              const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEvent.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
+                              const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedEvent.title)}&dates=${encodeURIComponent(startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}/${encodeURIComponent(endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}&details=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
                               window.open(googleUrl, '_blank')
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -1463,27 +1466,7 @@ END:VCALENDAR`
                               await fetch('/api/track', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
-                              })
-                              const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
-                              const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
-                              const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(selectedEvent.title)}&startdt=${startDate.toISOString()}&enddt=${endDate.toISOString()}&body=${encodeURIComponent(selectedEvent.description || '')}&location=${encodeURIComponent(selectedEvent.location || '')}`
-                              window.open(outlookUrl, '_blank')
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7 18h10V6H7v12zM21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/>
-                            </svg>
-                            Outlook
-                          </button>
-                          <button
-                            onClick={async () => {
-                              setDropdownOpen(null)
-                              await fetch('/api/track', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'add_to_calendar_click', visitorId: localStorage.getItem('visitor_id') })
+                                body: JSON.stringify({ action: 'apple_calendar_add', visitorId: localStorage.getItem('visitor_id') })
                               })
                               const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
                               const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
@@ -1504,7 +1487,9 @@ END:VCALENDAR`
                               const a = document.createElement('a')
                               a.href = url
                               a.download = `${selectedEvent.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`
+                              document.body.appendChild(a)
                               a.click()
+                              document.body.removeChild(a)
                               URL.revokeObjectURL(url)
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
@@ -1512,7 +1497,41 @@ END:VCALENDAR`
                             <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                             </svg>
-                            Apple Calendar / Other
+                            Apple Calendar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setDropdownOpen(null)
+                              await fetch('/api/track', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'yahoo_calendar_add', visitorId: localStorage.getItem('visitor_id') })
+                              })
+                              const startDate = new Date(selectedEvent.start_date + (selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T00:00'))
+                              const endDate = new Date((selectedEvent.end_date || selectedEvent.start_date) + (selectedEvent.end_time ? `T${selectedEvent.end_time}` : selectedEvent.start_time ? `T${selectedEvent.start_time}` : 'T23:59'))
+                              const yahooUrl = `https://calendar.yahoo.com/?v=60&view=d&type=20&title=${encodeURIComponent(selectedEvent.title)}&st=${encodeURIComponent(startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}Z&et=${encodeURIComponent(endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''))}Z&desc=${encodeURIComponent(selectedEvent.description || '')}&in_loc=${encodeURIComponent(selectedEvent.location || '')}`
+                              window.open(yahooUrl, '_blank')
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Yahoo Calendar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDropdownOpen(null)
+                              const eventUrl = `${window.location.origin}/?event=${selectedEvent.id}`
+                              navigator.clipboard.writeText(eventUrl)
+                              toast.success('Event URL copied to clipboard!')
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy Event URL
                           </button>
                         </div>
                       </div>
