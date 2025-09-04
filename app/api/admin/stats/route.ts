@@ -11,19 +11,25 @@ export async function GET(request: NextRequest) {
       pageViews,
       uniqueViews,
       subscribeClicks,
-      addToCalendarClicks
+      addToCalendarClicks,
+      pushSubscriptions,
+      pwaInstalls
     ] = await Promise.all([
       redis.get('stats:page_views') || '0',
       redis.scard('stats:unique_visitors'),
       redis.get('stats:subscribe_clicks') || '0',
-      redis.get('stats:add_to_calendar_clicks') || '0'
+      redis.get('stats:add_to_calendar_clicks') || '0',
+      redis.scard('push:subscriptions:active'),
+      redis.get('stats:pwa_installs') || '0'
     ])
 
     const stats = {
       pageViews: parseInt(pageViews as string),
       uniqueViews: uniqueViews || 0,
       subscribeClicks: parseInt(subscribeClicks as string),
-      addToCalendarClicks: parseInt(addToCalendarClicks as string)
+      addToCalendarClicks: parseInt(addToCalendarClicks as string),
+      pushSubscriptions: pushSubscriptions || 0,
+      pwaInstalls: parseInt(pwaInstalls as string)
     }
 
     return NextResponse.json(stats)
@@ -52,6 +58,10 @@ export async function POST(request: NextRequest) {
       
       case 'addToCalendar':
         await redis.incr('stats:add_to_calendar_clicks')
+        break
+      
+      case 'pwa_install':
+        await redis.incr('stats:pwa_installs')
         break
       
       default:

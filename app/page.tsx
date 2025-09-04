@@ -116,6 +116,13 @@ export default function HomePage() {
     
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsPWA(true)
+      // Track PWA install
+      fetch('/api/admin/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'pwa_install' })
+      }).catch(() => {}) // Silent fail
       setShowInstallPrompt(false)
     }
     
@@ -188,9 +195,16 @@ export default function HomePage() {
         const { outcome } = await deferredPrompt.userChoice
         console.log('PWA install outcome:', outcome)
         if (outcome === 'accepted') {
-          console.log('PWA installed successfully')
+          setIsPWA(true)
+          setShowInstallPrompt(false)
+          setDeferredPrompt(null)
+          // Track PWA install
+          fetch('/api/admin/stats', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'pwa_install' })
+          }).catch(() => {}) // Silent fail
         }
-        setDeferredPrompt(null)
         setShowInstallPrompt(false)
       } catch (error) {
         console.error('Error installing PWA:', error)
@@ -1389,7 +1403,7 @@ END:VCALENDAR`
               </svg>
               Usage Statistics
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
                 <div className="flex justify-center mb-1">
                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1428,6 +1442,26 @@ END:VCALENDAR`
                 </div>
                 <p className="text-lg font-medium text-gray-300">{stats.addToCalendarClicks?.toLocaleString() || '0'}</p>
                 <p className="text-slate-500 text-xs">Calendar Adds</p>
+              </div>
+              
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l10.586 10.586c.781.781 2.047.781 2.828 0l1.414-1.414c.781-.781.781-2.047 0-2.828L9.07 2.758c-.781-.781-2.047-.781-2.828 0L4.828 4.172c-.781.781-.781 2.047 0 2.828z" />
+                  </svg>
+                </div>
+                <p className="text-lg font-medium text-gray-300">{stats.pushSubscriptions?.toLocaleString() || '0'}</p>
+                <p className="text-slate-500 text-xs">Push Subscribers</p>
+              </div>
+              
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
+                <div className="flex justify-center mb-1">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-lg font-medium text-gray-300">{stats.pwaInstalls?.toLocaleString() || '0'}</p>
+                <p className="text-slate-500 text-xs">PWA Installs</p>
               </div>
             </div>
           </div>

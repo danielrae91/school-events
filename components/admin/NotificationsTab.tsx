@@ -17,7 +17,11 @@ interface Notification {
   status: string
 }
 
-export default function NotificationsTab() {
+interface NotificationsTabProps {
+  adminToken: string
+}
+
+export default function NotificationsTab({ adminToken }: NotificationsTabProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,15 +29,14 @@ export default function NotificationsTab() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('adminToken')
-      if (!token) {
+      if (!adminToken) {
         setError('No admin token found')
         return
       }
 
       const response = await fetch('/api/admin/notifications', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       })
 
@@ -53,8 +56,7 @@ export default function NotificationsTab() {
   const sendTestNotification = async () => {
     setSending(true)
     try {
-      const token = localStorage.getItem('adminToken')
-      if (!token) {
+      if (!adminToken) {
         setError('No admin token found')
         return
       }
@@ -62,7 +64,7 @@ export default function NotificationsTab() {
       const response = await fetch('/api/push/send', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -107,21 +109,13 @@ export default function NotificationsTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Push Notifications</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={sendTestNotification}
-            disabled={sending}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            {sending ? 'Sending...' : 'Send Test'}
-          </button>
-          <button
-            onClick={fetchNotifications}
-            className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
+        <button
+          onClick={sendTestNotification}
+          disabled={sending}
+          className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          {sending ? 'Sending...' : 'Send Test'}
+        </button>
       </div>
 
       {error && (

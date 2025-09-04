@@ -11,14 +11,12 @@ interface SettingsTabProps {
   settings: Settings
   loading: boolean
   adminToken: string
-  onRefresh: () => void
 }
 
 export default function SettingsTab({
   settings,
   loading,
-  adminToken,
-  onRefresh
+  adminToken
 }: SettingsTabProps) {
   const defaultPrompt = `You are an expert at extracting school events from newsletter content. Extract ALL date-based events from the provided newsletter text.
 
@@ -85,7 +83,7 @@ Return ONLY valid JSON in this format:
       })
       if (response.ok) {
         alert('Settings saved successfully')
-        onRefresh()
+        // Settings saved successfully
       } else {
         const errorData = await response.json()
         alert(`Failed to save settings: ${errorData.error || 'Unknown error'}`)
@@ -114,7 +112,7 @@ Return ONLY valid JSON in this format:
       })
       if (response.ok) {
         alert('Statistics reset successfully')
-        onRefresh()
+        // Settings saved successfully
       }
     } catch (err) {
       console.error('Failed to reset stats:', err)
@@ -132,7 +130,7 @@ Return ONLY valid JSON in this format:
       })
       if (response.ok) {
         alert('Bulk retry started successfully')
-        onRefresh()
+        // Settings saved successfully
       }
     } catch (err) {
       console.error('Failed to start bulk retry:', err)
@@ -150,7 +148,7 @@ Return ONLY valid JSON in this format:
       })
       if (response.ok) {
         alert('All events deleted and reparse started successfully')
-        onRefresh()
+        // Settings saved successfully
       }
     } catch (err) {
       console.error('Failed to delete events:', err)
@@ -169,7 +167,7 @@ Return ONLY valid JSON in this format:
       if (response.ok) {
         const result = await response.json()
         alert(`Calendar sync completed successfully. ${result.message || 'Events synced to Google Calendar.'}`)
-        onRefresh()
+        // Settings saved successfully
       } else {
         const errorData = await response.json()
         alert(`Failed to sync calendar: ${errorData.error || 'Unknown error'}`)
@@ -182,14 +180,8 @@ Return ONLY valid JSON in this format:
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6">
         <h2 className="text-xl font-semibold text-white">Settings</h2>
-        <button
-          onClick={onRefresh}
-          className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          Refresh
-        </button>
       </div>
 
       {loading ? (
