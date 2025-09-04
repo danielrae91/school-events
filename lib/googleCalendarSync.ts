@@ -74,6 +74,7 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
 
     const existingEvents = existingEventsResponse.data.items || []
     const existingEventsByUID = new Map<string, any>()
+    const icsEventUIDs = new Set<string>()
     
     existingEvents.forEach(event => {
       if (event.iCalUID) {
@@ -91,6 +92,9 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
           errors.push(`Event missing UID: ${event.summary}`)
           continue
         }
+
+        // Track this event UID as existing in ICS
+        icsEventUIDs.add(icalUID)
 
         // Convert ICS event to Google Calendar format
         const googleEvent: any = {
@@ -240,18 +244,18 @@ export async function syncEventsToGoogleCalendar(events: any[]): Promise<{ succe
           iCalUID: icalUID
         }
 
-        // Handle dates
-        const startDate = new Date(event.start_date + (event.start_time ? `T${event.start_time}` : 'T00:00'))
-        const endDate = new Date((event.end_date || event.start_date) + (event.end_time ? `T${event.end_time}` : event.start_time ? `T${event.start_time}` : 'T23:59'))
-
+        // Handle dates - parse as NZ time with proper timezone offset
         if (event.start_time) {
-          // Timed event
+          // Timed event - create dates with NZ timezone offset
+          const startDateTime = `${event.start_date}T${event.start_time}:00+12:00`
+          const endDateTime = `${event.end_date || event.start_date}T${event.end_time || event.start_time}:00+12:00`
+          
           googleEvent.start = {
-            dateTime: startDate.toISOString(),
+            dateTime: startDateTime,
             timeZone: 'Pacific/Auckland'
           }
           googleEvent.end = {
-            dateTime: endDate.toISOString(),
+            dateTime: endDateTime,
             timeZone: 'Pacific/Auckland'
           }
         } else {
@@ -371,8 +375,8 @@ export async function syncSingleEventToGoogle(event: any, action: 'create' | 'up
       }
     } else {
       // All-day event
-      googleEvent.start = { date: event.start_date }
-      googleEvent.end = { date: event.end_date || event.start_date }
+      googleEvent.start = { date: formatDateForGoogle(event.start_date) }
+      googleEvent.end = { date: formatDateForGoogle(event.end_date || event.start_date) }
     }
 
     if (action === 'update') {
