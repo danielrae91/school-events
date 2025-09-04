@@ -55,12 +55,14 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
 
   const sendTestNotification = async () => {
     setSending(true)
+    setError(null)
     try {
       if (!adminToken) {
         setError('No admin token found')
         return
       }
 
+      console.log('Sending test notification...')
       const response = await fetch('/api/push/send', {
         method: 'POST',
         headers: {
@@ -76,18 +78,23 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
         })
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to send notification')
-      }
+      console.log('Response status:', response.status)
+      const responseData = await response.json()
+      console.log('Response data:', responseData)
 
-      const result = await response.json()
-      console.log('Notification sent:', result)
-      
-      // Refresh notifications list
-      await fetchNotifications()
-      
+      if (response.ok) {
+        alert(`Test notification sent successfully! ${responseData.message || ''}`)
+        fetchNotifications()
+      } else {
+        const errorMsg = responseData.error || 'Failed to send test notification'
+        setError(errorMsg)
+        alert(errorMsg)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send notification')
+      console.error('Failed to send test notification:', err)
+      const errorMsg = err instanceof Error ? err.message : 'Failed to send test notification'
+      setError(errorMsg)
+      alert(errorMsg)
     } finally {
       setSending(false)
     }

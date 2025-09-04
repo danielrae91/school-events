@@ -204,6 +204,16 @@ export default function HomePage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'pwa_install' })
           }).catch(() => {}) // Silent fail
+          
+          // Request push notification permission after PWA install
+          setTimeout(async () => {
+            if ('Notification' in window && Notification.permission === 'default') {
+              const permission = await Notification.requestPermission()
+              if (permission === 'granted') {
+                subscribeToPushNotifications()
+              }
+            }
+          }, 1000) // Small delay to ensure PWA is fully installed
         }
         setShowInstallPrompt(false)
       } catch (error) {
@@ -229,6 +239,15 @@ export default function HomePage() {
       }
 
       const registration = await navigator.serviceWorker.ready
+      
+      // Check if already subscribed
+      const existingSubscription = await registration.pushManager.getSubscription()
+      if (existingSubscription) {
+        setPushSubscribed(true)
+        console.log('Already subscribed to push notifications')
+        return
+      }
+      
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: 'BNxlC8b1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz' // Replace with your VAPID public key
