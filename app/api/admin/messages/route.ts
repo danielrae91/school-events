@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get messages list
-    const messagesList = await redis.get('messages:list') as string[] || []
+    const messagesListData = await redis.get('messages:list')
+    const messagesList = messagesListData ? JSON.parse(messagesListData as string) : []
     
     // Get message data
     const messages = []

@@ -68,7 +68,8 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
       })
 
       if (response.ok) {
-        setNotifications(notifications.filter(n => n.id !== notificationId))
+        // Refresh the notifications list after deletion
+        refreshNotifications()
       } else {
         throw new Error('Failed to delete notification')
       }
@@ -127,7 +128,11 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
 
   useEffect(() => {
     fetchNotifications()
-  }, [])
+  }, [adminToken])
+
+  const refreshNotifications = () => {
+    fetchNotifications()
+  }
 
   if (loading) {
     return (

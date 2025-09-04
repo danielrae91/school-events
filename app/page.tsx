@@ -1459,7 +1459,7 @@ END:VCALENDAR`
                   </svg>
                 </div>
                 <p className="text-lg font-medium text-gray-300">{stats.subscribeClicks?.toLocaleString() || '0'}</p>
-                <p className="text-slate-500 text-xs">Subscribe Clicks</p>
+                <p className="text-slate-500 text-xs">Calendar Subscribers</p>
               </div>
               
               <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
@@ -1470,16 +1470,6 @@ END:VCALENDAR`
                 </div>
                 <p className="text-lg font-medium text-gray-300">{stats.addToCalendarClicks?.toLocaleString() || '0'}</p>
                 <p className="text-slate-500 text-xs">Calendar Adds</p>
-              </div>
-              
-              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">
-                <div className="flex justify-center mb-1">
-                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l10.586 10.586c.781.781 2.047.781 2.828 0l1.414-1.414c.781-.781.781-2.047 0-2.828L9.07 2.758c-.781-.781-2.047-.781-2.828 0L4.828 4.172c-.781.781-.781 2.047 0 2.828z" />
-                  </svg>
-                </div>
-                <p className="text-lg font-medium text-gray-300">{stats.pushSubscriptions?.toLocaleString() || '0'}</p>
-                <p className="text-slate-500 text-xs">Push Subscribers</p>
               </div>
               
               <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 text-center">

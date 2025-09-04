@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // Add to messages list for admin
     const messagesList = await redis.get('messages:list') as string[] || []
     messagesList.unshift(messageId)
-    await redis.set('messages:list', messagesList)
+    await redis.set('messages:list', JSON.stringify(messagesList))
 
     return NextResponse.json({ success: true })
   } catch (error) {
