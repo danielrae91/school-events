@@ -44,6 +44,17 @@ export default function HomePage() {
         .then((subscription) => {
           if (subscription) {
             setPushSubscribed(true)
+            
+            // Auto-request push notification permission for PWA installs
+            if (window.matchMedia('(display-mode: standalone)').matches && Notification.permission === 'default') {
+              setTimeout(() => {
+                Notification.requestPermission().then(permission => {
+                  if (permission === 'granted') {
+                    console.log('Push notification permission granted after PWA install')
+                  }
+                })
+              }, 2000)
+            }
           }
         })
         .catch((error) => {
@@ -100,6 +111,12 @@ export default function HomePage() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
       setDeferredPrompt(e)
+      
+      // Only show PWA prompt on mobile devices
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (!isMobile) {
+        return // Don't show PWA prompt on desktop
+      }
       
       // Check if user has dismissed the prompt recently
       const dismissed = localStorage.getItem('pwa-dismissed')
@@ -705,7 +722,7 @@ export default function HomePage() {
                           <span className="hidden sm:inline">Calendar</span>
                         </button>
                         {dropdownOpen === event.id && (
-                          <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
+                          <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70] max-h-64 overflow-y-auto">
                             <div className="py-1">
                               <button
                                 onClick={async (e) => {
@@ -947,7 +964,7 @@ END:VCALENDAR`
                           </svg>
                         </button>
                         {dropdownOpen === event.id && (
-                          <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
+                          <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70] max-h-64 overflow-y-auto">
                             <div className="py-1">
                               <button
                                 onClick={async (e) => {

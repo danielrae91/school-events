@@ -53,7 +53,7 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
     const icsData = await response.text()
     const parsedCalendar = ical.parseICS(icsData)
 
-    // Get existing events from Google Calendar to check for updates
+    // Delete ALL existing events from Google Calendar first for clean sync
     console.log('Attempting to access Google Calendar with ID:', calendarId)
     
     let existingEventsResponse
@@ -73,14 +73,24 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
     }
 
     const existingEvents = existingEventsResponse.data.items || []
-    const existingEventsByUID = new Map<string, any>()
-    const icsEventUIDs = new Set<string>()
     
-    existingEvents.forEach(event => {
-      if (event.iCalUID) {
-        existingEventsByUID.set(event.iCalUID, event)
+    // Delete all existing events for clean sync
+    let deletedCount = 0
+    console.log(`Deleting ${existingEvents.length} existing events for clean sync...`)
+    for (const event of existingEvents) {
+      try {
+        await calendar.events.delete({
+          calendarId,
+          eventId: event.id!
+        })
+        deletedCount++
+        console.log(`Deleted event: ${event.summary}`)
+      } catch (deleteError) {
+        console.error(`Failed to delete event ${event.summary}:`, deleteError)
+        errors.push(`Failed to delete event ${event.summary}`)
       }
-    })
+    }
+    console.log(`Deleted ${deletedCount} existing events`)
 
     // Process each event from ICS
     for (const [key, event] of Object.entries(parsedCalendar)) {
@@ -93,8 +103,7 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
           continue
         }
 
-        // Track this event UID as existing in ICS
-        icsEventUIDs.add(icalUID)
+        // No need to track UIDs since we're doing clean sync
 
         // Convert ICS event to Google Calendar format
         const googleEvent: any = {
@@ -145,23 +154,11 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
           }
         }
 
-        // Check if event already exists
-        const existingEvent = existingEventsByUID.get(icalUID)
-        
-        if (existingEvent) {
-          // Update existing event
-          await calendar.events.update({
-            calendarId,
-            eventId: existingEvent.id!,
-            requestBody: googleEvent
-          })
-        } else {
-          // Create new event
-          await calendar.events.insert({
-            calendarId,
-            requestBody: googleEvent
-          })
-        }
+        // Create new event (since we deleted all existing ones)
+        await calendar.events.insert({
+          calendarId,
+          requestBody: googleEvent
+        })
 
         syncedCount++
       } catch (eventError) {
@@ -264,23 +261,11 @@ export async function syncEventsToGoogleCalendar(events: any[]): Promise<{ succe
           googleEvent.end = { date: event.end_date || event.start_date }
         }
 
-        // Check if event already exists
-        const existingEvent = existingEventsByUID.get(icalUID)
-        
-        if (existingEvent) {
-          // Update existing event
-          await calendar.events.update({
-            calendarId,
-            eventId: existingEvent.id!,
-            requestBody: googleEvent
-          })
-        } else {
-          // Create new event
-          await calendar.events.insert({
-            calendarId,
-            requestBody: googleEvent
-          })
-        }
+        // Create new event (since we deleted all existing ones)
+        await calendar.events.insert({
+          calendarId,
+          requestBody: googleEvent
+        })
 
         syncedCount++
       } catch (eventError) {

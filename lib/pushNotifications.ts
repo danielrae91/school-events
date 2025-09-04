@@ -49,7 +49,9 @@ export async function getActivePushSubscriptions(): Promise<Array<{id: string, s
   for (const id of subscriptionIds) {
     const data = await redis.hgetall(id)
     console.log(`Subscription ${id} data:`, data)
-    if (data && data.active === 'true') {
+    
+    // Check if subscription data exists and has required fields
+    if (data && data.endpoint && data.p256dh && data.auth && data.active === 'true') {
       subscriptions.push({
         id,
         subscription: {
@@ -62,7 +64,12 @@ export async function getActivePushSubscriptions(): Promise<Array<{id: string, s
       })
       console.log(`Added active subscription: ${id}`)
     } else {
-      console.log(`Skipping inactive subscription: ${id}`, data)
+      console.log(`Skipping invalid/inactive subscription: ${id}`, data)
+      // Clean up invalid subscription from the set
+      if (!data || !data.endpoint) {
+        await redis.srem('active_push_subscriptions', id)
+        console.log(`Removed invalid subscription ${id} from active set`)
+      }
     }
   }
 
