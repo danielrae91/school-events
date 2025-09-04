@@ -307,6 +307,12 @@ export default function HomePage() {
     window.location.href = webcalUrl
   }
 
+  const handleYahooCalendar = () => {
+    const calendarUrl = `https://tkevents.nz/calendar.ics`
+    const yahooUrl = `https://calendar.yahoo.com/?v=60&url=${encodeURIComponent(calendarUrl)}`
+    window.open(yahooUrl, '_blank')
+  }
+
   const handleOutlookCalendar = () => {
     const calendarUrl = `https://tkevents.nz/calendar.ics`
     const outlookUrl = `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent(calendarUrl)}`
@@ -692,9 +698,9 @@ END:VCALENDAR`
             <h2 className="text-2xl font-bold text-white mb-4">
               Today's Events
             </h2>
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 text-center">
-              <div className="text-gray-400 mb-2">
-                <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-2 text-center">
+              <div className="text-blue-400 mb-1">
+                <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -943,8 +949,16 @@ END:VCALENDAR`
           </div>
           <div className="p-2 max-h-96 overflow-y-auto">
             {(() => {
+              // Filter out past events for mobile view
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
+              const futureEvents = events.filter(event => {
+                const eventDate = new Date(event.start_date)
+                return eventDate >= today
+              })
+              
               // Group events by month
-              const eventsByMonth = events.reduce((acc, event) => {
+              const eventsByMonth = futureEvents.reduce((acc, event) => {
                 const eventDate = new Date(event.start_date)
                 const monthKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}`
                 const monthName = eventDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -976,9 +990,9 @@ END:VCALENDAR`
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="text-sm flex-shrink-0">{event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
+                              <span className="text-sm flex-shrink-0">{event.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? event.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(event.title)}</span>
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-white text-xs truncate">{event.title.replace(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, '')}</h3>
+                                <h3 className="font-medium text-white text-xs truncate">{event.title.replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/g, '')}</h3>
                                 <div className="text-xs text-gray-400 truncate">
                                   {formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}
                                   {event.location && ` • ${event.location}`}
@@ -1029,11 +1043,6 @@ END:VCALENDAR`
                   </div>
                 ))
             })()}
-            {events.length === 0 && (
-              <div className="text-center py-8 text-gray-400">
-                <p>No upcoming events</p>
-              </div>
-            )}
           </div>
           
           {/* Mobile Calendar Subscription */}
@@ -1067,24 +1076,24 @@ END:VCALENDAR`
                   onClick={(e) => {
                     e.preventDefault()
                     trackCalendarSubscription()
-                    handleOutlookCalendar()
+                    handleYahooCalendar()
                   }}
-                  className="text-gray-400 hover:text-orange-400 transition-colors"
+                  className="text-gray-400 hover:text-purple-400 transition-colors"
                 >
-                  Outlook
+                  Yahoo
                 </button>
                 <span className="text-gray-600">|</span>
                 <button
                   onClick={(e) => {
                     e.preventDefault()
                     trackCalendarSubscription()
-                    const icsUrl = `${window.location.origin}/calendar.ics`
-                    navigator.clipboard.writeText(icsUrl)
-                    toast.success('Calendar URL copied to clipboard!')
+                    const eventUrl = `${window.location.origin}/`
+                    navigator.clipboard.writeText(eventUrl)
+                    toast.success('Event URL copied to clipboard!')
                   }}
-                  className="text-gray-400 hover:text-purple-400 transition-colors"
+                  className="text-gray-400 hover:text-green-400 transition-colors"
                 >
-                  Copy URL
+                  Copy Event URL
                 </button>
               </div>
             </div>
@@ -1352,7 +1361,7 @@ END:VCALENDAR`
               <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="text-3xl bg-white/20 p-2 rounded-xl">{selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(selectedEvent.title)}</div>
+                    <div className="text-3xl p-2">{selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(selectedEvent.title)}</div>
                     <div>
                       <h2 className="text-xl font-bold text-white">{selectedEvent.title.replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/g, '').trim()}</h2>
                       <p className="text-purple-100 text-sm">{getDaysUntilEvent(selectedEvent.start_date)}</p>

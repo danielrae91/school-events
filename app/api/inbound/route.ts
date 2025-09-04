@@ -10,6 +10,8 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
   console.log(`[${new Date().toISOString()}] [info] Starting async processing for log ${logId} (attempt ${retryCount + 1}/${maxRetries + 1})`)
   
   try {
+    console.log(`[${new Date().toISOString()}] [info] Step 1: Updating Redis status for log ${logId}`)
+    
     // Update status to show processing started
     await redis.hset(`email_log:${logId}`, {
       status: 'processing',
@@ -18,9 +20,9 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
       updatedAt: new Date().toISOString()
     })
     
-    console.log(`[${new Date().toISOString()}] [info] Updated email_log status to processing for ${logId}`)
-
-    console.log(`[${new Date().toISOString()}] [info] Calling GPT for log ${logId}`)
+    console.log(`[${new Date().toISOString()}] [info] Step 2: Redis status updated successfully for log ${logId}`)
+  
+    console.log(`[${new Date().toISOString()}] [info] Step 3: Preparing content for GPT for log ${logId}`)
     
     // Parse newsletter content with GPT-4
     const contentToProcess = `
@@ -32,15 +34,21 @@ ${plain || ''}
 ${html ? `\nHTML CONTENT:\n${html}` : ''}
     `.trim()
     
-    console.log(`[${new Date().toISOString()}] [info] Content length for GPT: ${contentToProcess.length}`)
-    console.log(`[${new Date().toISOString()}] [info] OpenAI API key configured: ${!!process.env.OPENAI_API_KEY}`)
+    console.log(`[${new Date().toISOString()}] [info] Step 4: Content prepared - length: ${contentToProcess.length}, OpenAI key configured: ${!!process.env.OPENAI_API_KEY}`)
+    
+    console.log(`[${new Date().toISOString()}] [info] Step 5: About to call parseNewsletterWithGPT for log ${logId}`)
     
     let events
     try {
       events = await parseNewsletterWithGPT(contentToProcess)
-      console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
+      console.log(`[${new Date().toISOString()}] [info] Step 6: GPT call successful - returned ${events.length} events for log ${logId}`)
     } catch (gptError) {
-      console.error(`[${new Date().toISOString()}] [error] GPT parsing failed for ${logId}:`, gptError)
+      console.error(`[${new Date().toISOString()}] [error] Step 6 FAILED: GPT parsing failed for ${logId}:`, gptError)
+      console.error(`[${new Date().toISOString()}] [error] GPT Error details:`, {
+        name: gptError instanceof Error ? gptError.name : 'Unknown',
+        message: gptError instanceof Error ? gptError.message : String(gptError),
+        stack: gptError instanceof Error ? gptError.stack : 'No stack'
+      })
       throw gptError
     }
 

@@ -59,12 +59,19 @@ export function generateICalFeed(events: StoredEvent[]): string {
 
 function parseEventDateTime(date: string, time?: string | null): Date {
   if (!time) {
-    // All-day event - use date at midnight in NZ timezone
-    return new Date(`${date}T00:00:00+12:00`)
+    // All-day event - use date at midnight in local timezone
+    return new Date(`${date}T00:00:00`)
   }
 
-  // Parse time and combine with date in NZ timezone
-  return new Date(`${date}T${time}:00+12:00`)
+  // Parse time and combine with date in local timezone
+  // Convert to proper NZ time by creating date object and adjusting for timezone
+  const dateTime = new Date(`${date}T${time}:00`)
+  
+  // Adjust for NZ timezone (UTC+12 or UTC+13 depending on DST)
+  const nzOffset = 12 * 60 // 12 hours in minutes
+  const utcTime = dateTime.getTime() - (nzOffset * 60 * 1000)
+  
+  return new Date(utcTime)
 }
 
 export function validateICalFeed(icsContent: string): boolean {

@@ -300,24 +300,6 @@ Return ONLY valid JSON in this format:
             </div>
           </div>
 
-          {/* System Information */}
-          <div className="bg-slate-700 rounded-lg p-6 border border-slate-600">
-            <h3 className="text-lg font-medium text-white mb-4">System Information</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Environment:</span>
-                <span className="text-white">{process.env.NODE_ENV || 'development'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Version:</span>
-                <span className="text-white">1.0.0</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Last Updated:</span>
-                <span className="text-white">{new Date().toLocaleDateString()}</span>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

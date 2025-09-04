@@ -54,12 +54,23 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
     const parsedCalendar = ical.parseICS(icsData)
 
     // Get existing events from Google Calendar to check for updates
-    const existingEventsResponse = await calendar.events.list({
-      calendarId,
-      maxResults: 2500, // Adjust as needed
-      singleEvents: true,
-      orderBy: 'startTime'
-    })
+    console.log('Attempting to access Google Calendar with ID:', calendarId)
+    
+    let existingEventsResponse
+    try {
+      existingEventsResponse = await calendar.events.list({
+        calendarId,
+        maxResults: 2500, // Adjust as needed
+        singleEvents: true,
+        orderBy: 'startTime'
+      })
+    } catch (calendarError: any) {
+      console.error('Google Calendar access error:', calendarError)
+      if (calendarError.code === 404) {
+        throw new Error(`Google Calendar not found. Please check that the calendar ID '${calendarId}' is correct and that the service account has access to it.`)
+      }
+      throw new Error(`Google Calendar API error: ${calendarError.message}`)
+    }
 
     const existingEvents = existingEventsResponse.data.items || []
     const existingEventsByUID = new Map<string, any>()
