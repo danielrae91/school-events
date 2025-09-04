@@ -18,6 +18,8 @@ export default function HomePage() {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [pushSupported, setPushSupported] = useState(false)
+  const [pushSubscribed, setPushSubscribed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
   const [stats, setStats] = useState<any>(null)
@@ -28,6 +30,26 @@ export default function HomePage() {
     fetchEvents()
     trackPageView()
     fetchStats()
+    
+    // Register service worker and set up push notifications
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered:', registration)
+          setPushSupported(true)
+          
+          // Check if already subscribed
+          return registration.pushManager.getSubscription()
+        })
+        .then((subscription) => {
+          if (subscription) {
+            setPushSubscribed(true)
+          }
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error)
+        })
+    }
     
     // Check if running in PWA mode
     const checkPWAMode = () => {
@@ -179,8 +201,30 @@ export default function HomePage() {
   const dismissInstallPrompt = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
-    // Store dismissal to avoid showing again for a while
-    localStorage.setItem('pwa-dismissed', Date.now().toString())
+  }
+
+  const subscribeToPushNotifications = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa40HdHSWgdW356L4zdCpof1-0yrHPrjmzjHqiNEdHSwtsa1VPyBoD7SG4dLIE' // You'll need to replace this with your actual VAPID public key
+      })
+
+      // Send subscription to server
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subscription)
+      })
+
+      setPushSubscribed(true)
+      console.log('Push notification subscription successful')
+    } catch (error) {
+      console.error('Failed to subscribe to push notifications:', error)
+    }
   }
 
   const fetchEvents = async () => {
@@ -475,6 +519,14 @@ export default function HomePage() {
                   body: JSON.stringify({ action: 'google_calendar_subscribe' })
                 })
                 window.open('https://calendar.google.com/calendar/u/0?cid=https://www.tkevents.nz/calendar', '_blank')
+                
+                // Also request push notification permission if PWA is installed
+                if (pushSupported && !pushSubscribed && 'Notification' in window) {
+                  const permission = await Notification.requestPermission()
+                  if (permission === 'granted') {
+                    subscribeToPushNotifications()
+                  }
+                }
               }}
               className="bg-white text-purple-600 px-3 py-2 rounded text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-1"
             >

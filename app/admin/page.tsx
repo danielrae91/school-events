@@ -9,6 +9,7 @@ import SuggestionsTab from '@/components/admin/SuggestionsTab'
 import FeedbackTab from '@/components/admin/FeedbackTab'
 import LogsTab from '@/components/admin/LogsTab'
 import SettingsTab from '@/components/admin/SettingsTab'
+import NotificationsTab from '@/components/admin/NotificationsTab'
 import { gsap } from 'gsap'
 
 interface Suggestion {
@@ -49,7 +50,7 @@ function AdminPageContent() {
   const [loginToken, setLoginToken] = useState('')
   
   // UI state
-  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings'>('events')
+  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings' | 'notifications'>('events')
   const [loading, setLoading] = useState(false)
   const [suggestionsLoading, setSuggestionsLoading] = useState(true)
   const [feedbackLoading, setFeedbackLoading] = useState(true)
@@ -83,7 +84,7 @@ function AdminPageContent() {
   useEffect(() => {
     // Check URL params for tab
     const tab = searchParams.get('tab')
-    if (tab && ['events', 'suggestions', 'feedback', 'logs', 'settings'].includes(tab)) {
+    if (tab && ['events', 'suggestions', 'feedback', 'logs', 'settings', 'notifications'].includes(tab)) {
       setActiveTab(tab as any)
     }
     
@@ -568,7 +569,7 @@ function AdminPageContent() {
 
         {/* Tabs */}
         <div ref={tabsRef} className="flex flex-wrap gap-2 mb-8 justify-center">
-          {(['events', 'suggestions', 'feedback', 'logs', 'settings'] as const).map((tab) => (
+          {(['events', 'suggestions', 'feedback', 'logs', 'notifications', 'settings'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
@@ -597,6 +598,11 @@ function AdminPageContent() {
               {tab === 'logs' && (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              )}
+              {tab === 'notifications' && (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM11 19H6a2 2 0 01-2-2V7a2 2 0 012-2h6l4 4v1M9 9h1m4 0h1m-5 2h3m-3 2h3" />
                 </svg>
               )}
               {tab === 'settings' && (
@@ -666,6 +672,10 @@ function AdminPageContent() {
               onClearSelection={clearSelection}
               onCleanupRedis={cleanupRedis}
             />
+          )}
+
+          {activeTab === 'notifications' && (
+            <NotificationsTab />
           )}
 
           {activeTab === 'settings' && (
