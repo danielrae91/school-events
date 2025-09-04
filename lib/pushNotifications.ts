@@ -30,23 +30,26 @@ export async function storePushSubscription(subscription: PushSubscription, user
     auth: subscription.keys.auth,
     userId: userId || 'anonymous',
     createdAt: new Date().toISOString(),
-    active: true
+    active: 'true'
   })
 
   // Add to active subscriptions list
   await redis.sadd('active_push_subscriptions', subscriptionId)
   
+  console.log(`Stored push subscription: ${subscriptionId}`)
   return subscriptionId
 }
 
 // Get all active push subscriptions
 export async function getActivePushSubscriptions(): Promise<Array<{id: string, subscription: PushSubscription}>> {
   const subscriptionIds = await redis.smembers('active_push_subscriptions')
+  console.log('Found subscription IDs:', subscriptionIds)
   const subscriptions = []
 
   for (const id of subscriptionIds) {
     const data = await redis.hgetall(id)
-    if (data && data.active) {
+    console.log(`Subscription ${id} data:`, data)
+    if (data && data.active === 'true') {
       subscriptions.push({
         id,
         subscription: {
@@ -57,9 +60,13 @@ export async function getActivePushSubscriptions(): Promise<Array<{id: string, s
           }
         }
       })
+      console.log(`Added active subscription: ${id}`)
+    } else {
+      console.log(`Skipping inactive subscription: ${id}`, data)
     }
   }
 
+  console.log(`Total active subscriptions: ${subscriptions.length}`)
   return subscriptions
 }
 

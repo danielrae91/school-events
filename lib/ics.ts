@@ -75,15 +75,11 @@ function parseEventDateTime(date: string, time?: string | null): Date {
     return new Date(`${date}T00:00:00`)
   }
 
-  // For timed events, parse as NZ local time then convert to UTC
-  // This ensures Google Calendar gets the correct UTC time
-  const nzDateTime = new Date(`${date}T${time}:00`)
+  // Parse as NZ local time and let the calendar handle timezone conversion
+  // Don't manually subtract hours - let the timezone setting handle it
+  const nzDateTime = new Date(`${date}T${time}:00+12:00`)
   
-  // NZ is UTC+12 (or UTC+13 during DST)
-  // Subtract 12 hours to get UTC equivalent
-  const utcDateTime = new Date(nzDateTime.getTime() - (12 * 60 * 60 * 1000))
-  
-  return utcDateTime
+  return nzDateTime
 }
 
 export function validateICalFeed(icsContent: string): boolean {
