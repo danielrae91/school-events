@@ -97,6 +97,36 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
       }
     }
 
+    // Send push notifications for new events
+    if (storedEvents.length > 0) {
+      try {
+        const { sendPushNotification } = await import('@/lib/pushNotifications')
+        
+        if (storedEvents.length === 1) {
+          const event = storedEvents[0]
+          await sendPushNotification({
+            title: 'New TK Event Added',
+            body: `${event.title} - ${new Date(event.start_date).toLocaleDateString()}`,
+            eventId: event.id,
+            eventTitle: event.title,
+            eventDate: event.start_date
+          })
+        } else {
+          await sendPushNotification({
+            title: 'New TK Events Added',
+            body: `${storedEvents.length} new events added to the calendar`,
+            eventId: 'multiple',
+            eventTitle: `${storedEvents.length} events`,
+            eventDate: new Date().toISOString().split('T')[0]
+          })
+        }
+        
+        console.log(`[${new Date().toISOString()}] [info] Push notifications sent for ${storedEvents.length} new events`)
+      } catch (pushError) {
+        console.error(`[${new Date().toISOString()}] [error] Failed to send push notifications:`, pushError)
+      }
+    }
+
     // Update log with success
     await redis.hset(`email_log:${logId}`, {
       status: 'completed',
