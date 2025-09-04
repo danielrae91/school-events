@@ -118,13 +118,11 @@ export default function HomePage() {
         return // Don't show PWA prompt on desktop
       }
       
-      // Check if user has dismissed the prompt recently
+      // Check if user has dismissed the prompt or installed the app
       const dismissed = localStorage.getItem('pwa-dismissed')
-      const dismissedTime = dismissed ? parseInt(dismissed) : 0
-      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24)
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches
       
-      if (!isStandalone && (!dismissed || daysSinceDismissed > 7)) {
+      if (!isStandalone && !dismissed) {
         setShowInstallPrompt(true)
       }
     }
@@ -233,6 +231,8 @@ export default function HomePage() {
           }, 1000) // Small delay to ensure PWA is fully installed
         }
         setShowInstallPrompt(false)
+        // Mark as permanently dismissed after install
+        localStorage.setItem('pwa-dismissed', 'permanent')
       } catch (error) {
         console.error('Error installing PWA:', error)
       }
@@ -242,8 +242,8 @@ export default function HomePage() {
   const dismissInstallPrompt = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
-    // Remember dismissal with timestamp
-    localStorage.setItem('pwa-dismissed', Date.now().toString())
+    // Remember dismissal permanently - never show again
+    localStorage.setItem('pwa-dismissed', 'permanent')
   }
 
   const subscribeToPushNotifications = async () => {
@@ -550,20 +550,20 @@ export default function HomePage() {
       
       {/* PWA Install Prompt */}
       {showInstallPrompt && deferredPrompt && (
-        <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-lg shadow-lg z-50">
+        <div className="fixed bottom-4 left-4 right-4 bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 text-slate-200 p-4 rounded-xl shadow-xl z-50">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
               <div>
-                <p className="font-medium">Stay Updated with TK Events</p>
-                <p className="text-sm text-purple-100">Subscribe to calendar or install as app</p>
+                <p className="font-medium text-white">Install TK Events App</p>
+                <p className="text-sm text-slate-400">Get quick access and notifications</p>
               </div>
             </div>
             <button
               onClick={dismissInstallPrompt}
-              className="text-white/80 hover:text-white p-1 rounded transition-colors"
+              className="text-slate-400 hover:text-white p-1 rounded transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -571,72 +571,15 @@ export default function HomePage() {
             </button>
           </div>
           
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <button
-              onClick={async () => {
-                await fetch('/api/track', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'google_calendar_subscribe' })
-                })
-                window.open('https://calendar.google.com/calendar/u/0?cid=https://www.tkevents.nz/calendar', '_blank')
-                
-                // Also request push notification permission if PWA is installed
-                if (pushSupported && !pushSubscribed && 'Notification' in window && Notification.permission === 'default') {
-                  const permission = await Notification.requestPermission()
-                  if (permission === 'granted') {
-                    subscribeToPushNotifications()
-                  }
-                }
-              }}
-              className="bg-white text-purple-600 px-3 py-2 rounded text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-1"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-              </svg>
-              Google
-            </button>
-            <button
-              onClick={async () => {
-                await fetch('/api/track', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'apple_calendar_subscribe' })
-                })
-                window.open('webcal://www.tkevents.nz/calendar', '_blank')
-              }}
-              className="bg-white text-purple-600 px-3 py-2 rounded text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-1"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-              </svg>
-              Apple
-            </button>
-          </div>
-          
-          <div className="flex space-x-2">
-            <button
-              onClick={handleInstallPWA}
-              className="flex-1 bg-white/20 text-white px-3 py-2 rounded text-sm font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              Install App
-            </button>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText('https://www.tkevents.nz/calendar')
-                // You could add a toast notification here
-              }}
-              className="flex-1 bg-white/20 text-white px-3 py-2 rounded text-sm font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Copy URL
-            </button>
-          </div>
+          <button
+            onClick={handleInstallPWA}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Install App
+          </button>
         </div>
       )}
       <div className="max-w-4xl mx-auto px-4 py-8">
