@@ -163,9 +163,12 @@ export async function syncFromIcsToGoogle(): Promise<{ success: boolean; message
           })
           syncedCount++
         } catch (insertError: any) {
-          if (insertError.code === 409 && insertError.message?.includes('iCalUID')) {
+          if ((insertError.code === 409 || insertError.status === 409) && 
+              (insertError.message?.includes('identifier already exists') || 
+               insertError.message?.includes('iCalUID') ||
+               insertError.cause?.message?.includes('identifier already exists'))) {
             // Retry without iCalUID to avoid conflicts
-            console.log(`Retrying event ${event.summary} without iCalUID due to conflict`)
+            console.log(`Retrying event ${event.summary} without iCalUID due to 409 conflict`)
             const eventWithoutUID = { ...googleEvent }
             delete eventWithoutUID.iCalUID
             
@@ -287,9 +290,12 @@ export async function syncEventsToGoogleCalendar(events: any[]): Promise<{ succe
           })
           syncedCount++
         } catch (insertError: any) {
-          if (insertError.code === 409 && insertError.message?.includes('iCalUID')) {
+          if ((insertError.code === 409 || insertError.status === 409) && 
+              (insertError.message?.includes('identifier already exists') || 
+               insertError.message?.includes('iCalUID') ||
+               insertError.cause?.message?.includes('identifier already exists'))) {
             // Retry without iCalUID to avoid conflicts
-            console.log(`Retrying event ${event.title} without iCalUID due to conflict`)
+            console.log(`Retrying event ${event.title} without iCalUID due to 409 conflict`)
             const eventWithoutUID = { ...googleEvent }
             delete eventWithoutUID.iCalUID
             
@@ -425,9 +431,12 @@ export async function syncSingleEventToGoogle(event: any, action: 'create' | 'up
         requestBody: googleEvent
       })
     } catch (insertError: any) {
-      if (insertError.code === 409 && insertError.message?.includes('iCalUID')) {
+      if ((insertError.code === 409 || insertError.status === 409) && 
+          (insertError.message?.includes('identifier already exists') || 
+           insertError.message?.includes('iCalUID') ||
+           insertError.cause?.message?.includes('identifier already exists'))) {
         // Retry without iCalUID to avoid conflicts
-        console.log(`Retrying event ${event.title} without iCalUID due to conflict`)
+        console.log(`Retrying event ${event.title} without iCalUID due to 409 conflict`)
         const eventWithoutUID = { ...googleEvent }
         delete eventWithoutUID.iCalUID
         
