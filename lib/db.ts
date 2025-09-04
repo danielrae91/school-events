@@ -155,9 +155,57 @@ export async function deleteEvent(id: string): Promise<boolean> {
   return true
 }
 
-// Check if event exists (for deduplication)
+// Enhanced event similarity check for better deduplication
+function calculateSimilarity(str1: string, str2: string): number {
+  const s1 = str1.toLowerCase().trim()
+  const s2 = str2.toLowerCase().trim()
+  
+  if (s1 === s2) return 1.0
+  
+  // Calculate Jaccard similarity using word sets
+  const words1 = new Set(s1.split(/\s+/))
+  const words2 = new Set(s2.split(/\s+/))
+  
+  const intersection = new Set(Array.from(words1).filter(x => words2.has(x)))
+  const union = new Set([...Array.from(words1), ...Array.from(words2)])
+  
+  return intersection.size / union.size
+}
+
+// Check if similar event exists (enhanced deduplication)
 export async function eventExists(title: string, startDate: string): Promise<boolean> {
   const id = generateEventId(title, startDate)
   const exists = await redis.exists(`tk:event:${id}`)
-  return exists === 1
+  if (exists === 1) return true
+  
+  // Enhanced similarity check - get all events for the same date
+  const targetDate = new Date(startDate)
+  const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).getTime()
+  const endOfDay = startOfDay + (24 * 60 * 60 * 1000) - 1
+  
+  try {
+    // Get events for the same day
+    const eventIds = await redis.zrange('tk:events:by_date', startOfDay, endOfDay, { byScore: true })
+    
+    for (const eventId of eventIds) {
+      const existingEvent = await getEvent(eventId as string)
+      if (existingEvent) {
+        const titleSimilarity = calculateSimilarity(title, existingEvent.title)
+        
+        // Consider it a duplicate if:
+        // 1. Title similarity > 80%
+        // 2. Same date
+        if (titleSimilarity > 0.8) {
+          console.log(`Similar event found: "${title}" vs "${existingEvent.title}" (similarity: ${(titleSimilarity * 100).toFixed(1)}%)`)
+          return true
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for similar events:', error)
+    // Fall back to basic check
+    return exists === 1
+  }
+  
+  return false
 }
