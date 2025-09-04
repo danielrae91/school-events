@@ -13,13 +13,13 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
     console.log(`[${new Date().toISOString()}] [info] Step 1: Updating Redis status for log ${logId}`)
     
     // Update status to show processing started
+    console.log(`[${new Date().toISOString()}] [info] Step 2: About to update Redis status for log ${logId}`)
     await redis.hset(`email_log:${logId}`, {
       status: 'processing',
       stage: 'gpt_parsing',
       processingStarted: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
-    
     console.log(`[${new Date().toISOString()}] [info] Step 2: Redis status updated successfully for log ${logId}`)
   
     console.log(`[${new Date().toISOString()}] [info] Step 3: Preparing content for GPT for log ${logId}`)
