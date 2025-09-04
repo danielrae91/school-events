@@ -139,6 +139,23 @@ export default function HomePage() {
         body: JSON.stringify({ action: 'pwa_install' })
       }).catch(() => {}) // Silent fail
       setShowInstallPrompt(false)
+    } else {
+      // Fallback for incognito mode or when beforeinstallprompt doesn't fire
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile) {
+        // Use a timeout to ensure localStorage is accessible
+        setTimeout(() => {
+          try {
+            const dismissed = localStorage.getItem('pwa-dismissed')
+            if (!dismissed) {
+              setShowInstallPrompt(true)
+            }
+          } catch (e) {
+            // In incognito mode, localStorage might throw errors, so show prompt anyway
+            setShowInstallPrompt(true)
+          }
+        }, 1000)
+      }
     }
     
     return () => {
@@ -232,9 +249,34 @@ export default function HomePage() {
         }
         setShowInstallPrompt(false)
         // Mark as permanently dismissed after install
-        localStorage.setItem('pwa-dismissed', 'permanent')
+        try {
+          localStorage.setItem('pwa-dismissed', 'permanent')
+        } catch (e) {
+          // Ignore localStorage errors in incognito mode
+        }
       } catch (error) {
         console.error('Error installing PWA:', error)
+      }
+    } else {
+      // Fallback for incognito mode - show manual install instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      const isAndroid = /Android/.test(navigator.userAgent)
+      
+      let instructions = ''
+      if (isIOS) {
+        instructions = 'To install: Tap the Share button in Safari, then "Add to Home Screen"'
+      } else if (isAndroid) {
+        instructions = 'To install: Tap the menu (⋮) in your browser, then "Add to Home screen" or "Install app"'
+      } else {
+        instructions = 'To install: Look for "Add to Home Screen" or "Install" option in your browser menu'
+      }
+      
+      alert(instructions)
+      setShowInstallPrompt(false)
+      try {
+        localStorage.setItem('pwa-dismissed', 'permanent')
+      } catch (e) {
+        // Ignore localStorage errors in incognito mode
       }
     }
   }
@@ -243,7 +285,11 @@ export default function HomePage() {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
     // Remember dismissal permanently - never show again
-    localStorage.setItem('pwa-dismissed', 'permanent')
+    try {
+      localStorage.setItem('pwa-dismissed', 'permanent')
+    } catch (e) {
+      // Ignore localStorage errors in incognito mode
+    }
   }
 
   const subscribeToPushNotifications = async () => {
@@ -549,7 +595,7 @@ export default function HomePage() {
         <Toaster />
       
       {/* PWA Install Prompt */}
-      {showInstallPrompt && deferredPrompt && (
+      {showInstallPrompt && (
         <div className="fixed bottom-4 left-4 right-4 bg-slate-800/95 backdrop-blur-sm border border-slate-600/50 text-slate-200 p-4 rounded-xl shadow-xl z-50">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
