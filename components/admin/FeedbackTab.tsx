@@ -1,33 +1,47 @@
 'use client'
 
-interface FeedbackItem {
+interface MessageItem {
   id: string
+  name: string
+  email: string
   message: string
-  email?: string
+  timestamp: string
+  userAgent: string
+  platform: string
+  language: string
+  screenResolution: string
+  viewport: string
+  timezone: string
+  ipAddress: string
+  country: string
+  city: string
+  isRead: boolean
   created_at: string
 }
 
-interface FeedbackTabProps {
-  feedback: FeedbackItem[]
-  selectedFeedback: string[]
+interface MessagesTabProps {
+  messages: MessageItem[]
+  selectedMessages: string[]
   loading: boolean
   onRefresh: () => void
   onBulkDelete: () => void
-  onToggleSelection: (feedbackId: string) => void
+  onToggleSelection: (messageId: string) => void
   onSelectAll: () => void
   onClearSelection: () => void
+  onMarkAsRead: (messageId: string) => void
 }
 
-export default function FeedbackTab({
-  feedback,
-  selectedFeedback,
+export default function MessagesTab({
+  messages,
+  selectedMessages,
   loading,
   onRefresh,
   onBulkDelete,
   onToggleSelection,
   onSelectAll,
-  onClearSelection
-}: FeedbackTabProps) {
+  onClearSelection,
+  onMarkAsRead
+}: MessagesTabProps) {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -42,7 +56,7 @@ export default function FeedbackTab({
 
       {loading ? (
         <div className="text-center py-8 text-slate-400">Loading messages...</div>
-      ) : feedback.length === 0 ? (
+      ) : messages.length === 0 ? (
         <div className="text-center py-12 text-slate-400">
           <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V8m10 0H7" />
@@ -53,13 +67,13 @@ export default function FeedbackTab({
         <div>
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-4">
-              <span className="text-slate-300">{feedback.length} feedback items</span>
-              {selectedFeedback.length > 0 && (
-                <span className="text-purple-400">{selectedFeedback.length} selected</span>
+              <span className="text-slate-300">{messages.length} messages</span>
+              {selectedMessages.length > 0 && (
+                <span className="text-purple-400">{selectedMessages.length} selected</span>
               )}
             </div>
             <div className="flex gap-2">
-              {selectedFeedback.length > 0 && (
+              {selectedMessages.length > 0 && (
                 <>
                   <button
                     onClick={onBulkDelete}
@@ -85,29 +99,45 @@ export default function FeedbackTab({
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-slate-400">Loading feedback...</div>
+            <div className="text-center py-8 text-slate-400">Loading messages...</div>
           ) : (
             <div className="space-y-3">
-              {feedback.map((item) => (
+              {messages.map((item: MessageItem) => (
                 <div
                   key={item.id}
-                  className={`bg-slate-700 rounded-lg p-4 border transition-colors ${
-                    selectedFeedback.includes(item.id)
+                  onClick={() => onMarkAsRead(item.id)}
+                  className={`bg-slate-700 rounded-lg p-4 border transition-colors cursor-pointer ${
+                    selectedMessages.includes(item.id)
                       ? 'border-purple-500 bg-purple-900/20'
-                      : 'border-slate-600 hover:border-slate-500'
+                      : item.isRead 
+                      ? 'border-slate-600 hover:border-slate-500'
+                      : 'border-blue-500 bg-blue-900/20 hover:border-blue-400'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
-                      checked={selectedFeedback.includes(item.id)}
-                      onChange={() => onToggleSelection(item.id)}
+                      checked={selectedMessages.includes(item.id)}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        onToggleSelection(item.id)
+                      }}
                       className="rounded border-slate-500 bg-slate-600 text-purple-600 focus:ring-purple-500 mt-1"
                     />
                     <div className="flex-1">
-                      <p className="text-white mb-2">{item.message}</p>
-                      <div className="text-sm text-slate-400">
-                        {item.email && <p>From: {item.email}</p>}
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className={`font-medium ${item.isRead ? 'text-gray-300' : 'text-white'}`}>
+                          {item.name}
+                        </h4>
+                        {!item.isRead && (
+                          <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">New</span>
+                        )}
+                      </div>
+                      <p className={`mb-2 ${item.isRead ? 'text-gray-400' : 'text-white'}`}>{item.message}</p>
+                      <div className="text-sm text-slate-400 space-y-1">
+                        <p>From: {item.email}</p>
+                        <p>IP: {item.ipAddress} ({item.country}, {item.city})</p>
+                        <p>Device: {item.platform} • {item.screenResolution} • {item.timezone}</p>
                         <p>Received: {new Date(item.created_at).toLocaleString()}</p>
                       </div>
                     </div>

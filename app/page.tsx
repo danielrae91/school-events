@@ -250,7 +250,7 @@ export default function HomePage() {
       
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'BNxlC8b1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz' // Replace with your VAPID public key
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       })
 
       // Send subscription to server

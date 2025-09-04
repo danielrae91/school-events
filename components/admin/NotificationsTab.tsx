@@ -53,6 +53,31 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
     }
   }
 
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      if (!adminToken) {
+        setError('No admin token found')
+        return
+      }
+
+      const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      })
+
+      if (response.ok) {
+        setNotifications(notifications.filter(n => n.id !== notificationId))
+      } else {
+        throw new Error('Failed to delete notification')
+      }
+    } catch (err) {
+      console.error('Failed to delete notification:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete notification')
+    }
+  }
+
   const sendTestNotification = async () => {
     setSending(true)
     setError(null)
@@ -189,6 +214,16 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
                       )}
                     </div>
                   </div>
+                  
+                  <button
+                    onClick={() => deleteNotification(notification.id)}
+                    className="ml-4 text-red-400 hover:text-red-300 p-1 rounded"
+                    title="Delete notification"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))

@@ -42,7 +42,6 @@ export async function POST(request: NextRequest) {
     console.log('Push notification result:', result)
 
     return NextResponse.json({ 
-      success: true, 
       message: `Notification sent to ${result.successCount} subscribers (${result.failureCount} failed)`,
       ...result 
     })

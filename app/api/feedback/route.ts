@@ -3,35 +3,45 @@ import { redis } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, message, timestamp, userAgent } = await request.json()
+    const { name, email, message, timestamp, userAgent, platform, language, screenResolution, viewport, timezone } = await request.json()
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Get real IP address
+    // Get real IP address and additional headers
     const forwarded = request.headers.get('x-forwarded-for')
     const realIp = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown'
+    const country = request.headers.get('cf-ipcountry') || 'unknown'
+    const city = request.headers.get('cf-ipcity') || 'unknown'
 
-    const feedbackId = `feedback:${Date.now()}`
+    const messageId = `message:${Date.now()}`
     
-    const feedbackData = {
-      id: feedbackId,
+    const messageData = {
+      id: messageId,
       name,
       email,
       message,
       timestamp,
       userAgent: userAgent || 'unknown',
+      platform: platform || 'unknown',
+      language: language || 'unknown',
+      screenResolution: screenResolution || 'unknown',
+      viewport: viewport || 'unknown',
+      timezone: timezone || 'unknown',
       ipAddress: realIp,
+      country,
+      city,
+      isRead: false,
       created_at: new Date().toISOString()
     }
 
-    await redis.set(feedbackId, JSON.stringify(feedbackData))
+    await redis.set(messageId, JSON.stringify(messageData))
     
-    // Add to feedback list for admin
-    const feedbackList = await redis.get('feedback:list') as string[] || []
-    feedbackList.unshift(feedbackId)
-    await redis.set('feedback:list', feedbackList)
+    // Add to messages list for admin
+    const messagesList = await redis.get('messages:list') as string[] || []
+    messagesList.unshift(messageId)
+    await redis.set('messages:list', messagesList)
 
     return NextResponse.json({ success: true })
   } catch (error) {
