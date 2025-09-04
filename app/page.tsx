@@ -445,28 +445,83 @@ export default function HomePage() {
       
       {/* PWA Install Prompt */}
       {showInstallPrompt && deferredPrompt && (
-        <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-lg shadow-lg z-50 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            <div>
-              <p className="font-medium">Install TK Events</p>
-              <p className="text-sm text-purple-100">Add to your home screen for quick access</p>
+        <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-lg shadow-lg z-50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div>
+                <p className="font-medium">Stay Updated with TK Events</p>
+                <p className="text-sm text-purple-100">Subscribe to calendar or install as app</p>
+              </div>
             </div>
+            <button
+              onClick={dismissInstallPrompt}
+              className="text-white/80 hover:text-white p-1 rounded transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
+          
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={async () => {
+                await fetch('/api/track', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'google_calendar_subscribe' })
+                })
+                window.open('https://calendar.google.com/calendar/u/0?cid=https://www.tkevents.nz/calendar', '_blank')
+              }}
+              className="bg-white text-purple-600 px-3 py-2 rounded text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-1"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+              </svg>
+              Google
+            </button>
+            <button
+              onClick={async () => {
+                await fetch('/api/track', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'apple_calendar_subscribe' })
+                })
+                window.open('webcal://www.tkevents.nz/calendar', '_blank')
+              }}
+              className="bg-white text-purple-600 px-3 py-2 rounded text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-1"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+              </svg>
+              Apple
+            </button>
+          </div>
+          
           <div className="flex space-x-2">
             <button
               onClick={handleInstallPWA}
-              className="bg-white text-purple-600 px-4 py-2 rounded font-medium text-sm hover:bg-purple-50 transition-colors"
+              className="flex-1 bg-white/20 text-white px-3 py-2 rounded text-sm font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
             >
-              Install
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Install App
             </button>
             <button
-              onClick={dismissInstallPrompt}
-              className="text-white/80 hover:text-white px-3 py-1 rounded text-xs transition-colors"
+              onClick={() => {
+                navigator.clipboard.writeText('https://www.tkevents.nz/calendar')
+                // You could add a toast notification here
+              }}
+              className="flex-1 bg-white/20 text-white px-3 py-2 rounded text-sm font-medium hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
             >
-              Not now
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy URL
             </button>
           </div>
         </div>
