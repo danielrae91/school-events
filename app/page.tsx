@@ -492,7 +492,7 @@ export default function HomePage() {
               {todaysEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="group bg-gradient-to-br from-amber-800 to-orange-900 border border-amber-600/50 rounded-2xl p-4 sm:p-6 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer"
+                  className="group bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl p-4 sm:p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
                   onClick={() => {
                     setSelectedEvent(event)
                     window.history.pushState({}, '', `/?event=${event.id}`)
@@ -503,7 +503,7 @@ export default function HomePage() {
                       <div className="mb-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
-                            <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-amber-200 transition-colors break-words">
+                            <h3 className="text-base sm:text-lg font-semibold text-white group-hover:text-purple-300 transition-colors break-words">
                               {event.title}
                             </h3>
                             {isMultiDayEvent(event) && (
@@ -512,18 +512,18 @@ export default function HomePage() {
                               </span>
                             )}
                           </div>
-                          <div className="flex flex-col space-y-1 sm:space-y-2 text-amber-100 text-sm">
+                          <div className="flex flex-col space-y-1 sm:space-y-2 text-gray-300 text-sm">
                             <div className="flex items-center space-x-2">
-                              <svg className="w-4 h-4 text-amber-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
                               <p className="font-medium">{formatEventDate(event.start_date, event.end_date || undefined, event.start_time || undefined, event.end_time || undefined)}</p>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              <span className="font-medium text-amber-200">{getDaysUntilEvent(event.start_date, event.start_time)}</span>
+                              <span className="font-medium text-orange-300">{getDaysUntilEvent(event.start_date, event.start_time)}</span>
                             </div>
                             {event.location && (
                               <div className="flex items-center space-x-2">

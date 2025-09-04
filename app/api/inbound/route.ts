@@ -40,6 +40,7 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
     
     let events
     try {
+      console.log(`[${new Date().toISOString()}] [info] Step 5a: Calling parseNewsletterWithGPT...`)
       events = await parseNewsletterWithGPT(contentToProcess)
       console.log(`[${new Date().toISOString()}] [info] Step 6: GPT call successful - returned ${events.length} events for log ${logId}`)
     } catch (gptError) {
@@ -49,6 +50,15 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
         message: gptError instanceof Error ? gptError.message : String(gptError),
         stack: gptError instanceof Error ? gptError.stack : 'No stack'
       })
+      
+      // Update Redis with error details
+      await redis.hset(`email_log:${logId}`, {
+        status: 'failed',
+        stage: 'gpt_parsing_error',
+        error: gptError instanceof Error ? gptError.message : String(gptError),
+        updatedAt: new Date().toISOString()
+      })
+      
       throw gptError
     }
 
