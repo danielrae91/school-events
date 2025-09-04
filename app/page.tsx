@@ -219,10 +219,19 @@ export default function HomePage() {
 
   const subscribeToPushNotifications = async () => {
     try {
+      // First check if permission is granted
+      if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          console.log('Push notification permission denied')
+          return
+        }
+      }
+
       const registration = await navigator.serviceWorker.ready
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'BEl62iUYgUivxIkv69yViEuiBIa40HdHSWgdW356L4zdCpof1-0yrHPrjmzjHqiNEdHSwtsa1VPyBoD7SG4dLIE' // You'll need to replace this with your actual VAPID public key
+        applicationServerKey: 'BNxlC8b1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz' // Replace with your VAPID public key
       })
 
       // Send subscription to server
@@ -535,7 +544,7 @@ export default function HomePage() {
                 window.open('https://calendar.google.com/calendar/u/0?cid=https://www.tkevents.nz/calendar', '_blank')
                 
                 // Also request push notification permission if PWA is installed
-                if (pushSupported && !pushSubscribed && 'Notification' in window) {
+                if (pushSupported && !pushSubscribed && 'Notification' in window && Notification.permission === 'default') {
                   const permission = await Notification.requestPermission()
                   if (permission === 'granted') {
                     subscribeToPushNotifications()
