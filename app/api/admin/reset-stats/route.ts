@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     await redis.del('stats:add_to_calendar_clicks')
     await redis.del('stats:feedback_submissions')
     await redis.del('stats:event_suggestions')
+    await redis.del('stats:pwa_installs')
 
     return NextResponse.json({ success: true })
   } catch (error) {
