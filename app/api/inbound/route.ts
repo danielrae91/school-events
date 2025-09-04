@@ -17,6 +17,8 @@ async function processEmailAsync(logId: string, subject: string, plain: string, 
       processingStarted: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
+    
+    console.log(`[${new Date().toISOString()}] [info] Updated email_log status to processing for ${logId}`)
 
     console.log(`[${new Date().toISOString()}] [info] Calling GPT for log ${logId}`)
     
@@ -33,8 +35,14 @@ ${html ? `\nHTML CONTENT:\n${html}` : ''}
     console.log(`[${new Date().toISOString()}] [info] Content length for GPT: ${contentToProcess.length}`)
     console.log(`[${new Date().toISOString()}] [info] OpenAI API key configured: ${!!process.env.OPENAI_API_KEY}`)
     
-    const events = await parseNewsletterWithGPT(contentToProcess)
-    console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
+    let events
+    try {
+      events = await parseNewsletterWithGPT(contentToProcess)
+      console.log(`[${new Date().toISOString()}] [info] GPT returned ${events.length} events for log ${logId}`)
+    } catch (gptError) {
+      console.error(`[${new Date().toISOString()}] [error] GPT parsing failed for ${logId}:`, gptError)
+      throw gptError
+    }
 
     // Update status to show GPT completed
     await redis.hset(`email_log:${logId}`, {
@@ -280,8 +288,9 @@ export async function POST(request: NextRequest) {
     await redis.set('logs:list', logsList)
 
     // Process email asynchronously to avoid timeout
+    console.log(`[${new Date().toISOString()}] [webhook] Starting processEmailAsync for log ${logId}`)
     processEmailAsync(logId, email.headers.subject, email.plain, email.html).catch((error: Error) => {
-      console.error('Async email processing failed:', error)
+      console.error(`[${new Date().toISOString()}] [error] Async email processing failed for ${logId}:`, error)
     })
 
     console.log(`[${new Date().toISOString()}] [webhook] Email queued for processing with log ID: ${logId}`)

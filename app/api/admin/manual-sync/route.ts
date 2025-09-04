@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Get all events from Redis
-    const eventsList = await redis.get('events:list') as string[] || []
+    // Get all events from Redis using the correct storage format
+    const eventIds = await redis.zrange('tk:events:by_date', 0, -1)
     
-    if (eventsList.length === 0) {
+    if (eventIds.length === 0) {
       return NextResponse.json({ 
         success: true, 
         message: 'No events found to sync.',
@@ -31,12 +31,11 @@ export async function POST(request: NextRequest) {
 
     // Fetch all events
     const events = []
-    for (const eventId of eventsList) {
+    for (const eventId of eventIds) {
       try {
-        const eventData = await redis.get(eventId)
-        if (eventData) {
-          const event = typeof eventData === 'string' ? JSON.parse(eventData) : eventData
-          events.push(event)
+        const eventData = await redis.hgetall(`tk:event:${eventId}`)
+        if (eventData && Object.keys(eventData).length > 0) {
+          events.push(eventData)
         }
       } catch (error) {
         console.error(`Error fetching event ${eventId}:`, error)
