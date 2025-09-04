@@ -225,6 +225,8 @@ export default function HomePage() {
   const dismissInstallPrompt = () => {
     setShowInstallPrompt(false)
     setDeferredPrompt(null)
+    // Remember dismissal with timestamp
+    localStorage.setItem('pwa-dismissed', Date.now().toString())
   }
 
   const subscribeToPushNotifications = async () => {
