@@ -1352,9 +1352,9 @@ END:VCALENDAR`
               <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-5 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="text-3xl bg-white/20 p-2 rounded-xl">{selectedEvent.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? selectedEvent.title.match(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(selectedEvent.title)}</div>
+                    <div className="text-3xl bg-white/20 p-2 rounded-xl">{selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/) ? selectedEvent.title.match(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+/)![0] : getEventEmoji(selectedEvent.title)}</div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">{selectedEvent.title.replace(/^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/, '').trim()}</h2>
+                      <h2 className="text-xl font-bold text-white">{selectedEvent.title.replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/g, '').trim()}</h2>
                       <p className="text-purple-100 text-sm">{getDaysUntilEvent(selectedEvent.start_date)}</p>
                     </div>
                   </div>
