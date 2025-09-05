@@ -1,64 +1,98 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle with gradient -->
   <defs>
+    <!-- Glass morphism background -->
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glass calendar gradient -->
+    <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.15);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.05);stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Purple accent gradient -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#5b21b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="calendarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#f3f4f6;stop-opacity:1" />
-    </linearGradient>
+    
+    <!-- Blur filter for glass effect -->
+    <filter id="blur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+    </filter>
   </defs>
   
-  <!-- Background -->
-  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#4c1d95" stroke-width="8"/>
+  <!-- Background with subtle pattern -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
   
-  <!-- Calendar base -->
-  <rect x="140" y="160" width="232" height="200" rx="16" fill="url(#calendarGradient)" stroke="#e5e7eb" stroke-width="2"/>
+  <!-- Decorative background elements -->
+  <circle cx="100" cy="100" r="40" fill="rgba(124, 58, 237, 0.1)" filter="url(#blur)"/>
+  <circle cx="412" cy="150" r="30" fill="rgba(168, 85, 247, 0.08)" filter="url(#blur)"/>
+  <circle cx="80" cy="400" r="35" fill="rgba(124, 58, 237, 0.06)" filter="url(#blur)"/>
+  <circle cx="450" cy="380" r="25" fill="rgba(168, 85, 247, 0.1)" filter="url(#blur)"/>
   
-  <!-- Calendar header -->
-  <rect x="140" y="160" width="232" height="48" rx="16" fill="#1f2937"/>
-  <rect x="140" y="192" width="232" height="16" fill="#1f2937"/>
+  <!-- Main calendar container with glass morphism -->
+  <rect x="100" y="140" width="312" height="280" rx="24" 
+        fill="url(#glassGradient)" 
+        stroke="rgba(255,255,255,0.2)" 
+        stroke-width="1"/>
   
-  <!-- Binding rings -->
-  <circle cx="180" cy="140" r="8" fill="#6b7280"/>
-  <circle cx="220" cy="140" r="8" fill="#6b7280"/>
-  <circle cx="292" cy="140" r="8" fill="#6b7280"/>
-  <circle cx="332" cy="140" r="8" fill="#6b7280"/>
+  <!-- Calendar header with gradient -->
+  <rect x="100" y="140" width="312" height="60" rx="24" fill="url(#accentGradient)"/>
+  <rect x="100" y="180" width="312" height="20" fill="url(#accentGradient)"/>
   
-  <!-- Ring holes -->
-  <circle cx="180" cy="140" r="3" fill="#374151"/>
-  <circle cx="220" cy="140" r="3" fill="#374151"/>
-  <circle cx="292" cy="140" r="3" fill="#374151"/>
-  <circle cx="332" cy="140" r="3" fill="#374151"/>
+  <!-- Elegant binding rings -->
+  <circle cx="150" cy="120" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <circle cx="210" cy="120" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <circle cx="302" cy="120" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <circle cx="362" cy="120" r="12" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
   
-  <!-- Calendar grid lines -->
-  <line x1="140" y1="240" x2="372" y2="240" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="140" y1="270" x2="372" y2="270" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="140" y1="300" x2="372" y2="300" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="140" y1="330" x2="372" y2="330" stroke="#e5e7eb" stroke-width="1"/>
+  <!-- Ring centers -->
+  <circle cx="150" cy="120" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="210" cy="120" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="302" cy="120" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="362" cy="120" r="4" fill="rgba(255,255,255,0.4)"/>
   
-  <line x1="173" y1="208" x2="173" y2="360" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="206" y1="208" x2="206" y2="360" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="239" y1="208" x2="239" y2="360" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="272" y1="208" x2="272" y2="360" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="305" y1="208" x2="305" y2="360" stroke="#e5e7eb" stroke-width="1"/>
-  <line x1="338" y1="208" x2="338" y2="360" stroke="#e5e7eb" stroke-width="1"/>
+  <!-- Calendar grid with subtle lines -->
+  <line x1="100" y1="240" x2="412" y2="240" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="100" y1="280" x2="412" y2="280" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="100" y1="320" x2="412" y2="320" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="100" y1="360" x2="412" y2="360" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
   
-  <!-- TK text in header -->
-  <text x="256" y="185" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">TK</text>
+  <line x1="144" y1="200" x2="144" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="188" y1="200" x2="188" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="232" y1="200" x2="232" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="276" y1="200" x2="276" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="320" y1="200" x2="320" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="364" y1="200" x2="364" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
   
-  <!-- Event dots -->
-  <circle cx="190" cy="225" r="4" fill="#ef4444"/>
-  <circle cx="223" cy="225" r="4" fill="#10b981"/>
-  <circle cx="289" cy="255" r="4" fill="#f59e0b"/>
-  <circle cx="322" cy="285" r="4" fill="#8b5cf6"/>
-  <circle cx="156" cy="315" r="4" fill="#06b6d4"/>
+  <!-- TK Events text in header -->
+  <text x="256" y="175" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="700" fill="white" text-anchor="middle">TK</text>
   
-  <!-- Today highlight -->
-  <rect x="272" y="240" width="33" height="30" rx="4" fill="#7c3aed" fill-opacity="0.2" stroke="#7c3aed" stroke-width="1"/>
+  <!-- Beautiful event indicators -->
+  <circle cx="122" cy="220" r="6" fill="#ef4444" opacity="0.9"/>
+  <circle cx="166" cy="220" r="6" fill="#10b981" opacity="0.9"/>
+  <circle cx="210" cy="260" r="6" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="254" cy="300" r="6" fill="#8b5cf6" opacity="0.9"/>
+  <circle cx="298" cy="340" r="6" fill="#06b6d4" opacity="0.9"/>
+  <circle cx="342" cy="380" r="6" fill="#f97316" opacity="0.9"/>
   
-  <!-- Date numbers -->
-  <text x="289" y="260" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#7c3aed" text-anchor="middle">15</text>
+  <!-- Today highlight with glow -->
+  <rect x="320" y="240" width="44" height="40" rx="8" 
+        fill="rgba(124, 58, 237, 0.3)" 
+        stroke="#7c3aed" 
+        stroke-width="2"/>
+  
+  <!-- Today date -->
+  <text x="342" y="265" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">15</text>
+  
+  <!-- Subtle glow effect around the calendar -->
+  <rect x="98" y="138" width="316" height="284" rx="26" 
+        fill="none" 
+        stroke="rgba(124, 58, 237, 0.3)" 
+        stroke-width="2" 
+        filter="url(#blur)"/>
 </svg>

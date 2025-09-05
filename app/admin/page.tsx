@@ -131,50 +131,38 @@ function AdminPageContent() {
   }, [isAuthenticated])
 
   const handleLogin = async (e: React.FormEvent) => {
-    console.log('handleLogin called - form submitted')
     e.preventDefault()
     
-    console.log('Setting loading to true')
     setLoading(true)
     setError('')
     
-    console.log('Current loginToken:', loginToken)
-    
     // Simple validation first
     if (!loginToken.trim()) {
-      console.log('No token provided')
       setError('Please enter admin token')
       setLoading(false)
       return
     }
     
     try {
-      console.log('Making fetch request to /api/admin/auth')
-      
       const response = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: loginToken })
       })
       
-      console.log('Response received, status:', response.status)
-      
       if (response.ok) {
-        console.log('Login successful, setting authenticated state')
         localStorage.setItem('admin_token', loginToken)
         setAdminToken(loginToken)
         setIsAuthenticated(true)
         fetchEventsWithToken(loginToken)
       } else {
         const errorData = await response.json().catch(() => ({}))
-        console.log('Login failed with error:', errorData)
         setError('Invalid token')
       }
     } catch (err) {
       console.error('Network or other error during login:', err)
       setError('Login failed - network error')
     } finally {
-      console.log('Setting loading to false')
       setLoading(false)
     }
   }
@@ -555,7 +543,6 @@ function AdminPageContent() {
               type="submit"
               disabled={loading}
               onClick={(e) => {
-                console.log('Login button clicked')
                 if (!loginToken.trim()) {
                   e.preventDefault()
                   setError('Please enter admin token')
@@ -573,44 +560,77 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header with Logout */}
+        <div className="flex justify-between items-center mb-8">
+          <a 
+            href="/" 
+            className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to TK Events
+          </a>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+
         {/* Header */}
-        <div ref={headerRef} className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <div className="flex gap-3">
-            <a
-              href="/"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to TK Events
-            </a>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Logout
-            </button>
+        <div ref={headerRef} className="text-center mb-12">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-3xl rounded-full"></div>
+            <div className="relative bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 shadow-2xl">
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  Admin Dashboard
+                </h1>
+              </div>
+              <p className="text-slate-300 text-lg font-medium">Comprehensive management for events, notifications, and system operations</p>
+              <div className="flex items-center justify-center gap-6 mt-6 text-sm text-slate-400">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span>System Online</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Real-time Updates</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <span>Secure Access</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="mb-8">
+        <div className="mb-10">
           {/* Desktop Navigation */}
           <div className="hidden md:flex justify-center">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-2 border border-slate-700/50">
-              <div className="flex gap-1">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-xl rounded-3xl"></div>
+              <div className="relative bg-slate-800/80 backdrop-blur-xl rounded-3xl p-3 border border-slate-700/50 shadow-2xl">
+                <div className="flex gap-2">
                 {(['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
-                    className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 text-sm ${
+                    className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-3 text-sm relative overflow-hidden ${
                       activeTab === tab
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl shadow-purple-500/30 scale-105'
+                        : 'text-slate-300 hover:bg-slate-700/80 hover:text-white hover:scale-105 hover:shadow-lg'
                     }`}
                   >
                     {tab === 'events' && (
@@ -653,16 +673,18 @@ function AdminPageContent() {
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-2 border border-slate-700/50">
-              <div className="grid grid-cols-3 gap-1">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-xl rounded-3xl"></div>
+              <div className="relative bg-slate-800/80 backdrop-blur-xl rounded-3xl p-3 border border-slate-700/50 shadow-2xl">
+                <div className="grid grid-cols-3 gap-2">
                 {(['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
-                    className={`px-3 py-3 rounded-xl font-medium transition-all duration-200 flex flex-col items-center gap-1 text-xs ${
+                    className={`px-3 py-4 rounded-2xl font-semibold transition-all duration-300 flex flex-col items-center gap-2 text-xs relative overflow-hidden ${
                       activeTab === tab
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl shadow-purple-500/30 scale-105'
+                        : 'text-slate-300 hover:bg-slate-700/80 hover:text-white hover:scale-105 hover:shadow-lg'
                     }`}
                   >
                     {tab === 'events' && (
@@ -701,11 +723,15 @@ function AdminPageContent() {
                 ))}
               </div>
             </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Tab Content */}
-        <div ref={contentRef} className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
+        <div ref={contentRef} className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl"></div>
+          <div className="relative p-8 rounded-3xl">
           {activeTab === 'events' && (
             <EventsTab
               events={events}
@@ -787,6 +813,7 @@ function AdminPageContent() {
               adminToken={adminToken}
             />
           )}
+          </div>
         </div>
 
         {/* Modals */}

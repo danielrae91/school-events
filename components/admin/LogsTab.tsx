@@ -1,5 +1,7 @@
 'use client'
 
+import { toast } from 'sonner'
+
 interface EmailLog {
   id: string
   subject: string
@@ -48,29 +50,136 @@ export default function LogsTab({
         body: JSON.stringify({ logId })
       })
       if (response.ok) {
+        toast.success('Email retry started successfully')
         onRefresh()
+      } else {
+        toast.error('Failed to retry email processing')
       }
     } catch (err) {
-      console.error('Failed to retry email:', err)
+      toast.error('Failed to retry email processing')
     }
   }
 
   const handleBulkRetryLogs = async () => {
-    if (!confirm('Are you sure you want to retry processing all stored emails? This may take several minutes.')) return
-    
-    try {
-      const response = await fetch('/api/admin/bulk-retry', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      })
-      if (response.ok) {
-        alert('Bulk retry started successfully')
-        onRefresh()
-      }
-    } catch (err) {
-      console.error('Failed to start bulk retry:', err)
-      alert('Failed to start bulk retry')
-    }
+    toast.custom((t) => (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-2xl">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">Retry All Email Processing</h3>
+            <p className="text-slate-300 text-sm">This will retry processing all stored emails. This may take several minutes.</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/admin/bulk-retry', {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${adminToken}` }
+                })
+                if (response.ok) {
+                  toast.dismiss(t)
+                  toast.success('Bulk retry started successfully')
+                  onRefresh()
+                } else {
+                  toast.dismiss(t)
+                  toast.error('Failed to start bulk retry')
+                }
+              } catch (err) {
+                toast.dismiss(t)
+                toast.error('Failed to start bulk retry')
+              }
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Start Retry
+          </button>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity })
+  }
+
+  const handleBulkDelete = () => {
+    toast.custom((t) => (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-2xl">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">Delete Selected Logs</h3>
+            <p className="text-slate-300 text-sm">Are you sure you want to delete {selectedLogs.length} selected log entries?</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              onBulkDelete()
+              toast.dismiss(t)
+              toast.success(`${selectedLogs.length} log entries deleted successfully`)
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Delete All
+          </button>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity })
+  }
+
+  const handleCleanupRedis = () => {
+    toast.custom((t) => (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-2xl">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-white font-semibold">Cleanup Redis Cache</h3>
+            <p className="text-slate-300 text-sm">This will clear Redis cache and temporary data. Are you sure?</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              onCleanupRedis()
+              toast.dismiss(t)
+              toast.success('Redis cleanup completed successfully')
+            }}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cleanup
+          </button>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity })
   }
 
   const getStatusColor = (status: string) => {
@@ -89,16 +198,63 @@ export default function LogsTab({
     }
   }
 
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'success':
+        return (
+          <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        )
+      case 'failed':
+      case 'error':
+        return (
+          <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        )
+      case 'processing':
+      case 'pending':
+        return (
+          <svg className="animate-spin w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        )
+      default:
+        return (
+          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )
+    }
+  }
+
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-xl font-semibold text-white">Email Processing Logs</h2>
-        <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            className="flex-1 sm:flex-none bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-          >
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-xl rounded-2xl"></div>
+        <div className="relative bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Email Processing Logs</h2>
+                <p className="text-slate-400 text-sm">Monitor email processing status and retry failed operations</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+              <button
+                onClick={onRefresh}
+                disabled={loading}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+              >
             {loading ? (
               <>
                 <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -115,58 +271,90 @@ export default function LogsTab({
                 Refresh
               </>
             )}
-          </button>
-          <button
-            onClick={handleBulkRetryLogs}
-            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Retry All
-          </button>
-          <button
-            onClick={onCleanupRedis}
-            className="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Cleanup Redis
-          </button>
+              </button>
+              <button
+                onClick={handleBulkRetryLogs}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Retry All
+              </button>
+              <button
+                onClick={handleCleanupRedis}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Cleanup Redis
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-slate-400">Loading logs...</div>
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8">
+          <div className="text-center py-8">
+            <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+              <svg className="animate-spin w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <p className="text-slate-300 font-medium">Loading logs...</p>
+          </div>
+        </div>
       ) : emailLogs.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
-          <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p>No email logs found</p>
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-12">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-6 bg-slate-700/50 rounded-2xl flex items-center justify-center">
+              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">No Email Logs Found</h3>
+            <p className="text-slate-400">No email processing logs available yet</p>
+          </div>
         </div>
       ) : (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-4">
-              <span className="text-slate-300">{emailLogs.length} log entries</span>
+        <div className="bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
+          {/* Stats and Actions Bar */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-slate-300 font-medium">{emailLogs.length} log entries</span>
+              </div>
               {selectedLogs.length > 0 && (
-                <span className="text-purple-400">{selectedLogs.length} selected</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <span className="text-purple-400 font-medium">{selectedLogs.length} selected</span>
+                </div>
               )}
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-green-400 font-medium">{emailLogs.filter(log => log.status === 'completed' || log.status === 'success').length} completed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                <span className="text-red-400 font-medium">{emailLogs.filter(log => log.status === 'failed' || log.status === 'error').length} failed</span>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {selectedLogs.length > 0 && (
                 <>
                   <button
-                    onClick={onBulkDelete}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                    onClick={handleBulkDelete}
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
                   >
                     Delete Selected
                   </button>
                   <button
                     onClick={onClearSelection}
-                    className="bg-slate-600 hover:bg-slate-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                    className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
                   >
                     Clear Selection
                   </button>
@@ -174,85 +362,136 @@ export default function LogsTab({
               )}
               <button
                 onClick={onSelectAll}
-                className="bg-slate-600 hover:bg-slate-500 text-white px-3 py-1 rounded text-sm transition-colors"
+                className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
               >
                 Select All
               </button>
             </div>
           </div>
 
-          {loading ? (
-            <div className="text-center py-8 text-slate-400">Loading logs...</div>
-          ) : (
-            <div className="space-y-3">
-              {emailLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className={`bg-slate-700 rounded-lg p-4 border transition-colors cursor-pointer ${
-                    selectedLogs.includes(log.id)
-                      ? 'border-purple-500 bg-purple-900/20'
-                      : 'border-slate-600 hover:border-slate-500'
-                  }`}
-                  onClick={() => onToggleSelection(log.id)}
-                >
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedLogs.includes(log.id)}
-                      onChange={(e) => {
-                        e.stopPropagation()
-                        onToggleSelection(log.id)
-                      }}
-                      className="rounded border-slate-500 bg-slate-600 text-purple-600 focus:ring-purple-500 mt-1"
-                    />
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-white">{log.subject}</h3>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${getStatusColor(log.status)} flex items-center gap-1`}>
-                            {log.status === 'processing' && (
-                              <div className="animate-spin rounded-full h-3 w-3 border border-yellow-400 border-t-transparent"></div>
-                            )}
-                            {log.status.toUpperCase()}
+          {/* Logs Grid */}
+          <div className="space-y-4">
+            {emailLogs.map((log) => (
+              <div
+                key={log.id}
+                className={`relative group transition-all duration-300 cursor-pointer ${
+                  selectedLogs.includes(log.id)
+                    ? 'scale-[1.02]'
+                    : 'hover:scale-[1.01]'
+                }`}
+                onClick={() => onToggleSelection(log.id)}
+              >
+                <div className={`absolute inset-0 rounded-2xl transition-all duration-300 ${
+                  selectedLogs.includes(log.id)
+                    ? 'bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-sm'
+                    : log.status === 'failed' || log.status === 'error'
+                    ? 'bg-gradient-to-r from-red-600/20 to-orange-600/20 blur-sm group-hover:from-red-500/30 group-hover:to-orange-500/30'
+                    : log.status === 'completed' || log.status === 'success'
+                    ? 'bg-gradient-to-r from-green-600/20 to-blue-600/20 blur-sm group-hover:from-green-500/30 group-hover:to-blue-500/30'
+                    : 'bg-gradient-to-r from-slate-600/10 to-slate-700/10 blur-sm group-hover:from-slate-500/20 group-hover:to-slate-600/20'
+                }`}></div>
+                <div className={`relative bg-slate-800/60 backdrop-blur-sm border rounded-2xl p-6 transition-all duration-300 ${
+                  selectedLogs.includes(log.id)
+                    ? 'border-purple-500/50 shadow-xl shadow-purple-500/10'
+                    : log.status === 'failed' || log.status === 'error'
+                    ? 'border-red-500/50 shadow-xl shadow-red-500/10'
+                    : log.status === 'completed' || log.status === 'success'
+                    ? 'border-green-500/50 shadow-xl shadow-green-500/10'
+                    : 'border-slate-700/50 group-hover:border-slate-600/50 shadow-lg'
+                }`}>
+                  <div className="flex items-start gap-4">
+                    <div className="mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedLogs.includes(log.id)}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          onToggleSelection(log.id)
+                        }}
+                        className="w-5 h-5 rounded-lg border-2 border-slate-500 bg-slate-700 text-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-0 transition-all duration-200"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-xl font-bold text-white group-hover:text-purple-300 transition-colors truncate">{log.subject}</h3>
+                        <div className="flex items-center gap-2 ml-4">
+                          {getStatusIcon(log.status)}
+                          <span className={`text-sm font-semibold ${getStatusColor(log.status)} uppercase tracking-wide`}>
+                            {log.status}
                           </span>
                         </div>
                       </div>
                       
                       {log.error && (
-                        <div className="bg-red-900/30 border border-red-700 rounded p-2 mb-2">
-                          <p className="text-red-300 text-sm">{log.error}</p>
+                        <div className="bg-red-900/30 border border-red-700/50 rounded-xl p-4 mb-4">
+                          <div className="flex items-start gap-2">
+                            <svg className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                              <h4 className="text-red-300 font-semibold text-sm mb-1">Error Details</h4>
+                              <p className="text-red-200 text-sm leading-relaxed">{log.error}</p>
+                            </div>
+                          </div>
                         </div>
                       )}
                       
-                      <div className="text-sm text-slate-400 space-y-1">
-                        <p>Created: {new Date(log.created_at).toLocaleString()}</p>
-                        {log.processed_at && (
-                          <p>Processed: {new Date(log.processed_at).toLocaleString()}</p>
-                        )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="font-medium">Created:</span>
+                            <span>{new Date(log.created_at).toLocaleString()}</span>
+                          </div>
+                          {log.processed_at && (
+                            <div className="flex items-center gap-2 text-slate-300">
+                              <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="font-medium">Processed:</span>
+                              <span>{new Date(log.processed_at).toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                        
                         {(log.eventsProcessed !== undefined || log.eventsSkipped !== undefined || log.eventsExtracted !== undefined) && (
-                          <div className="mt-2 flex gap-4 text-xs">
+                          <div className="space-y-2">
                             {log.eventsExtracted !== undefined && (
-                              <span className="text-blue-400">📧 {log.eventsExtracted} extracted</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                <span className="text-blue-400 font-medium">{log.eventsExtracted} extracted</span>
+                              </div>
                             )}
                             {log.eventsProcessed !== undefined && (
-                              <span className="text-green-400">✅ {log.eventsProcessed} created</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <span className="text-green-400 font-medium">{log.eventsProcessed} created</span>
+                              </div>
                             )}
                             {log.eventsSkipped !== undefined && (
-                              <span className="text-yellow-400">⏭️ {log.eventsSkipped} skipped</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                                <span className="text-yellow-400 font-medium">{log.eventsSkipped} skipped</span>
+                              </div>
                             )}
                           </div>
                         )}
                       </div>
                       
                       {(log.status === 'failed' || log.status === 'error' || log.status === 'processing') && (
-                        <div className="mt-2">
+                        <div className="flex justify-end">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               handleRetryEmail(log.id)
                             }}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2"
                           >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
                             {log.status === 'processing' ? 'Force Retry (Stuck)' : 'Retry Processing'}
                           </button>
                         </div>
@@ -260,9 +499,9 @@ export default function LogsTab({
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
