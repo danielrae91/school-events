@@ -53,12 +53,12 @@ export default function HomePage() {
           
           // Check notification permission and prompt if needed
           const checkNotificationPermission = () => {
-            // Only prompt on mobile devices or PWA
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-            const isPWAMode = window.matchMedia('(display-mode: standalone)').matches
+            // Only prompt when running as PWA (standalone mode)
+            const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || 
+                             (window.navigator as any).standalone === true
             
-            if (!isMobile && !isPWAMode) {
-              return // Don't prompt on desktop browsers
+            if (!isPWAMode) {
+              return // Only prompt in PWA mode, not in browser or mobile browser
             }
             
             if (Notification.permission === 'default') {
