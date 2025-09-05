@@ -51,7 +51,7 @@ export async function getActivePushSubscriptions(): Promise<Array<{id: string, s
     console.log(`Subscription ${id} data:`, data)
     
     // Check if subscription data exists and has required fields
-    if (data && data.endpoint && data.p256dh && data.auth && data.active === 'true') {
+    if (data && data.endpoint && data.p256dh && data.auth && (data.active === 'true' || data.active === true)) {
       subscriptions.push({
         id,
         subscription: {
