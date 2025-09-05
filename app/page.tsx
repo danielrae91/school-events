@@ -53,6 +53,14 @@ export default function HomePage() {
           
           // Check notification permission and prompt if needed
           const checkNotificationPermission = () => {
+            // Only prompt on mobile devices or PWA
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            const isPWAMode = window.matchMedia('(display-mode: standalone)').matches
+            
+            if (!isMobile && !isPWAMode) {
+              return // Don't prompt on desktop browsers
+            }
+            
             if (Notification.permission === 'default') {
               // Show a friendly prompt after a short delay
               setTimeout(() => {
@@ -719,6 +727,7 @@ export default function HomePage() {
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
+                          <span className="hidden sm:inline">Calendar</span>
                         </button>
                         {dropdownOpen === event.id && (
                           <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
@@ -764,7 +773,7 @@ export default function HomePage() {
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               >
                                 <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M7 18h10V6H7v12zM21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/>
+                                  <path d="M7 22h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2zM9 4h6v2H9V4zm0 4h6v2H9V8zm0 4h6v2H9v-2z"/>
                                 </svg>
                                 Add to Outlook
                               </button>
@@ -803,12 +812,27 @@ END:VCALENDAR`
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               >
-                                <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Add to Apple
+                                Download .ics
                               </button>
-                              <hr className="my-1 border-gray-200" />
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  setDropdownOpen(null)
+                                  const icsUrl = `${window.location.origin}/api/event-ics/${event.id}`
+                                  navigator.clipboard.writeText(icsUrl)
+                                  toast.success('ICS URL copied to clipboard!')
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                Copy ICS URL
+                              </button>
+                              <div className="border-t border-gray-200 my-1"></div>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -819,26 +843,10 @@ END:VCALENDAR`
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                               >
-                                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
-                                Copy Event Link
-                              </button>
-                              <hr className="my-1 border-gray-200" />
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setDropdownOpen(null)
-                                  const eventUrl = `${window.location.origin}/?event=${event.id}`
-                                  navigator.clipboard.writeText(eventUrl)
-                                  toast.success('Event link copied to clipboard!')
-                                }}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                              >
-                                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                Copy Event Link
+                                Copy Event URL
                               </button>
                             </div>
                           </div>
@@ -970,6 +978,7 @@ END:VCALENDAR`
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
+                          <span className="hidden sm:inline">Calendar</span>
                         </button>
                         {dropdownOpen === event.id && (
                           <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">

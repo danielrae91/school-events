@@ -188,21 +188,71 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
 
   return (
     <div className="mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Push Notifications</h3>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-xl font-semibold text-white">Push Notifications</h2>
+        <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={refreshNotifications}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            disabled={loading}
+            className="flex-1 sm:flex-none bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
           >
-            Refresh
+            {loading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </>
+            )}
           </button>
           <button
             onClick={sendTestNotification}
             disabled={sending}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
           >
-            {sending ? 'Sending...' : 'Send Test Notification'}
+            {sending ? (
+              <>
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sending...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 7l10.586 10.586c.781.781 2.047.781 2.828 0l1.414-1.414c.781-.781.781-2.047 0-2.828L9.07 2.758c-.781-.781-2.047-.781-2.828 0L4.828 4.172c-.781.781-.781 2.047 0 2.828z" />
+                </svg>
+                Send Test
+              </>
+            )}
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/push/debug')
+                const data = await response.json()
+                console.log('Push notification debug info:', data)
+                alert(`Debug Info:\n\nVAPID Keys: ${data.vapidKeysConfigured.public ? 'Configured' : 'Missing'}\nActive Subscriptions: ${data.subscriptions.activeCount}\nRedis Connection: ${data.redisConnection ? 'OK' : 'Failed'}\n\nCheck console for detailed info.`)
+              } catch (error) {
+                console.error('Debug failed:', error)
+                alert('Debug failed - check console')
+              }
+            }}
+            className="flex-1 sm:flex-none bg-yellow-600 hover:bg-yellow-700 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Debug
           </button>
         </div>
       </div>
@@ -214,10 +264,20 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
             <h4 className="font-medium text-yellow-800">Batched Notifications</h4>
             <button
               onClick={forceProcessBatch}
-              disabled={processingBatch || batchStatus.pendingCount === 0}
-              className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600 disabled:opacity-50"
+              disabled={processingBatch}
+              className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-800 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
             >
-              {processingBatch ? 'Processing...' : 'Force Process Now'}
+              {processingBatch ? (
+                <>
+                  <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                'Force Process Now'
+              )}
             </button>
           </div>
           <p className="text-sm text-yellow-700 mb-2">

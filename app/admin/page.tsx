@@ -63,10 +63,10 @@ function AdminPageContent() {
   const [loginToken, setLoginToken] = useState('')
   
   // UI state
-  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'feedback' | 'logs' | 'settings' | 'notifications'>('events')
+  const [activeTab, setActiveTab] = useState<'events' | 'suggestions' | 'messages' | 'logs' | 'settings' | 'notifications'>('events')
   const [loading, setLoading] = useState(false)
   const [suggestionsLoading, setSuggestionsLoading] = useState(true)
-  const [feedbackLoading, setFeedbackLoading] = useState(true)
+  const [messagesLoading, setMessagesLoading] = useState(true)
   const [logsLoading, setLogsLoading] = useState(true)
   const [settingsLoading, setSettingsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -74,13 +74,13 @@ function AdminPageContent() {
   // Data state
   const [events, setEvents] = useState<StoredEvent[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [feedback, setFeedback] = useState<MessageItem[]>([])
+  const [messages, setMessages] = useState<MessageItem[]>([])
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([])
   const [settings, setSettings] = useState<any>({})
   
   // Selection state
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
-  const [selectedFeedback, setSelectedFeedback] = useState<string[]>([])
+  const [selectedMessages, setSelectedMessages] = useState<string[]>([])
   const [selectedLogs, setSelectedLogs] = useState<string[]>([])
   
   // Modal state
@@ -97,7 +97,7 @@ function AdminPageContent() {
   useEffect(() => {
     // Check URL params for tab
     const tab = searchParams.get('tab')
-    if (tab && ['events', 'suggestions', 'feedback', 'logs', 'settings', 'notifications'].includes(tab)) {
+    if (tab && ['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'].includes(tab)) {
       setActiveTab(tab as any)
     }
     
@@ -221,8 +221,8 @@ function AdminPageContent() {
     }
   }
 
-  const fetchFeedbackWithToken = async (token: string) => {
-    setFeedbackLoading(true)
+  const fetchMessagesWithToken = async (token: string) => {
+    setMessagesLoading(true)
     try {
       const response = await fetch('/api/admin/messages', {
         headers: {
@@ -231,12 +231,12 @@ function AdminPageContent() {
       })
       if (response.ok) {
         const data = await response.json()
-        setFeedback(data.messages || [])
+        setMessages(data.messages || [])
       }
     } catch (err) {
       console.error('Failed to fetch messages:', err)
     } finally {
-      setFeedbackLoading(false)
+      setMessagesLoading(false)
     }
   }
 
@@ -339,7 +339,7 @@ function AdminPageContent() {
     }
   }
 
-  const bulkDeleteFeedback = async () => {
+  const bulkDeleteMessages = async () => {
     toast.promise(
       (async () => {
         const response = await fetch('/api/admin/messages', {
@@ -348,19 +348,19 @@ function AdminPageContent() {
             'Authorization': `Bearer ${adminToken}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ messageIds: selectedFeedback })
+          body: JSON.stringify({ messageIds: selectedMessages })
         })
         
-        if (!response.ok) throw new Error('Failed to delete feedback')
+        if (!response.ok) throw new Error('Failed to delete messages')
         
-        setSelectedFeedback([])
-        fetchFeedbackWithToken(adminToken)
-        return `Deleted ${selectedFeedback.length} feedback items`
+        setSelectedMessages([])
+        fetchMessagesWithToken(adminToken)
+        return `Deleted ${selectedMessages.length} message items`
       })(),
       {
-        loading: `Deleting ${selectedFeedback.length} feedback items...`,
+        loading: `Deleting ${selectedMessages.length} message items...`,
         success: (message) => message,
-        error: 'Failed to delete feedback items'
+        error: 'Failed to delete message items'
       }
     )
   }
@@ -414,11 +414,11 @@ function AdminPageContent() {
     )
   }
 
-  const toggleFeedbackSelection = (feedbackId: string) => {
-    setSelectedFeedback(prev => 
-      prev.includes(feedbackId) 
-        ? prev.filter(id => id !== feedbackId)
-        : [...prev, feedbackId]
+  const toggleMessageSelection = (messageId: string) => {
+    setSelectedMessages(prev => 
+      prev.includes(messageId) 
+        ? prev.filter(id => id !== messageId)
+        : [...prev, messageId]
     )
   }
 
@@ -434,8 +434,8 @@ function AdminPageContent() {
     setSelectedEvents(events.map(e => e.id))
   }
 
-  const selectAllFeedback = () => {
-    setSelectedFeedback(feedback.map(f => f.id))
+  const selectAllMessages = () => {
+    setSelectedMessages(messages.map(f => f.id))
   }
 
   const selectAllLogs = () => {
@@ -444,7 +444,7 @@ function AdminPageContent() {
 
   const clearSelection = () => {
     setSelectedEvents([])
-    setSelectedFeedback([])
+    setSelectedMessages([])
     setSelectedLogs([])
   }
 
@@ -504,8 +504,8 @@ function AdminPageContent() {
     
     if (tab === 'suggestions' && suggestions.length === 0) {
       fetchSuggestionsWithToken(adminToken)
-    } else if (tab === 'feedback' && feedback.length === 0) {
-      fetchFeedbackWithToken(adminToken)
+    } else if (tab === 'messages' && messages.length === 0) {
+      fetchMessagesWithToken(adminToken)
     } else if (tab === 'logs' && emailLogs.length === 0) {
       fetchLogsWithToken(adminToken)
     } else if (tab === 'settings' && !settings.prompt) {
@@ -603,7 +603,7 @@ function AdminPageContent() {
           <div className="hidden md:flex justify-center">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-2 border border-slate-700/50">
               <div className="flex gap-1">
-                {(['events', 'suggestions', 'feedback', 'logs', 'notifications', 'settings'] as const).map((tab) => (
+                {(['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
@@ -623,7 +623,7 @@ function AdminPageContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     )}
-                    {tab === 'feedback' && (
+                    {tab === 'messages' && (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
@@ -655,7 +655,7 @@ function AdminPageContent() {
           <div className="md:hidden">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-2 border border-slate-700/50">
               <div className="grid grid-cols-3 gap-1">
-                {(['events', 'suggestions', 'feedback', 'logs', 'notifications', 'settings'] as const).map((tab) => (
+                {(['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
@@ -675,7 +675,7 @@ function AdminPageContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     )}
-                    {tab === 'feedback' && (
+                    {tab === 'messages' && (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
@@ -734,18 +734,17 @@ function AdminPageContent() {
             />
           )}
 
-          {activeTab === 'feedback' && (
+          {activeTab === 'messages' && (
             <MessagesTab
-              messages={feedback}
-              selectedMessages={selectedFeedback}
-              loading={feedbackLoading}
-              onRefresh={() => fetchFeedbackWithToken(adminToken)}
-              onBulkDelete={bulkDeleteFeedback}
-              onToggleSelection={toggleFeedbackSelection}
-              onSelectAll={selectAllFeedback}
+              messages={messages}
+              selectedMessages={selectedMessages}
+              loading={messagesLoading}
+              onRefresh={() => fetchMessagesWithToken(adminToken)}
+              onBulkDelete={bulkDeleteMessages}
+              onToggleSelection={toggleMessageSelection}
+              onSelectAll={selectAllMessages}
               onClearSelection={clearSelection}
               onMarkAsRead={(messageId: string) => {
-                // Mark message as read functionality
                 fetch(`/api/admin/messages/${messageId}`, {
                   method: 'PATCH',
                   headers: {
@@ -754,8 +753,7 @@ function AdminPageContent() {
                   },
                   body: JSON.stringify({ isRead: true })
                 }).then(() => {
-                  // Update local state
-                  setFeedback(prev => prev.map(msg => 
+                  setMessages(prev => prev.map(msg => 
                     msg.id === messageId ? { ...msg, isRead: true } : msg
                   ))
                 }).catch(console.error)
