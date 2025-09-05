@@ -29,6 +29,8 @@ interface NotificationLog {
   title: string
   body: string
   eventId: string
+  eventTitle?: string
+  eventDate?: string
   sentAt: string
   recipientCount: number
   successCount: number
@@ -480,7 +482,7 @@ export default function NotificationsTab({ adminToken }: NotificationsTabProps) 
                 </button>
               )}
             </div>
-          )}
+          </div>
         </div>
       )}
 
