@@ -11,7 +11,7 @@ import LogsTab from '@/components/admin/LogsTab'
 import SettingsTab from '@/components/admin/SettingsTab'
 import NotificationsTab from '@/components/admin/NotificationsTab'
 import { gsap } from 'gsap'
-import { toast, Toaster } from 'sonner'
+import { toast } from 'sonner'
 
 interface Suggestion {
   id: string
@@ -560,77 +560,44 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-4">
+    <div className="min-h-screen bg-slate-900 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header with Logout */}
-        <div className="flex justify-between items-center mb-8">
-          <a 
-            href="/" 
-            className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to TK Events
-          </a>
+        {/* Simplified Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <a 
+              href="/" 
+              className="text-slate-400 hover:text-white transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back
+            </a>
+            <h1 className="text-xl font-semibold text-white">Admin</h1>
+          </div>
           <button
             onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition-colors text-sm"
           >
             Logout
           </button>
         </div>
 
-        {/* Header */}
-        <div ref={headerRef} className="text-center mb-12">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 blur-3xl rounded-full"></div>
-            <div className="relative bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 shadow-2xl">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Admin Dashboard
-                </h1>
-              </div>
-              <p className="text-slate-300 text-lg font-medium">Comprehensive management for events, notifications, and system operations</p>
-              <div className="flex items-center justify-center gap-6 mt-6 text-sm text-slate-400">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>System Online</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span>Real-time Updates</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                  <span>Secure Access</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Navigation */}
-        <div className="mb-10">
+        <div className="mb-6">
           {/* Desktop Navigation */}
           <div className="hidden md:flex justify-center">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-xl rounded-3xl"></div>
-              <div className="relative bg-slate-800/80 backdrop-blur-xl rounded-3xl p-3 border border-slate-700/50 shadow-2xl">
-                <div className="flex gap-2">
-                {(['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'] as const).map((tab) => (
+            <div className="bg-slate-800/50 rounded-xl p-2 border border-slate-700/50">
+              <div className="flex gap-1">
+                {(['events', 'logs', 'messages', 'suggestions', 'notifications', 'settings'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
-                    className={`px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-3 text-sm relative overflow-hidden ${
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 text-sm ${
                       activeTab === tab
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl shadow-purple-500/30 scale-105'
-                        : 'text-slate-300 hover:bg-slate-700/80 hover:text-white hover:scale-105 hover:shadow-lg'
+                        ? 'bg-purple-600 text-white'
+                        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                     }`}
                   >
                     {tab === 'events' && (
@@ -673,28 +640,26 @@ function AdminPageContent() {
 
           {/* Mobile Navigation */}
           <div className="md:hidden">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-xl rounded-3xl"></div>
-              <div className="relative bg-slate-800/80 backdrop-blur-xl rounded-3xl p-3 border border-slate-700/50 shadow-2xl">
-                <div className="grid grid-cols-3 gap-2">
-                {(['events', 'suggestions', 'messages', 'logs', 'settings', 'notifications'] as const).map((tab) => (
+            <div className="bg-slate-800/50 rounded-xl p-2 border border-slate-700/50">
+              <div className="grid grid-cols-3 gap-1">
+                {(['events', 'logs', 'messages', 'suggestions', 'notifications', 'settings'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
-                    className={`px-3 py-4 rounded-2xl font-semibold transition-all duration-300 flex flex-col items-center gap-2 text-xs relative overflow-hidden ${
+                    className={`px-2 py-3 rounded-lg font-medium transition-all duration-200 flex flex-col items-center gap-1 text-xs ${
                       activeTab === tab
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-xl shadow-purple-500/30 scale-105'
-                        : 'text-slate-300 hover:bg-slate-700/80 hover:text-white hover:scale-105 hover:shadow-lg'
+                        ? 'bg-purple-600 text-white'
+                        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                     }`}
                   >
                     {tab === 'events' && (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     )}
-                    {tab === 'suggestions' && (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    {tab === 'logs' && (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     )}
                     {tab === 'messages' && (
@@ -718,11 +683,9 @@ function AdminPageContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     )}
-                    <span className="capitalize">{tab}</span>
+                    <span className="capitalize">{tab === 'messages' ? 'msgs' : tab === 'notifications' ? 'notifs' : tab}</span>
                   </button>
                 ))}
-              </div>
-            </div>
               </div>
             </div>
           </div>
@@ -771,7 +734,9 @@ function AdminPageContent() {
               onSelectAll={selectAllMessages}
               onClearSelection={clearSelection}
               onMarkAsRead={(messageId: string) => {
-                fetch(`/api/admin/messages/${messageId}`, {
+                // Extract just the ID part if it includes the prefix
+                const cleanId = messageId.startsWith('message:') ? messageId.substring(8) : messageId
+                fetch(`/api/admin/messages/${cleanId}`, {
                   method: 'PATCH',
                   headers: {
                     'Authorization': `Bearer ${adminToken}`,
@@ -975,13 +940,6 @@ function AdminPageContent() {
           </div>
         )}
         
-        {/* Toast notifications */}
-        <Toaster 
-          position="top-right"
-          theme="dark"
-          richColors
-          closeButton
-        />
       </div>
     </div>
   )
