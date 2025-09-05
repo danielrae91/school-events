@@ -1,12 +1,14 @@
+import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
+import { Toaster } from 'sonner'
+import { ChunkErrorBoundary } from '@/components/ChunkErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'TK Events',
-  description: 'Stay updated with TK school events and activities',
+  description: 'Stay updated with the latest events at Te Kura',
   keywords: 'school events, calendar, newsletter, ical, feed, Te Kura o Take Karara',
   manifest: '/manifest.json',
 }
@@ -37,7 +39,12 @@ export default function RootLayout({
         <meta name="theme-color" content="#7c3aed" />
         <link rel="apple-touch-icon" href="/favicon-calendar.svg" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <ChunkErrorBoundary>
+          {children}
+          <Toaster />
+        </ChunkErrorBoundary>
+      </body>
     </html>
   )
 }
