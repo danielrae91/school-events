@@ -768,7 +768,7 @@ function AdminPageContent() {
           )}
 
           {activeTab === 'notifications' && (
-            <NotificationsTab adminToken={adminToken} />
+            <NotificationsTab onRefresh={() => {}} loading={false} />
           )}
 
           {activeTab === 'settings' && (

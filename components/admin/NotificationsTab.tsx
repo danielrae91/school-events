@@ -3,579 +3,433 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
-interface NotificationsTabProps {
-  adminToken: string | null
-}
-
 interface NotificationStats {
-  totalSubscriptions: number
-  activeSubscriptions: number
-  totalNotificationsSent: number
-  successRate: number
-  averageDeliveryTime: number
-}
-
-interface PushSubscription {
-  id: string
-  endpoint: string
-  userAgent?: string
-  createdAt: string
-  lastUsed?: string
-  active: boolean
+  history: NotificationLog[]
+  subscriberCount: number
+  totalSent: number
+  totalSuccessful: number
+  recentHistory: NotificationLog[]
 }
 
 interface NotificationLog {
   id: string
+  timestamp: string
   title: string
-  body: string
-  eventId: string
-  eventTitle?: string
-  eventDate?: string
-  sentAt: string
   recipientCount: number
   successCount: number
   failureCount: number
-  status: 'pending' | 'sending' | 'completed' | 'failed'
 }
 
-interface DebugInfo {
-  vapidKeysConfigured: {
-    public: boolean
-    private: boolean
-    nextPublic: boolean
-  }
-  redisConnection: boolean
-  subscriptions: {
-    total: number
-    activeCount: number
-    inactiveCount: number
-  }
+interface Subscription {
+  id: string
+  endpoint: string
+  userAgent: string
+  createdAt: string
+  lastNotificationStatus: string
+  lastNotificationTime?: string
+  lastNotificationTitle?: string
 }
 
-type TabType = 'overview' | 'subscriptions' | 'history' | 'settings'
+interface NotificationsTabProps {
+  onRefresh: () => void
+  loading: boolean
+}
 
-export default function NotificationsTab({ adminToken }: NotificationsTabProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('overview')
-  const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedSubscriptions, setSelectedSubscriptions] = useState<string[]>([])
-  
-  // Data states
-  const [stats, setStats] = useState<NotificationStats | null>(null)
-  const [subscriptions, setSubscriptions] = useState<PushSubscription[]>([])
-  const [notifications, setNotifications] = useState<NotificationLog[]>([])
-  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null)
+export default function NotificationsTab({ onRefresh, loading }: NotificationsTabProps) {
+  const [stats, setStats] = useState<NotificationStats>({
+    history: [],
+    subscriberCount: 0,
+    totalSent: 0,
+    totalSuccessful: 0,
+    recentHistory: []
+  })
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'subscribers'>('overview')
+  const [loadingStats, setLoadingStats] = useState(false)
+  const [loadingAction, setLoadingAction] = useState<string | null>(null)
 
-  const fetchNotifications = async () => {
-    if (!adminToken) return
-    
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Fetch notifications
-      const notificationsResponse = await fetch('/api/admin/notifications', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      })
-      
-      if (notificationsResponse.ok) {
-        const notificationsData = await notificationsResponse.json()
-        setNotifications(notificationsData.notifications || [])
-      }
-
-      // Fetch stats
-      const statsResponse = await fetch('/api/admin/notifications/stats', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      })
-      
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setStats(statsData)
-      }
-
-      // Fetch subscriptions
-      const subscriptionsResponse = await fetch('/api/admin/push/subscriptions', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      })
-      
-      if (subscriptionsResponse.ok) {
-        const subscriptionsData = await subscriptionsResponse.json()
-        setSubscriptions(subscriptionsData.subscriptions || [])
-      }
-
-    } catch (err) {
-      console.error('Failed to fetch notifications data:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch data')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    fetchStats()
+    if (activeTab === 'subscribers') {
+      fetchSubscriptions()
     }
-  }
+  }, [activeTab])
 
-  const fetchDebugInfo = async () => {
-    if (!adminToken) return
-    
+  const fetchStats = async () => {
+    setLoadingStats(true)
     try {
-      const response = await fetch('/api/push/debug', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
+      const response = await fetch('/api/admin/notifications/stats', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_TOKEN || localStorage.getItem('adminToken')}`
+        }
       })
       
       if (response.ok) {
         const data = await response.json()
-        setDebugInfo(data)
+        setStats(data)
       }
-    } catch (err) {
-      console.error('Failed to fetch debug info:', err)
+    } catch (error) {
+      console.error('Error fetching notification stats:', error)
+      toast.error('Failed to load notification stats')
+    } finally {
+      setLoadingStats(false)
+    }
+  }
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await fetch('/api/admin/push/subscriptions', {
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_TOKEN || localStorage.getItem('adminToken')}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSubscriptions(data.subscriptions || [])
+      }
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error)
+      toast.error('Failed to load subscriptions')
     }
   }
 
   const sendTestNotification = async () => {
-    setSending(true)
-    setError(null)
-    
+    setLoadingAction('test')
     try {
-      if (!adminToken) {
-        setError('No admin token found')
-        return
-      }
-
-      const response = await fetch('/api/push/send', {
+      const response = await fetch('/api/admin/notifications', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_TOKEN || localStorage.getItem('adminToken')}`
         },
         body: JSON.stringify({
           title: 'Test Notification',
-          body: 'This is a test push notification from TK Events admin panel',
-          eventId: 'test',
-          eventTitle: 'Test Event',
-          eventDate: new Date().toISOString().split('T')[0]
+          body: 'This is a test notification from the admin panel',
+          url: '/'
         })
       })
 
-      const responseData = await response.json()
-
       if (response.ok) {
-        toast.success(`Test notification sent successfully! ${responseData.message || ''}`)
-        fetchNotifications()
+        toast.success('Test notification sent!')
+        fetchStats()
       } else {
-        const errorMsg = responseData.error || 'Failed to send test notification'
-        setError(errorMsg)
-        toast.error(errorMsg)
+        toast.error('Failed to send test notification')
       }
-    } catch (err) {
-      console.error('Failed to send test notification:', err)
-      const errorMsg = err instanceof Error ? err.message : 'Failed to send test notification'
-      setError(errorMsg)
-      toast.error(errorMsg)
+    } catch (error) {
+      console.error('Error sending test notification:', error)
+      toast.error('Failed to send test notification')
     } finally {
-      setSending(false)
+      setLoadingAction(null)
     }
   }
 
-  const deregisterSubscription = async (subscriptionId: string) => {
+  const clearAllSubscriptions = async () => {
+    setLoadingAction('clear-subs')
     try {
-      if (!adminToken) {
-        setError('No admin token found')
-        return
-      }
-
-      const response = await fetch(`/api/admin/push/subscriptions/${subscriptionId}`, {
+      const response = await fetch('/api/admin/push/subscriptions', {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${adminToken}`
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_TOKEN || localStorage.getItem('adminToken')}`
         }
       })
 
       if (response.ok) {
-        toast.success('Subscription deregistered successfully')
-        fetchNotifications()
-      } else {
         const data = await response.json()
-        toast.error(data.error || 'Failed to deregister subscription')
+        toast.success(`Cleared ${data.deletedCount} subscriptions`)
+        setSubscriptions([])
+        fetchStats()
+      } else {
+        toast.error('Failed to clear subscriptions')
       }
-    } catch (err) {
-      console.error('Failed to deregister subscription:', err)
-      toast.error(err instanceof Error ? err.message : 'Failed to deregister subscription')
+    } catch (error) {
+      console.error('Error clearing subscriptions:', error)
+      toast.error('Failed to clear subscriptions')
+    } finally {
+      setLoadingAction(null)
     }
   }
 
-  const bulkDeleteSubscriptions = async (subscriptionIds: string[]) => {
-    try {
-      if (!adminToken) {
-        setError('No admin token found')
-        return
-      }
-
-      const response = await fetch('/api/admin/push/subscriptions/bulk-delete', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ subscriptionIds })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        toast.success(`${data.deletedCount} subscriptions deleted successfully`)
-        setSelectedSubscriptions([])
-        fetchNotifications()
-      } else {
-        const data = await response.json()
-        toast.error(data.error || 'Failed to delete subscriptions')
-      }
-    } catch (err) {
-      console.error('Failed to bulk delete subscriptions:', err)
-      toast.error(err instanceof Error ? err.message : 'Failed to delete subscriptions')
-    }
-  }
-
-  const deleteNotification = async (notificationId: string) => {
-    try {
-      if (!adminToken) {
-        setError('No admin token found')
-        return
-      }
-
-      const response = await fetch(`/api/admin/notifications/${notificationId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      })
-
-      if (response.ok) {
-        toast.success('Notification deleted successfully')
-        fetchNotifications()
-      } else {
-        const data = await response.json()
-        toast.error(data.error || 'Failed to delete notification')
-      }
-    } catch (err) {
-      console.error('Failed to delete notification:', err)
-      toast.error(err instanceof Error ? err.message : 'Failed to delete notification')
-    }
-  }
-
-  useEffect(() => {
-    fetchNotifications()
-    fetchDebugInfo()
-  }, [adminToken])
-
-  const refreshNotifications = () => {
-    fetchNotifications()
-    fetchDebugInfo()
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-slate-700 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="h-24 bg-slate-700 rounded"></div>
-            <div className="h-24 bg-slate-700 rounded"></div>
-            <div className="h-24 bg-slate-700 rounded"></div>
-            <div className="h-24 bg-slate-700 rounded"></div>
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Simple Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-400 text-sm font-medium">Active Subscribers</p>
+              <p className="text-2xl font-bold text-white">{stats.subscriberCount}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
           </div>
-          <div className="space-y-3">
-            <div className="h-16 bg-slate-700 rounded"></div>
-            <div className="h-16 bg-slate-700 rounded"></div>
-            <div className="h-16 bg-slate-700 rounded"></div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-400 text-sm font-medium">Total Sent</p>
+              <p className="text-2xl font-bold text-white">{stats.totalSent}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-400 text-sm font-medium">Success Rate</p>
+              <p className="text-2xl font-bold text-white">
+                {stats.totalSent > 0 ? ((stats.totalSuccessful / stats.totalSent) * 100).toFixed(1) : '0'}%
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
-    )
-  }
+
+      {/* Last 2 Notifications */}
+      <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Recent Notifications</h3>
+        {stats.recentHistory.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">No notifications sent yet</p>
+        ) : (
+          <div className="space-y-3">
+            {stats.recentHistory.map((notification) => (
+              <div key={notification.id} className="bg-slate-700/50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">{notification.title}</h4>
+                    <p className="text-slate-400 text-sm">{new Date(notification.timestamp).toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-green-400 font-medium">{notification.successCount}/{notification.recipientCount}</p>
+                    <p className="text-slate-400 text-xs">delivered</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={sendTestNotification}
+            disabled={loadingAction === 'test'}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-800 disabled:to-blue-900 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+          >
+            {loadingAction === 'test' ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Sending...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                Send Test
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderHistory = () => (
+    <div className="space-y-6">
+      <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Notification History</h3>
+        {loadingStats ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-400"></div>
+            <span className="ml-2 text-slate-300">Loading history...</span>
+          </div>
+        ) : stats.history.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">No notification history available</p>
+        ) : (
+          <div className="space-y-4">
+            {stats.history.map((notification) => (
+              <div key={notification.id} className="bg-slate-700/50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h4 className="text-white font-medium">{notification.title}</h4>
+                    <p className="text-slate-400 text-sm">{new Date(notification.timestamp).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-6 text-sm">
+                    <div className="text-center">
+                      <p className="text-green-400 font-medium">{notification.successCount}</p>
+                      <p className="text-slate-500 text-xs">Success</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-red-400 font-medium">{notification.failureCount}</p>
+                      <p className="text-slate-500 text-xs">Failed</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-slate-300 font-medium">{notification.recipientCount}</p>
+                      <p className="text-slate-500 text-xs">Total</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  const renderSubscribers = () => (
+    <div className="space-y-6">
+      <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">Push Subscribers ({subscriptions.length})</h3>
+          <button
+            onClick={clearAllSubscriptions}
+            disabled={loadingAction === 'clear-subs' || subscriptions.length === 0}
+            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-red-800 disabled:to-red-900 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+          >
+            {loadingAction === 'clear-subs' ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                Clearing...
+              </>
+            ) : (
+              <>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear All
+              </>
+            )}
+          </button>
+        </div>
+        
+        {subscriptions.length === 0 ? (
+          <p className="text-slate-400 text-center py-8">No active subscribers</p>
+        ) : (
+          <div className="space-y-3">
+            {subscriptions.map((sub) => (
+              <div key={sub.id} className="bg-slate-700/50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-white font-medium text-sm">{sub.userAgent}</p>
+                    <p className="text-slate-400 text-xs">Subscribed: {new Date(sub.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      sub.lastNotificationStatus === 'success' ? 'bg-green-500/20 text-green-400' :
+                      sub.lastNotificationStatus === 'failed' ? 'bg-red-500/20 text-red-400' :
+                      'bg-slate-500/20 text-slate-400'
+                    }`}>
+                      {sub.lastNotificationStatus === 'success' ? '✓ Delivered' :
+                       sub.lastNotificationStatus === 'failed' ? '✗ Failed' :
+                       'No notifications'}
+                    </div>
+                    {sub.lastNotificationTime && (
+                      <p className="text-slate-500 text-xs mt-1">
+                        {new Date(sub.lastNotificationTime).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
-      {/* Header with tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-white">Push Notifications</h2>
-        <div className="flex flex-wrap gap-2">
-          {(['overview', 'subscriptions', 'history', 'settings'] as const).map((tab) => (
+      {/* Header */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 blur-xl rounded-2xl"></div>
+        <div className="relative bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-2H4v2zM4 15h8v-2H4v2zM4 11h10V9H4v2zM4 7h12V5H4v2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Push Notifications</h2>
+                <p className="text-slate-400 text-sm">Manage push notification system</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+              <button
+                onClick={() => { onRefresh(); fetchStats(); }}
+                disabled={loading}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-xl p-1">
+        <div className="flex flex-wrap gap-1">
+          {[
+            { id: 'overview', label: 'Overview', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+            { id: 'history', label: 'History', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { id: 'subscribers', label: 'Subscribers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                activeTab === tab
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab.id
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
+              </svg>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm">Total Subscribers</p>
-                <p className="text-2xl font-bold text-white">{stats.totalSubscriptions}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm">Active Subscribers</p>
-                <p className="text-2xl font-bold text-green-400">{stats.activeSubscriptions}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm">Success Rate</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.successRate?.toFixed(1) || 0}%</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-400 text-sm">Total Sent</p>
-                <p className="text-2xl font-bold text-orange-400">{stats.totalNotificationsSent}</p>
-              </div>
-              <div className="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-2H4v2zM4 15h8v-2H4v2zM4 11h10V9H4v2z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={sendTestNotification}
-                disabled={sending}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-slate-600 disabled:to-slate-700 text-white rounded-lg font-medium transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
-              >
-                {sending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                )}
-                Send Test Notification
-              </button>
-              <button
-                onClick={fetchDebugInfo}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Debug Info
-              </button>
-              <button
-                onClick={refreshNotifications}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-              </button>
-            </div>
-          </div>
-
-          {/* Debug Info */}
-          {debugInfo && (
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">System Status</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium text-slate-300 mb-2">VAPID Configuration</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Public Key:</span>
-                      <span className={debugInfo.vapidKeysConfigured?.public ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.vapidKeysConfigured?.public ? '✓ Configured' : '✗ Missing'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Private Key:</span>
-                      <span className={debugInfo.vapidKeysConfigured?.private ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.vapidKeysConfigured?.private ? '✓ Configured' : '✗ Missing'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Client Key:</span>
-                      <span className={debugInfo.vapidKeysConfigured?.nextPublic ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.vapidKeysConfigured?.nextPublic ? '✓ Configured' : '✗ Missing'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-slate-300 mb-2">Database</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Redis Connection:</span>
-                      <span className={debugInfo.redisConnection ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.redisConnection ? '✓ Connected' : '✗ Disconnected'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Active Subscriptions:</span>
-                      <span className="text-blue-400">{debugInfo.subscriptions?.activeCount || 0}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Subscriptions Tab */}
-      {activeTab === 'subscriptions' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h3 className="text-lg font-semibold text-white">Subscription Management</h3>
-              {selectedSubscriptions.length > 0 && (
-                <button
-                  onClick={() => bulkDeleteSubscriptions(selectedSubscriptions)}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete Selected ({selectedSubscriptions.length})
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-900/50 border border-red-600 rounded-lg p-4">
-          <p className="text-red-300">{error}</p>
-        </div>
-      )}
-
-      <div className="bg-slate-800 rounded-lg border border-slate-700">
-        <div className="p-4 border-b border-slate-700">
-          <h3 className="text-lg font-medium text-white">Notification History</h3>
-          <p className="text-gray-400 text-sm mt-1">
-            {notifications.length} notification{notifications.length !== 1 ? 's' : ''} sent
-          </p>
-        </div>
-
-        <div className="divide-y divide-slate-700">
-          {notifications.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-400">No notifications sent yet</p>
-            </div>
-          ) : (
-            notifications.map((notification) => (
-              <div key={notification.id} className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium text-white">{notification.title}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        notification.status === 'completed' 
-                          ? 'bg-green-900/50 text-green-300 border border-green-600'
-                          : notification.status === 'sending'
-                          ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-600'
-                          : 'bg-red-900/50 text-red-300 border border-red-600'
-                      }`}>
-                        {notification.status}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2">{notification.body}</p>
-                    
-                    {notification.eventTitle && (
-                      <div className="text-sm text-gray-400 mb-2">
-                        <span className="font-medium">Event:</span> {notification.eventTitle}
-                        {notification.eventDate && (
-                          <span className="ml-2">on {new Date(notification.eventDate).toLocaleDateString()}</span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span>
-                        Sent: {new Date(notification.sentAt).toLocaleString()}
-                      </span>
-                      <span>
-                        Recipients: {notification.recipientCount || 0}
-                      </span>
-                      <span className="text-green-400">
-                        ✓ {notification.successCount || 0}
-                      </span>
-                      {notification.failureCount > 0 && (
-                        <span className="text-red-400">
-                          ✗ {notification.failureCount}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => deleteNotification(notification.id)}
-                    className="ml-4 text-red-400 hover:text-red-300 p-1 rounded"
-                    title="Delete notification"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-        <h3 className="text-lg font-medium text-white mb-2">Push Notification Setup</h3>
-        <div className="text-sm text-gray-300 space-y-2">
-          <p>• Push notifications work when the PWA is installed on user devices</p>
-          <p>• Notifications are automatically sent when new events are added via email processing</p>
-          <p>• Users must grant notification permission when they install the app</p>
-          <p>• Test notifications help verify the system is working correctly</p>
-        </div>
-      </div>
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'history' && renderHistory()}
+      {activeTab === 'subscribers' && renderSubscribers()}
     </div>
   )
 }
