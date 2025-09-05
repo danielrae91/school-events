@@ -35,9 +35,12 @@ export default function HomePage() {
     
     // Register service worker and set up push notifications
     if ('serviceWorker' in navigator && 'PushManager' in window) {
+      let serviceWorkerRegistration: ServiceWorkerRegistration | null = null
+      
       navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
           console.log('Service Worker registered:', registration)
+          serviceWorkerRegistration = registration
           setPushSupported(true)
           
           // Check if already subscribed
@@ -46,17 +49,37 @@ export default function HomePage() {
         .then((subscription) => {
           if (subscription) {
             setPushSubscribed(true)
-            
-            // Auto-request push notification permission for PWA installs
-            if (window.matchMedia('(display-mode: standalone)').matches && Notification.permission === 'default') {
+          }
+          
+          // Check notification permission and prompt if needed
+          const checkNotificationPermission = () => {
+            if (Notification.permission === 'default') {
+              // Show a friendly prompt after a short delay
               setTimeout(() => {
-                Notification.requestPermission().then(permission => {
-                  if (permission === 'granted') {
-                    console.log('Push notification permission granted after PWA install')
-                  }
-                })
-              }, 2000)
+                if (confirm('Would you like to receive notifications about new events and updates?')) {
+                  Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                      console.log('Push notification permission granted')
+                      // Try to subscribe to push notifications
+                      if (serviceWorkerRegistration && !subscription) {
+                        subscribeToPushNotifications()
+                      }
+                    }
+                  })
+                }
+              }, 3000)
+            } else if (Notification.permission === 'granted' && !subscription) {
+              // Permission granted but not subscribed, try to subscribe
+              subscribeToPushNotifications()
             }
+          }
+          
+          // Check permission on app open
+          checkNotificationPermission()
+          
+          // Also check when app becomes standalone (PWA install)
+          if (window.matchMedia('(display-mode: standalone)').matches) {
+            setTimeout(checkNotificationPermission, 2000)
           }
         })
         .catch((error) => {
@@ -696,7 +719,6 @@ export default function HomePage() {
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span>Calendar</span>
                         </button>
                         {dropdownOpen === event.id && (
                           <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">
@@ -948,7 +970,6 @@ END:VCALENDAR`
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span>Calendar</span>
                         </button>
                         {dropdownOpen === event.id && (
                           <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-[70]">

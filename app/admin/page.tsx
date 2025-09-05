@@ -11,6 +11,7 @@ import LogsTab from '@/components/admin/LogsTab'
 import SettingsTab from '@/components/admin/SettingsTab'
 import NotificationsTab from '@/components/admin/NotificationsTab'
 import { gsap } from 'gsap'
+import { toast, Toaster } from 'sonner'
 
 interface Suggestion {
   id: string
@@ -339,53 +340,68 @@ function AdminPageContent() {
   }
 
   const bulkDeleteFeedback = async () => {
-    if (!confirm(`Delete ${selectedFeedback.length} selected feedback items?`)) return
-    
-    try {
-      await fetch('/api/admin/messages', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ messageIds: selectedFeedback })
-      })
-      setSelectedFeedback([])
-      fetchFeedbackWithToken(adminToken)
-    } catch (err) {
-      console.error('Failed to bulk delete messages:', err)
-    }
+    toast.promise(
+      (async () => {
+        const response = await fetch('/api/admin/messages', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ messageIds: selectedFeedback })
+        })
+        
+        if (!response.ok) throw new Error('Failed to delete feedback')
+        
+        setSelectedFeedback([])
+        fetchFeedbackWithToken(adminToken)
+        return `Deleted ${selectedFeedback.length} feedback items`
+      })(),
+      {
+        loading: `Deleting ${selectedFeedback.length} feedback items...`,
+        success: (message) => message,
+        error: 'Failed to delete feedback items'
+      }
+    )
   }
 
   const bulkDeleteLogs = async () => {
-    if (!confirm(`Delete ${selectedLogs.length} selected logs?`)) return
-    
-    try {
-      await Promise.all(selectedLogs.map(id => 
-        fetch(`/api/admin/logs/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${adminToken}` }
-        })
-      ))
-      setSelectedLogs([])
-      fetchLogsWithToken(adminToken)
-    } catch (err) {
-      console.error('Failed to bulk delete logs:', err)
-    }
+    toast.promise(
+      (async () => {
+        await Promise.all(selectedLogs.map(id => 
+          fetch(`/api/admin/logs/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${adminToken}` }
+          })
+        ))
+        setSelectedLogs([])
+        fetchLogsWithToken(adminToken)
+        return `Deleted ${selectedLogs.length} log entries`
+      })(),
+      {
+        loading: `Deleting ${selectedLogs.length} log entries...`,
+        success: (message) => message,
+        error: 'Failed to delete log entries'
+      }
+    )
   }
 
   const cleanupRedis = async () => {
-    try {
-      const response = await fetch('/api/admin/cleanup', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      })
-      if (response.ok) {
-        alert('Redis cleanup completed')
+    toast.promise(
+      (async () => {
+        const response = await fetch('/api/admin/cleanup', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        })
+        if (!response.ok) throw new Error('Cleanup failed')
+        return 'Redis cleanup completed successfully'
+      })(),
+      {
+        loading: 'Cleaning up Redis cache...',
+        success: (message) => message,
+        error: 'Failed to cleanup Redis cache'
       }
-    } catch (err) {
-      console.error('Failed to cleanup Redis:', err)
-    }
+    )
   }
 
 
@@ -933,6 +949,14 @@ function AdminPageContent() {
             </div>
           </div>
         )}
+        
+        {/* Toast notifications */}
+        <Toaster 
+          position="top-right"
+          theme="dark"
+          richColors
+          closeButton
+        />
       </div>
     </div>
   )
@@ -940,9 +964,7 @@ function AdminPageContent() {
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center">
-      <div className="text-white">Loading admin panel...</div>
-    </div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <AdminPageContent />
     </Suspense>
   )
